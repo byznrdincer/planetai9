@@ -4,9 +4,10 @@
 
 > ONE PLANET. EVERY AI SIGNAL.
 
-## Bu repo şu an ne içeriyor?
+## Durum
 
-İlk teslimat: **ürün mimarisi + veri modeli + pipeline tasarımı** (kod değil, tasarım dokümanları).
+**MVP (V1) çalışır durumda:** ingestion pipeline + FastAPI + Next.js dashboard.
+Kurulum ve komutlar için → [docs/RUNBOOK.md](docs/RUNBOOK.md).
 
 | Doküman | İçerik |
 |---|---|
@@ -17,6 +18,7 @@
 | [docs/04-api.md](docs/04-api.md) | Backend REST API sözleşmesi |
 | [docs/05-frontend.md](docs/05-frontend.md) | Next.js sayfa yapısı, route'lar, bileşenler |
 | [docs/06-roadmap.md](docs/06-roadmap.md) | MVP → V2 → V3 → V4 yol haritası |
+| [docs/RUNBOOK.md](docs/RUNBOOK.md) | Local kurulum, CLI, portlar |
 
 ## Kararlaştırılan teknoloji yığını
 
