@@ -1,0 +1,183 @@
+from __future__ import annotations
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from planetai_api import schemas
+from planetai_shared.db import models
+from planetai_shared.enums import PRIMARY_SOURCE_TYPES
+
+
+def entity_ref(ent: models.Entity | None) -> schemas.EntityRef | None:
+    if ent is None:
+        return None
+    return schemas.EntityRef(slug=ent.slug, name=ent.name, type=ent.type)
+
+
+def source_ref(src: models.Source) -> schemas.SourceRef:
+    return schemas.SourceRef(
+        slug=src.slug,
+        name=src.name,
+        source_type=src.source_type,
+        trust_weight=float(src.trust_weight),
+        homepage_url=src.homepage_url,
+    )
+
+
+def _top_source(db: Session, event: models.Event) -> models.Source | None:
+    row = db.execute(
+        select(models.Source)
+        .join(models.Article, models.Article.source_id == models.Source.id)
+        .where(models.Article.event_id == event.id)
+        .order_by(models.Source.trust_weight.desc())
+        .limit(1)
+    ).scalar_one_or_none()
+    return row
+
+
+def event_card(db: Session, event: models.Event) -> schemas.EventCard:
+    return schemas.EventCard(
+        slug=event.slug,
+        title=event.title,
+        summary=event.summary,
+        category=event.category,
+        impact=event.impact,
+        importance=float(event.importance),
+        source_count=event.source_count,
+        primary_entity=entity_ref(event.primary_entity),
+        top_source=(lambda s: source_ref(s) if s else None)(_top_source(db, event)),
+        published_at=event.last_activity_at,
+        image_url=event.image_url,
+    )
+
+
+def video_card(video: models.Video) -> schemas.VideoCard:
+    return schemas.VideoCard(
+        youtube_id=video.youtube_id,
+        title=video.title,
+        description=video.description,
+        thumbnail_url=video.thumbnail_url,
+        duration_sec=video.duration_sec,
+        published_at=video.published_at,
+        playlist=video.playlist,
+        topics=video.topics or [],
+    )
+
+
+def event_detail(db: Session, event: models.Event) -> schemas.EventDetail:
+    entity_rows = db.execute(
+        select(models.EventEntity, models.Entity)
+        .join(models.Entity, models.Entity.id == models.EventEntity.entity_id)
+        .where(models.EventEntity.event_id == event.id)
+    ).all()
+    topic_rows = db.execute(
+        select(models.Topic)
+        .join(models.EventTopic, models.EventTopic.topic_id == models.Topic.id)
+        .where(models.EventTopic.event_id == event.id)
+    ).scalars().all()
+    article_rows = db.execute(
+        select(models.Article, models.Source)
+        .join(models.Source, models.Source.id == models.Article.source_id)
+        .where(models.Article.event_id == event.id)
+        .order_by(models.Article.published_at.desc())
+    ).all()
+
+    sources = [
+        schemas.EventSourceOut(
+            source=source_ref(src),
+            title=art.title,
+            url=art.canonical_url,
+            published_at=art.published_at,
+            is_primary=src.source_type in {str(t) for t in PRIMARY_SOURCE_TYPES},
+        )
+        for art, src in article_rows
+    ]
+    sources.sort(key=lambda s: (not s.is_primary, -s.source.trust_weight))
+
+    factors = db.get(models.ImportanceFactors, event.id)
+    fout = (
+        schemas.ImportanceFactorsOut(
+            source_reliability=float(factors.source_reliability),
+            independent_sources=float(factors.independent_sources),
+            entity_impact=float(factors.entity_impact),
+            novelty=float(factors.novelty),
+            market_impact=float(factors.market_impact),
+            velocity=float(factors.velocity),
+            total=float(factors.total),
+        )
+        if factors
+        else None
+    )
+
+    related = _related_events(db, event)
+    related_videos = _related_videos_for_event(db, event)
+
+    return schemas.EventDetail(
+        slug=event.slug,
+        title=event.title,
+        summary=event.summary,
+        why_it_matters=event.why_it_matters,
+        category=event.category,
+        impact=event.impact,
+        importance=float(event.importance),
+        source_count=event.source_count,
+        first_seen_at=event.first_seen_at,
+        last_activity_at=event.last_activity_at,
+        image_url=event.image_url,
+        primary_entity=entity_ref(event.primary_entity),
+        topics=[schemas.TopicRef(slug=t.slug, name=t.name) for t in topic_rows],
+        entities=[
+            schemas.EventEntityOut(entity=entity_ref(ent), role=ee.role)
+            for ee, ent in entity_rows
+        ],
+        sources=sources,
+        importance_factors=fout,
+        related_events=[event_card(db, e) for e in related],
+        related_videos=[video_card(v) for v in related_videos],
+    )
+
+
+def _related_events(db: Session, event: models.Event, limit: int = 6) -> list[models.Event]:
+    entity_ids = db.scalars(
+        select(models.EventEntity.entity_id).where(models.EventEntity.event_id == event.id)
+    ).all()
+    if not entity_ids:
+        return []
+    rows = db.scalars(
+        select(models.Event)
+        .join(models.EventEntity, models.EventEntity.event_id == models.Event.id)
+        .where(
+            models.EventEntity.entity_id.in_(entity_ids),
+            models.Event.id != event.id,
+            models.Event.status == "active",
+        )
+        .order_by(models.Event.last_activity_at.desc())
+        .limit(limit * 3)
+    ).all()
+    seen: set = set()
+    out: list[models.Event] = []
+    for e in rows:
+        if e.id not in seen:
+            seen.add(e.id)
+            out.append(e)
+        if len(out) >= limit:
+            break
+    return out
+
+
+def _related_videos_for_event(db: Session, event: models.Event, limit: int = 4) -> list[models.Video]:
+    entity_ids = db.scalars(
+        select(models.EventEntity.entity_id).where(models.EventEntity.event_id == event.id)
+    ).all()
+    if not entity_ids:
+        return []
+    return db.scalars(
+        select(models.Video)
+        .join(models.VideoLink, models.VideoLink.video_id == models.Video.id)
+        .where(
+            models.VideoLink.target_type == "entity",
+            models.VideoLink.target_id.in_(entity_ids),
+        )
+        .order_by(models.Video.published_at.desc())
+        .limit(limit)
+    ).all()
