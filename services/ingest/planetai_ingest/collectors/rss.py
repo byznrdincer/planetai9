@@ -3,8 +3,17 @@
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime, timezone
 from time import mktime
+
+_ARXIV_PREFIX = re.compile(
+    r"^\s*arXiv:\S+\s*(Announce Type:\s*\S+)?\s*(Abstract:)?\s*", re.I
+)
+
+
+def _clean_arxiv_summary(summary: str) -> str:
+    return _ARXIV_PREFIX.sub("", summary.replace("\n", " ")).strip()
 
 import feedparser
 
@@ -96,5 +105,5 @@ class ArxivCollector(RssCollector):
             # titles carry a trailing '. (arXiv:...)' sometimes
             item.title = item.title.split(". (arXiv:")[0].strip()
             if item.summary:
-                item.summary = item.summary.replace("\n", " ").strip()
+                item.summary = _clean_arxiv_summary(item.summary)
         return result

@@ -78,12 +78,18 @@ def refresh_top_signals() -> int:
         db.query(models.Event).filter(models.Event.is_top_signal.is_(True)).update(
             {models.Event.is_top_signal: False}
         )
+        arxiv_events = (
+            select(models.Article.event_id)
+            .join(models.Source, models.Source.id == models.Article.source_id)
+            .where(models.Source.kind == "arxiv", models.Article.event_id.isnot(None))
+        )
         candidates = db.scalars(
             select(models.Event)
             .where(
                 models.Event.status == "active",
                 models.Event.last_activity_at >= since,
                 models.Event.importance >= 4.0,
+                models.Event.id.not_in(arxiv_events),
             )
             .order_by(models.Event.importance.desc())
         ).all()

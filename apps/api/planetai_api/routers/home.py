@@ -30,11 +30,17 @@ def home(db: Session = Depends(get_db)) -> schemas.HomePayload:
         .limit(5)
     ).all()
 
+    research_event_ids = (
+        select(models.Article.event_id)
+        .join(models.Source, models.Source.id == models.Article.source_id)
+        .where(models.Source.kind == "arxiv", models.Article.event_id.isnot(None))
+    )
     latest = db.scalars(
         select(models.Event)
         .where(
             models.Event.status == "active",
             models.Event.category != Category.RESEARCH.value,
+            models.Event.id.not_in(research_event_ids),
         )
         .order_by(models.Event.last_activity_at.desc())
         .limit(20)
@@ -47,7 +53,11 @@ def home(db: Session = Depends(get_db)) -> schemas.HomePayload:
     since = datetime.now(timezone.utc) - timedelta(hours=24)
     timeline_events = db.scalars(
         select(models.Event)
-        .where(models.Event.last_activity_at >= since, models.Event.status == "active")
+        .where(
+            models.Event.last_activity_at >= since,
+            models.Event.status == "active",
+            models.Event.id.not_in(research_event_ids),
+        )
         .order_by(models.Event.last_activity_at.desc())
         .limit(25)
     ).all()
