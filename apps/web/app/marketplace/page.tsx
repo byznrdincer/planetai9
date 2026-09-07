@@ -89,7 +89,7 @@ export default async function MarketplacePage({
       <section id="oner" className="mt-14 scroll-mt-24 border-t-2 border-ink pt-8">
         <h2 className="text-xl font-black tracking-tight text-ink">Uygulamanı öner</h2>
         <p className="mt-1 max-w-lg text-sm text-ink-2">
-          Yaptığın yapay zekâ uygulamasını PlanetAI topluluğuyla paylaş. Gönderiler incelendikten
+          Yaptığın yapay zekâ uygulamasını PlanetAI9 topluluğuyla paylaş. Gönderiler incelendikten
           sonra yayınlanır.
         </p>
         <MarketplaceForm />

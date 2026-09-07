@@ -19,7 +19,7 @@ export default async function SourcesPage() {
   return (
     <Page
       title="Kaynaklar & Güven"
-      lead="PlanetAI'deki her haber orijinal yayıncıya bağlanır. Güven ağırlığı, haberin önem puanını etkiler."
+      lead="PlanetAI9'daki her haber orijinal yayıncıya bağlanır. Güven ağırlığı, haberin önem puanını etkiler."
     >
       <div className="card divide-y divide-line">
         {sources.map((s) => (

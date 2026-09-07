@@ -13,7 +13,7 @@ export default async function AuthorsPage() {
   ]);
 
   return (
-    <Page title="Yazarlar" lead="PlanetAI köşe yazıları — sektörün kırılma noktaları ve Türkiye'nin yapay zekâ ekosistemi.">
+    <Page title="Yazarlar" lead="PlanetAI9 köşe yazıları — sektörün kırılma noktaları ve Türkiye'nin yapay zekâ ekosistemi.">
       <div className="grid gap-10 lg:grid-cols-[1fr_260px]">
         <div>
           {columns.length === 0 ? (

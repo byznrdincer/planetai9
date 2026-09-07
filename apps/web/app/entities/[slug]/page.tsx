@@ -47,7 +47,7 @@ export default async function EntityPage({ params }: { params: Promise<{ slug: s
 
           {entity.videos.length > 0 && (
             <section>
-              <h2 className="mb-3 text-lg font-black tracking-tight text-ink">PlanetAI videoları</h2>
+              <h2 className="mb-3 text-lg font-black tracking-tight text-ink">PlanetAI9 videoları</h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 {entity.videos.map((v) => (
                   <VideoCard key={v.youtube_id} video={v} />

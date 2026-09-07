@@ -9,7 +9,7 @@ export default async function VideosPage() {
   const videos = await apiSafe<VideoCardT[]>("/videos?limit=36", []);
 
   return (
-    <Page title="PlanetAI Video" lead="Açıklayıcı videolar, model incelemeleri ve yapay zekâ haberleri.">
+    <Page title="PlanetAI9 Video" lead="Açıklayıcı videolar, model incelemeleri ve yapay zekâ haberleri.">
       {videos.length === 0 ? (
         <div className="card p-6 text-sm text-ink-2">
           Henüz video yok. YouTube API anahtarı ve kanal kimliği tanımlanınca videolar otomatik

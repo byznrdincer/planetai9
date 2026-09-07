@@ -39,7 +39,7 @@ export function Masthead() {
         <div className="flex items-center gap-4 border-t border-line py-4">
           <Link href="/" className="flex items-center gap-2.5">
             <LogoMark className="h-9 w-9" />
-            <span className="text-2xl font-black tracking-tightest text-ink">PlanetAI</span>
+            <span className="text-2xl font-black tracking-tightest text-ink">PlanetAI9</span>
             <span className="hidden border-l border-line pl-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted sm:block">
               Yapay Zekâ Haberleri
             </span>

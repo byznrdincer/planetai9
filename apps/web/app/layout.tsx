@@ -12,7 +12,7 @@ const archivo = Archivo({
 });
 
 export const metadata: Metadata = {
-  title: "PlanetAI — Yapay Zekâ Haberleri",
+  title: "PlanetAI9 — Yapay Zekâ Haberleri",
   description:
     "Yapay zekâ dünyasındaki gelişmeleri, model duyurularını ve araştırmaları tek bir yerde takip et.",
 };
@@ -27,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="mx-auto flex max-w-content flex-wrap items-center justify-between gap-3 px-5 py-8 text-[12px] text-muted">
             <span className="flex items-center gap-2">
               <LogoMark className="h-5 w-5" />
-              PlanetAI — Tek Gezegen. Her Yapay Zekâ Sinyali.
+              PlanetAI9 — Tek Gezegen. Her Yapay Zekâ Sinyali.
             </span>
             <Link href="/sources" className="link-accent">
               Kaynaklar &amp; Güven

@@ -128,7 +128,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
         {event.related_videos.length > 0 && (
           <section>
-            <p className="eyebrow mb-3">İlgili PlanetAI videoları</p>
+            <p className="eyebrow mb-3">İlgili PlanetAI9 videoları</p>
             <div className="grid gap-4 sm:grid-cols-2">
               {event.related_videos.map((v) => (
                 <VideoCard key={v.youtube_id} video={v} />
