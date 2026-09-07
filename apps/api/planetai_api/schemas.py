@@ -119,12 +119,24 @@ class TopicTrend(BaseModel):
     sample_events: list[EventCard]
 
 
+class ColumnCardLite(BaseModel):
+    slug: str
+    title: str
+    dek: str | None
+    hero_image_url: str | None
+    published_at: datetime
+    author_name: str
+    author_slug: str
+
+
 class HomePayload(BaseModel):
     top_signals: list[EventCard]
     latest_news: list[EventCard]
+    popular: list[EventCard]
     trending: list[TopicTrend]
     videos: list[VideoCard]
     timeline: list[TimelineItem]
+    columns: list[ColumnCardLite]
 
 
 class Page(BaseModel):

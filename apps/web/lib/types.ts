@@ -107,12 +107,66 @@ export interface TopicTrend {
   sample_events: EventCard[];
 }
 
+export interface ColumnCardLite {
+  slug: string;
+  title: string;
+  dek: string | null;
+  hero_image_url: string | null;
+  published_at: string;
+  author_name: string;
+  author_slug: string;
+}
+
 export interface HomePayload {
   top_signals: EventCard[];
   latest_news: EventCard[];
+  popular: EventCard[];
   trending: TopicTrend[];
   videos: VideoCard[];
   timeline: TimelineItem[];
+  columns: ColumnCardLite[];
+}
+
+export interface MarketplaceApp {
+  slug: string;
+  name: string;
+  tagline: string;
+  description: string | null;
+  url: string;
+  repo_url: string | null;
+  category: string;
+  category_label: string;
+  pricing: string;
+  logo_url: string | null;
+  author_name: string;
+  author_url: string | null;
+  upvotes: number;
+  featured: boolean;
+}
+
+export interface AuthorRef {
+  slug: string;
+  name: string;
+  role: string | null;
+  avatar_url: string | null;
+}
+
+export interface AuthorDetail extends AuthorRef {
+  bio: string | null;
+  links: Record<string, string>;
+}
+
+export interface ColumnCard {
+  slug: string;
+  title: string;
+  dek: string | null;
+  hero_image_url: string | null;
+  published_at: string;
+  author: AuthorRef;
+}
+
+export interface ColumnDetail extends ColumnCard {
+  body: string;
 }
 
 export interface Page<T = EventCard> {

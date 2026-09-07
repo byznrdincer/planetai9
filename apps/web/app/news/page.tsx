@@ -9,12 +9,11 @@ export const revalidate = 60;
 
 const CATEGORIES = [
   "All",
-  "Models",
-  "Companies",
   "Agents",
   "AICoding",
   "Robotics",
   "GenerativeAI",
+  "VoiceAI",
   "OpenSource",
   "AISafety",
   "Regulation",

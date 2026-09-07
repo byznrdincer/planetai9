@@ -48,10 +48,17 @@ then `uv run planetai-ingest collect --kinds youtube`.
 ## CLI reference
 | command | purpose |
 |---|---|
-| `planetai-ingest seed` | upsert seed YAML into DB (idempotent) |
-| `planetai-ingest collect [--kinds rss,arxiv,youtube]` | one collection pass |
+| `planetai-ingest seed` | upsert seed YAML into DB (idempotent) — sources, entities, topics, authors, marketplace apps |
+| `planetai-ingest collect [--kinds rss,arxiv,youtube]` | one collection pass (fetches OG images, busts API cache) |
 | `planetai-ingest trends` | recompute trend snapshots + refresh top signals |
 | `planetai-ingest scheduler` | APScheduler loop (10m news / 60m arxiv+yt / 30m trends) |
+| `python -m planetai_api.moderate list` | list AI Marketplace submissions with status |
+| `python -m planetai_api.moderate approve <slug>` | publish a pending marketplace app |
+| `python -m planetai_api.moderate reject <slug>` | reject a submission |
+
+## Köşe yazısı ekleme (opinion_posts)
+Şimdilik doğrudan DB'ye: `INSERT INTO opinion_posts (id, slug, author_id, title, dek, body, status, published_at, created_at, updated_at) VALUES (...)`.
+Yazar `authors` tablosundan (`beyza-nur-dincer` seed'li). `body` düz metin, paragraflar `\n\n` ile ayrılır; `## Başlık` satırı alt başlık olur.
 
 ## Ports
 | service | port | note |

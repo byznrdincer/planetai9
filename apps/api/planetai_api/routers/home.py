@@ -19,7 +19,7 @@ _settings = get_settings()
 
 @router.get("/home", response_model=schemas.HomePayload)
 def home(db: Session = Depends(get_db)) -> schemas.HomePayload:
-    cached = cache.get("home:v1")
+    cached = cache.get("home:v2")
     if cached:
         return schemas.HomePayload.model_validate(cached)
 
@@ -50,6 +50,27 @@ def home(db: Session = Depends(get_db)) -> schemas.HomePayload:
         select(models.Video).order_by(models.Video.published_at.desc()).limit(8)
     ).all()
 
+    week = datetime.now(timezone.utc) - timedelta(days=7)
+    popular = db.scalars(
+        select(models.Event)
+        .where(
+            models.Event.status == "active",
+            models.Event.category != Category.RESEARCH.value,
+            models.Event.id.not_in(research_event_ids),
+            models.Event.last_activity_at >= week,
+        )
+        .order_by(models.Event.source_count.desc(), models.Event.importance.desc())
+        .limit(6)
+    ).all()
+
+    columns = db.execute(
+        select(models.OpinionPost, models.Author)
+        .join(models.Author, models.Author.id == models.OpinionPost.author_id)
+        .where(models.OpinionPost.status == "published")
+        .order_by(models.OpinionPost.published_at.desc())
+        .limit(3)
+    ).all()
+
     since = datetime.now(timezone.utc) - timedelta(hours=24)
     timeline_events = db.scalars(
         select(models.Event)
@@ -65,8 +86,21 @@ def home(db: Session = Depends(get_db)) -> schemas.HomePayload:
     payload = schemas.HomePayload(
         top_signals=[serializers.event_card(db, e) for e in top_signals],
         latest_news=[serializers.event_card(db, e) for e in latest],
+        popular=[serializers.event_card(db, e) for e in popular],
         trending=build_trends(db, window="24h", limit=8),
         videos=[serializers.video_card(v) for v in videos],
+        columns=[
+            schemas.ColumnCardLite(
+                slug=p.slug,
+                title=p.title,
+                dek=p.dek,
+                hero_image_url=p.hero_image_url,
+                published_at=p.published_at,
+                author_name=a.name,
+                author_slug=a.slug,
+            )
+            for p, a in columns
+        ],
         timeline=[
             schemas.TimelineItem(
                 time=e.last_activity_at,
@@ -78,5 +112,5 @@ def home(db: Session = Depends(get_db)) -> schemas.HomePayload:
             for e in timeline_events
         ],
     )
-    cache.set("home:v1", payload.model_dump(), _settings.cache_ttl_home_sec)
+    cache.set("home:v2", payload.model_dump(), _settings.cache_ttl_home_sec)
     return payload

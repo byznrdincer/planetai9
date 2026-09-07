@@ -1,0 +1,57 @@
+# Seed AI Marketplace entries (status: approved). Community submissions arrive
+# via the site form as `pending`.
+# category: mcp | llm | stt | tts | agent | tool | other
+apps:
+  - slug: whisper
+    name: Whisper
+    tagline: OpenAI'nin açık kaynak konuşma tanıma modeli.
+    url: https://github.com/openai/whisper
+    repo_url: https://github.com/openai/whisper
+    category: stt
+    pricing: free
+    author_name: OpenAI
+
+  - slug: piper-tts
+    name: Piper
+    tagline: Cihaz üzerinde hızlı, gerçekçi metin-konuşma (TTS).
+    url: https://github.com/rhasspy/piper
+    repo_url: https://github.com/rhasspy/piper
+    category: tts
+    pricing: free
+    author_name: Rhasspy
+
+  - slug: ollama
+    name: Ollama
+    tagline: Açık LLM'leri kendi makinende tek komutla çalıştır.
+    url: https://ollama.com
+    repo_url: https://github.com/ollama/ollama
+    category: llm
+    pricing: free
+    author_name: Ollama
+
+  - slug: filesystem-mcp
+    name: Filesystem MCP Server
+    tagline: LLM'lere güvenli dosya sistemi erişimi veren referans MCP sunucusu.
+    url: https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem
+    repo_url: https://github.com/modelcontextprotocol/servers
+    category: mcp
+    pricing: free
+    author_name: Model Context Protocol
+
+  - slug: llamaindex
+    name: LlamaIndex
+    tagline: LLM uygulamaları için veri çerçevesi (RAG, ajanlar).
+    url: https://www.llamaindex.ai
+    repo_url: https://github.com/run-llama/llama_index
+    category: tool
+    pricing: freemium
+    author_name: LlamaIndex
+
+  - slug: open-webui
+    name: Open WebUI
+    tagline: Yerel ve uzak LLM'ler için özdenetimli sohbet arayüzü.
+    url: https://openwebui.com
+    repo_url: https://github.com/open-webui/open-webui
+    category: tool
+    pricing: free
+    author_name: Open WebUI

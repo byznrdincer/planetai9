@@ -119,12 +119,68 @@ def seed_sources(db: Session) -> None:
     db.flush()
 
 
+def seed_editorial(db: Session) -> None:
+    data = config.editorial()
+    for row in data.get("authors", []):
+        author = db.scalar(select(models.Author).where(models.Author.slug == row["slug"]))
+        if author is None:
+            author = models.Author(slug=row["slug"])
+            db.add(author)
+        author.name = row["name"]
+        author.role = row.get("role")
+        author.bio = (row.get("bio") or "").strip() or None
+        author.avatar_url = row.get("avatar_url")
+        author.links = row.get("links") or {}
+    db.flush()
+    for row in data.get("columns", []) or []:
+        post = db.scalar(select(models.OpinionPost).where(models.OpinionPost.slug == row["slug"]))
+        author = db.scalar(select(models.Author).where(models.Author.slug == row["author"]))
+        if author is None:
+            continue
+        if post is None:
+            post = models.OpinionPost(slug=row["slug"])
+            db.add(post)
+        post.author_id = author.id
+        post.title = row["title"]
+        post.dek = row.get("dek")
+        post.body = row["body"].strip()
+        post.hero_image_url = row.get("hero_image_url")
+        post.status = row.get("status", "published")
+        post.published_at = row.get("published_at") or datetime.now(timezone.utc)
+    db.flush()
+
+
+def seed_marketplace(db: Session) -> None:
+    for row in config.marketplace().get("apps", []):
+        app = db.scalar(
+            select(models.MarketplaceApp).where(models.MarketplaceApp.slug == row["slug"])
+        )
+        if app is None:
+            app = models.MarketplaceApp(slug=row["slug"])
+            db.add(app)
+        app.name = row["name"]
+        app.tagline = row["tagline"]
+        app.description = row.get("description")
+        app.url = row["url"]
+        app.repo_url = row.get("repo_url")
+        app.category = row["category"]
+        app.pricing = row.get("pricing", "free")
+        app.logo_url = row.get("logo_url")
+        app.author_name = row["author_name"]
+        app.author_url = row.get("author_url")
+        app.status = row.get("status", "approved")
+        app.featured = row.get("featured", False)
+    db.flush()
+
+
 def run() -> None:
     with session_scope() as db:
         seed_entities(db)
         seed_relations(db)
         seed_topics(db)
         seed_sources(db)
+        seed_editorial(db)
+        seed_marketplace(db)
     log.info("seed complete")
 
 

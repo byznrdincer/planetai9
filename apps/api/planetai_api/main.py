@@ -3,7 +3,17 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from planetai_api.routers import entities, events, home, meta, search, trends, videos
+from planetai_api.routers import (
+    authors,
+    entities,
+    events,
+    home,
+    marketplace,
+    meta,
+    search,
+    trends,
+    videos,
+)
 from planetai_shared.settings import get_settings
 
 _settings = get_settings()
@@ -17,7 +27,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_settings.cors_origins,
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -28,6 +38,8 @@ app.include_router(trends.router, prefix=API_V1, tags=["trends"])
 app.include_router(videos.router, prefix=API_V1, tags=["videos"])
 app.include_router(search.router, prefix=API_V1, tags=["search"])
 app.include_router(entities.router, prefix=API_V1, tags=["entities"])
+app.include_router(marketplace.router, prefix=API_V1, tags=["marketplace"])
+app.include_router(authors.router, prefix=API_V1, tags=["authors"])
 app.include_router(meta.router, prefix=API_V1, tags=["meta"])
 
 

@@ -249,6 +249,65 @@ class VideoLink(Base):
     )
 
 
+class MarketplaceApp(Base, TimestampMixin):
+    """Community-submitted AI apps/tools. New rows land as `pending`."""
+
+    __tablename__ = "marketplace_apps"
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    slug: Mapped[str] = mapped_column(String(160), unique=True)
+    name: Mapped[str] = mapped_column(String(160))
+    tagline: Mapped[str] = mapped_column(String(240))
+    description: Mapped[str | None] = mapped_column(Text)
+    url: Mapped[str] = mapped_column(Text)
+    repo_url: Mapped[str | None] = mapped_column(Text)
+    category: Mapped[str] = mapped_column(String(20))  # mcp | llm | stt | tts | agent | tool | other
+    pricing: Mapped[str] = mapped_column(String(20), default="free")  # free | freemium | paid
+    logo_url: Mapped[str | None] = mapped_column(Text)
+    author_name: Mapped[str] = mapped_column(String(120))
+    author_url: Mapped[str | None] = mapped_column(Text)
+    submitter_email: Mapped[str | None] = mapped_column(String(200))
+    status: Mapped[str] = mapped_column(String(12), default="pending")  # pending | approved | rejected
+    upvotes: Mapped[int] = mapped_column(Integer, default=0)
+    featured: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    __table_args__ = (Index("ix_marketplace_status", "status", "category"),)
+
+
+class Author(Base, TimestampMixin):
+    __tablename__ = "authors"
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    slug: Mapped[str] = mapped_column(String(120), unique=True)
+    name: Mapped[str] = mapped_column(String(160))
+    role: Mapped[str | None] = mapped_column(String(160))
+    bio: Mapped[str | None] = mapped_column(Text)
+    avatar_url: Mapped[str | None] = mapped_column(Text)
+    links: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+    posts: Mapped[list["OpinionPost"]] = relationship(back_populates="author")
+
+
+class OpinionPost(Base, TimestampMixin):
+    """Köşe yazısı / editorial column."""
+
+    __tablename__ = "opinion_posts"
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    slug: Mapped[str] = mapped_column(String(220), unique=True)
+    author_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("authors.id", ondelete="CASCADE"))
+    title: Mapped[str] = mapped_column(Text)
+    dek: Mapped[str | None] = mapped_column(Text)
+    body: Mapped[str] = mapped_column(Text)  # plain text, \n\n paragraphs
+    hero_image_url: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(12), default="published")  # draft | published
+    published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    author: Mapped[Author] = relationship(back_populates="posts")
+
+    __table_args__ = (Index("ix_opinion_published", "status", "published_at"),)
+
+
 class IngestRun(Base):
     """Bookkeeping for scheduler visibility / healthz."""
 

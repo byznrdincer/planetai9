@@ -53,3 +53,13 @@ def topics() -> list[dict]:
 @lru_cache
 def category_rules() -> dict:
     return _load("category_rules.yaml")
+
+
+@lru_cache
+def editorial() -> dict:
+    return _load("editorial.yaml")
+
+
+@lru_cache
+def marketplace() -> dict:
+    return _load("marketplace.yaml")

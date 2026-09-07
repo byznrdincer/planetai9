@@ -1,21 +1,21 @@
 import Link from "next/link";
 import { SearchBox } from "./SearchBox";
-import { Wordmark } from "./Logo";
+import { LogoMark } from "./Logo";
 
-const NAV: [string, string][] = [
-  ["Ana Sayfa", "/"],
-  ["Gündem", "/news"],
-  ["Teknoloji", "/news?category=Infrastructure"],
-  ["Modeller", "/models"],
-  ["Araçlar", "/tools"],
-  ["Şirketler", "/companies"],
-  ["Analiz", "/trends"],
-  ["Kodlama", "/news?category=AICoding"],
-  ["Robotik", "/news?category=Robotics"],
-  ["Güvenlik", "/news?category=AISafety"],
-  ["Regülasyon", "/news?category=Regulation"],
-  ["Trendler", "/trends"],
-  ["Video", "/videos"],
+type NavItem = { label: string; href: string; external?: boolean };
+
+const NAV: NavItem[] = [
+  { label: "Gündem", href: "/news" },
+  { label: "Analiz", href: "/trends" },
+  { label: "Robotik", href: "/news?category=Robotics" },
+  { label: "Kodlama", href: "/news?category=AICoding" },
+  { label: "Güvenlik", href: "/news?category=AISafety" },
+  { label: "Regülasyon", href: "/news?category=Regulation" },
+  { label: "Video", href: "/videos" },
+  { label: "AI Marketplace", href: "/marketplace" },
+  { label: "Yazarlar", href: "/yazarlar" },
+  { label: "LLMRadar ↗", href: "https://llmradar.planetai9.com", external: true },
+  { label: "PlanetAI9 ↗", href: "https://www.youtube.com/@planetai9", external: true },
 ];
 
 export function Masthead() {
@@ -27,52 +27,54 @@ export function Masthead() {
   });
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur">
+    <header className="border-b border-ink bg-paper">
       <div className="mx-auto max-w-content px-5">
-        <div className="flex h-16 items-center gap-4">
-          <Link href="/">
-            <Wordmark />
+        <div className="flex items-center justify-between py-1.5 text-[11px] uppercase tracking-wide text-muted">
+          <span>{today}</span>
+          <span className="flex items-center gap-1.5 font-semibold text-live">
+            <span className="h-1.5 w-1.5 rounded-full bg-live" /> Canlı Yayın
+          </span>
+        </div>
+
+        <div className="flex items-center gap-4 border-t border-line py-4">
+          <Link href="/" className="flex items-center gap-2.5">
+            <LogoMark className="h-9 w-9" />
+            <span className="text-2xl font-black tracking-tightest text-ink">PlanetAI</span>
+            <span className="hidden border-l border-line pl-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted sm:block">
+              Yapay Zekâ Haberleri
+            </span>
           </Link>
-          <div className="ml-auto hidden w-80 md:block">
+          <div className="ml-auto hidden w-72 md:block">
             <SearchBox />
           </div>
-          <button
-            aria-label="Tema"
-            className="hidden h-9 w-9 items-center justify-center rounded-full border border-line text-muted hover:text-ink md:flex"
-          >
-            ☀
-          </button>
-          <button
-            aria-label="Profil"
-            className="hidden h-9 w-9 items-center justify-center rounded-full border border-line text-muted hover:text-ink md:flex"
-          >
-            ◔
-          </button>
         </div>
       </div>
 
-      <div className="border-t border-line">
-        <div className="mx-auto flex max-w-content items-center gap-1 px-5">
-          <nav className="flex flex-1 gap-0.5 overflow-x-auto py-2 text-[13px] font-semibold">
-            {NAV.map(([label, href]) => (
-              <Link
-                key={label}
-                href={href}
-                className="whitespace-nowrap rounded-md px-2.5 py-1 text-ink-2 hover:bg-wash hover:text-ink"
+      <nav className="border-t border-ink bg-paper">
+        <div className="mx-auto flex max-w-content gap-1 overflow-x-auto px-5 py-2 text-[13px] font-bold uppercase tracking-wide">
+          {NAV.map((it) =>
+            it.external ? (
+              <a
+                key={it.label}
+                href={it.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="whitespace-nowrap px-2.5 py-1 text-ink-2 hover:text-accent"
               >
-                {label}
+                {it.label}
+              </a>
+            ) : (
+              <Link
+                key={it.label}
+                href={it.href}
+                className="whitespace-nowrap px-2.5 py-1 text-ink-2 hover:text-accent"
+              >
+                {it.label}
               </Link>
-            ))}
-          </nav>
-          <div className="hidden shrink-0 items-center gap-3 pl-4 text-[12px] text-muted lg:flex">
-            <span>{today}</span>
-            <span className="flex items-center gap-1.5 font-semibold text-live">
-              <span className="h-1.5 w-1.5 rounded-full bg-live" />
-              Canlı Yayın
-            </span>
-          </div>
+            ),
+          )}
         </div>
-      </div>
+      </nav>
     </header>
   );
 }

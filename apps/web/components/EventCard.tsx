@@ -3,41 +3,59 @@ import { relativeTime } from "@/lib/format";
 import type { EventCard as EventCardT } from "@/lib/types";
 import { CatBadge, Cover } from "./Cover";
 
-export function EventCard({ event }: { event: EventCardT }) {
+/** Big image on top, headline + dek below. WSJ-style. */
+export function EventCard({ event, size = "md" }: { event: EventCardT; size?: "md" | "lg" }) {
   return (
-    <article className="card group flex flex-col overflow-hidden">
-      <Link href={`/news/${event.slug}`} className="flex h-full flex-col">
+    <article className="group">
+      <Link href={`/news/${event.slug}`} className="block">
         <div className="relative">
-          <Cover src={event.image_url} category={event.category} className="aspect-[16/10]" rounded="rounded-none" />
+          <Cover
+            src={event.image_url}
+            category={event.category}
+            className={size === "lg" ? "aspect-[16/9]" : "aspect-[3/2]"}
+          />
           <span className="absolute left-2 top-2">
             <CatBadge category={event.category} />
           </span>
         </div>
-        <div className="flex flex-1 flex-col p-4">
-          <h3 className="headline line-clamp-3 text-[15px] leading-snug group-hover:text-accent">
-            {event.title}
-          </h3>
-          {event.summary && (
-            <p className="mt-1.5 line-clamp-2 text-[13px] text-ink-2">{event.summary}</p>
+        <h3
+          className={`headline mt-3 leading-tight group-hover:text-accent ${
+            size === "lg" ? "text-2xl" : "text-[17px]"
+          }`}
+        >
+          {event.title}
+        </h3>
+        {event.summary && (
+          <p className={`mt-2 text-ink-2 ${size === "lg" ? "line-clamp-3 text-[15px]" : "line-clamp-2 text-[13px]"}`}>
+            {event.summary}
+          </p>
+        )}
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 text-[11px] text-muted">
+          <span className="font-semibold text-ink-2">{event.top_source?.name}</span>
+          <span>·</span>
+          <span>{relativeTime(event.published_at)}</span>
+          {event.source_count > 1 && (
+            <>
+              <span>·</span>
+              <span>{event.source_count} kaynak</span>
+            </>
           )}
-          <div className="mt-auto flex items-center gap-2 pt-3 text-[11px] text-muted">
-            <span className="grid h-4 w-4 place-items-center rounded-full bg-wash text-[9px] font-bold text-ink-2">
-              {(event.top_source?.name ?? "?").slice(0, 1)}
-            </span>
-            <span className="font-semibold text-ink-2">{event.top_source?.name}</span>
-            <span>·</span>
-            <span>{relativeTime(event.published_at)}</span>
-          </div>
         </div>
       </Link>
     </article>
   );
 }
 
-export function EventRow({ event }: { event: EventCardT }) {
+/** Compact numbered/thumbnail row for rails. */
+export function EventRow({ event, index }: { event: EventCardT; index?: number }) {
   return (
-    <Link href={`/news/${event.slug}`} className="group flex gap-3 py-3">
-      <Cover src={event.image_url} category={event.category} className="h-16 w-24 shrink-0" />
+    <Link href={`/news/${event.slug}`} className="group flex gap-3 border-b border-line py-3 last:border-b-0">
+      {typeof index === "number" && (
+        <span className="w-5 shrink-0 pt-0.5 text-lg font-black text-line">{index + 1}</span>
+      )}
+      {typeof index !== "number" && (
+        <Cover src={event.image_url} category={event.category} className="h-16 w-20 shrink-0" />
+      )}
       <div className="min-w-0">
         <h4 className="headline line-clamp-3 text-[13px] leading-snug group-hover:text-accent">
           {event.title}
