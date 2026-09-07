@@ -16,3 +16,5 @@ apps/web/node_modules/
 apps/web/.next/
 apps/web/.env.local
 apps/web/next-env.d.ts
+
+*.png
