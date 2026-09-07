@@ -1,0 +1,58 @@
+# Known entities for dictionary-based tagging. slug is stable id.
+# tier (0..1) feeds importance scoring's entity_impact factor.
+
+companies:
+  - { slug: openai,          name: OpenAI,               tier: 1.00, aliases: ["Open AI"] }
+  - { slug: anthropic,       name: Anthropic,            tier: 1.00, aliases: [] }
+  - { slug: google-deepmind, name: Google DeepMind,      tier: 1.00, aliases: ["DeepMind", "Google AI"] }
+  - { slug: meta-ai,         name: Meta AI,              tier: 0.90, aliases: ["Meta FAIR", "FAIR"] }
+  - { slug: microsoft,       name: Microsoft,            tier: 0.85, aliases: ["Microsoft AI"] }
+  - { slug: nvidia,          name: NVIDIA,               tier: 0.90, aliases: ["Nvidia"] }
+  - { slug: xai,             name: xAI,                  tier: 0.80, aliases: ["x.ai"] }
+  - { slug: mistral,         name: Mistral AI,           tier: 0.75, aliases: ["Mistral"] }
+  - { slug: deepseek,        name: DeepSeek,             tier: 0.75, aliases: ["Deep Seek"] }
+  - { slug: cohere,          name: Cohere,               tier: 0.60, aliases: [] }
+  - { slug: amazon,          name: Amazon,               tier: 0.70, aliases: ["AWS AI", "Amazon AGI"] }
+  - { slug: alibaba,         name: Alibaba,              tier: 0.65, aliases: ["Alibaba Cloud", "Qwen Team"] }
+  - { slug: moonshot,        name: Moonshot AI,          tier: 0.55, aliases: ["Moonshot"] }
+  - { slug: hugging-face,    name: Hugging Face,          tier: 0.60, aliases: ["HuggingFace"] }
+  - { slug: perplexity,      name: Perplexity,           tier: 0.55, aliases: ["Perplexity AI"] }
+  - { slug: stability-ai,    name: Stability AI,          tier: 0.50, aliases: ["StabilityAI"] }
+
+model_families:
+  - { slug: gpt,      name: GPT,      parent: openai,          aliases: ["GPT-4", "GPT-4o", "GPT-5", "ChatGPT", "o1", "o3"] }
+  - { slug: claude,   name: Claude,   parent: anthropic,       aliases: ["Claude Opus", "Claude Sonnet", "Claude Haiku", "Claude 3", "Claude 4"] }
+  - { slug: gemini,   name: Gemini,   parent: google-deepmind, aliases: ["Gemini Pro", "Gemini Ultra", "Gemini Flash", "Bard"] }
+  - { slug: llama,    name: Llama,    parent: meta-ai,         aliases: ["LLaMA", "Llama 3", "Llama 4"] }
+  - { slug: grok,     name: Grok,     parent: xai,             aliases: [] }
+  - { slug: qwen,     name: Qwen,     parent: alibaba,         aliases: ["Qwen2", "Qwen3"] }
+  - { slug: mistral-large, name: Mistral Large, parent: mistral, aliases: ["Mixtral", "Codestral"] }
+  - { slug: deepseek-r1, name: DeepSeek-R1, parent: deepseek,  aliases: ["DeepSeek V3", "DeepSeek-V3", "DeepSeek R1"] }
+  - { slug: kimi,     name: Kimi,     parent: moonshot,        aliases: ["Kimi K2"] }
+
+products:
+  - { slug: claude-code,   name: Claude Code,   parent: anthropic, tier: 0.70, aliases: [] }
+  - { slug: chatgpt-app,   name: ChatGPT,       parent: openai,    tier: 0.80, aliases: [] }
+  - { slug: copilot,       name: GitHub Copilot, parent: microsoft, tier: 0.70, aliases: ["Copilot"] }
+  - { slug: cursor,        name: Cursor,        tier: 0.60, aliases: ["Cursor IDE", "Anysphere"] }
+  - { slug: sora,          name: Sora,          parent: openai,    tier: 0.65, aliases: [] }
+  - { slug: v0,            name: v0,            parent: null,      tier: 0.45, aliases: ["v0.dev"] }
+
+technologies:
+  - { slug: ai-agents,     name: AI Agents,     tier: 0.50, aliases: ["agentic AI", "autonomous agents"] }
+  - { slug: rag,           name: RAG,           tier: 0.35, aliases: ["retrieval augmented generation"] }
+  - { slug: multimodal,    name: Multimodal AI, tier: 0.40, aliases: ["multi-modal"] }
+  - { slug: mcp,           name: Model Context Protocol, tier: 0.40, aliases: ["MCP"] }
+
+people:
+  - { slug: sam-altman,      name: Sam Altman,       parent: openai,          aliases: [] }
+  - { slug: dario-amodei,    name: Dario Amodei,     parent: anthropic,       aliases: [] }
+  - { slug: demis-hassabis,  name: Demis Hassabis,   parent: google-deepmind, aliases: [] }
+  - { slug: yann-lecun,      name: Yann LeCun,       parent: meta-ai,         aliases: [] }
+  - { slug: jensen-huang,    name: Jensen Huang,     parent: nvidia,          aliases: [] }
+  - { slug: elon-musk,       name: Elon Musk,        parent: xai,             aliases: [] }
+
+institutions:
+  - { slug: stanford,   name: Stanford,   aliases: ["Stanford University", "Stanford HAI"] }
+  - { slug: mit,        name: MIT,        aliases: ["Massachusetts Institute of Technology", "MIT CSAIL"] }
+  - { slug: berkeley,   name: UC Berkeley, aliases: ["Berkeley AI Research", "BAIR"] }

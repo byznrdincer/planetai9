@@ -1,0 +1,28 @@
+[project]
+name = "planetai-ingest"
+version = "0.1.0"
+description = "PlanetAI data collectors and processing pipeline"
+requires-python = ">=3.12"
+dependencies = [
+    "planetai-shared",
+    "httpx>=0.28",
+    "feedparser>=6.0.11",
+    "python-dateutil>=2.9",
+    "rapidfuzz>=3.10",
+    "pyahocorasick>=2.1",
+    "PyYAML>=6.0",
+    "apscheduler>=3.10",
+    "redis>=5.2",
+    "python-slugify>=8.0",
+    "selectolax>=0.3.21",
+]
+
+[project.scripts]
+planetai-ingest = "planetai_ingest.run:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["planetai_ingest"]

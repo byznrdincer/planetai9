@@ -1,0 +1,330 @@
+"""Orchestrator: collect → parse → tag → dedup/event → score → persist."""
+
+from __future__ import annotations
+
+import logging
+import uuid
+from datetime import datetime, timedelta, timezone
+
+from slugify import slugify
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
+
+from planetai_ingest import config
+from planetai_ingest.collectors import RawItem, collector_for
+from planetai_ingest.pipeline import classify, dedup
+from planetai_ingest.pipeline.entities import EntityIndex, EntityHit, choose_primary
+from planetai_ingest.pipeline.score import persist_factors, score_event
+from planetai_ingest.text import (
+    clean_url,
+    content_hash,
+    simhash64,
+    strip_html,
+    summarize_excerpt,
+)
+from planetai_shared.db import models
+from planetai_shared.db.base import session_scope
+from planetai_shared.enums import PRIMARY_SOURCE_TYPES
+from planetai_shared.settings import get_settings
+
+log = logging.getLogger(__name__)
+_settings = get_settings()
+
+
+def collect_source(source_id: uuid.UUID) -> dict:
+    """Run one source end-to-end. Returns a small stats dict."""
+    stats = {"seen": 0, "written": 0, "source": str(source_id)}
+    with session_scope() as db:
+        source = db.get(models.Source, source_id)
+        if source is None or not source.enabled:
+            return stats
+        if source.kind == "youtube":
+            collector_for(source).fetch()
+            link_videos(db)
+            source.last_fetched_at = datetime.now(timezone.utc)
+            return stats
+        if not source.feed_url:
+            return stats
+
+        try:
+            result = collector_for(source).fetch()
+        except Exception as exc:  # noqa: BLE001 - keep other sources alive
+            log.warning("collect %s failed: %s", source.slug, exc)
+            return stats
+
+        source.last_fetched_at = datetime.now(timezone.utc)
+        if result.not_modified:
+            return stats
+        if result.etag:
+            source.etag = result.etag
+        if result.last_modified:
+            source.last_modified = result.last_modified
+
+        index = EntityIndex.from_db(db)
+        topics = _topics_payload(db)
+        for item in result.items:
+            stats["seen"] += 1
+            if _ingest_item(db, source, item, index, topics):
+                stats["written"] += 1
+    return stats
+
+
+def _topics_payload(db: Session) -> list[dict]:
+    return [
+        {"id": t.id, "keywords": t.keywords or []}
+        for t in db.scalars(select(models.Topic)).all()
+    ]
+
+
+def _ingest_item(
+    db: Session,
+    source: models.Source,
+    item: RawItem,
+    index: EntityIndex,
+    topics: list[dict],
+) -> bool:
+    existing = db.scalar(
+        select(models.Article).where(
+            models.Article.source_id == source.id,
+            models.Article.external_id == item.external_id,
+        )
+    )
+    if existing is not None:
+        return False
+
+    published = item.published_at or datetime.now(timezone.utc)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=_settings.max_article_age_days)
+    if published < cutoff:
+        return False
+
+    url = clean_url(item.url)
+    summary_src = strip_html(item.summary) if item.summary else ""
+    clean_summary = summarize_excerpt(summary_src) or None
+    body_excerpt = summary_src[:500] or None
+
+    hits = index.match(item.title, summary_src)
+    title_anchor_ids = frozenset(h.entity_id for h in hits if h.in_title)
+    sh = simhash64(f"{item.title} {clean_summary or ''}")
+
+    article = models.Article(
+        source_id=source.id,
+        external_id=item.external_id,
+        canonical_url=url,
+        title=item.title,
+        author=item.author,
+        raw_summary=summary_src or None,
+        clean_summary=clean_summary,
+        body_excerpt=body_excerpt,
+        lang=item.lang,
+        published_at=published,
+        fetched_at=datetime.now(timezone.utc),
+        image_url=item.image_url,
+        content_hash=content_hash(item.title, url),
+        dedup_simhash=sh,
+    )
+    db.add(article)
+    db.flush()
+
+    draft = dedup.ArticleDraft(
+        title=item.title,
+        canonical_url=url,
+        simhash=sh,
+        published_at=published,
+        anchor_entity_ids=title_anchor_ids,
+    )
+    event = dedup.find_event(db, draft)
+    if event is None:
+        event = _create_event(db, source, item, clean_summary, hits, topics, published)
+    else:
+        _attach_to_event(db, event, source, hits)
+
+    article.event_id = event.id
+    db.flush()
+
+    _recompute_event(db, event)
+    return True
+
+
+def _create_event(
+    db: Session,
+    source: models.Source,
+    item: RawItem,
+    clean_summary: str | None,
+    hits: list[EntityHit],
+    topics: list[dict],
+    published: datetime,
+) -> models.Event:
+    primary = choose_primary(hits)
+    category = classify.classify_category(
+        title=item.title,
+        summary=clean_summary or "",
+        source_kind=source.kind,
+        source_slug=source.slug,
+        hits=hits,
+    )
+    event = models.Event(
+        slug=_unique_slug(db, item.title),
+        title=item.title,
+        summary=clean_summary,
+        category=category,
+        primary_entity_id=uuid.UUID(primary.entity_id) if primary else None,
+        first_seen_at=published,
+        last_activity_at=published,
+        image_url=item.image_url,
+        source_count=1,
+        status="active",
+    )
+    db.add(event)
+    db.flush()
+
+    for hit in hits:
+        db.add(
+            models.EventEntity(
+                event_id=event.id,
+                entity_id=uuid.UUID(hit.entity_id),
+                role="primary" if (primary and hit.entity_id == primary.entity_id) else "mentioned",
+                confidence=0.9 if hit.in_title else 0.6,
+            )
+        )
+    for topic_id, weight in classify.match_topics(
+        title=item.title, summary=clean_summary or "", topics=topics
+    ):
+        db.add(models.EventTopic(event_id=event.id, topic_id=topic_id, weight=weight))
+    db.flush()
+    return event
+
+
+def _attach_to_event(
+    db: Session, event: models.Event, source: models.Source, hits: list[EntityHit]
+) -> None:
+    known = {
+        str(r)
+        for r in db.scalars(
+            select(models.EventEntity.entity_id).where(models.EventEntity.event_id == event.id)
+        ).all()
+    }
+    for hit in hits:
+        if hit.entity_id not in known:
+            db.add(
+                models.EventEntity(
+                    event_id=event.id,
+                    entity_id=uuid.UUID(hit.entity_id),
+                    role="mentioned",
+                    confidence=0.5,
+                )
+            )
+    # promote representative title/summary if this source is more authoritative
+    if source.source_type in {str(t) for t in PRIMARY_SOURCE_TYPES}:
+        newest = db.scalar(
+            select(models.Article)
+            .where(models.Article.event_id == event.id)
+            .order_by(models.Article.published_at.desc())
+            .limit(1)
+        )
+        if newest and newest.source_id == source.id:
+            event.title = newest.title
+            event.summary = newest.clean_summary or event.summary
+
+
+def _recompute_event(db: Session, event: models.Event) -> None:
+    agg = db.execute(
+        select(
+            func.count(func.distinct(models.Article.source_id)),
+            func.max(models.Article.published_at),
+        ).where(models.Article.event_id == event.id)
+    ).one()
+    event.source_count = int(agg[0] or 1)
+    if agg[1]:
+        event.last_activity_at = max(event.last_activity_at, agg[1])
+
+    total, band, factors = score_event(db, event)
+    event.importance = total
+    event.impact = band
+    persist_factors(db, event, factors, total)
+
+
+def _unique_slug(db: Session, title: str) -> str:
+    base = slugify(title)[:200] or "event"
+    suffix = uuid.uuid4().hex[:6]
+    return f"{base}-{suffix}"
+
+
+# --------------------------------------------------------------------------- videos
+
+
+def link_videos(db: Session) -> int:
+    """Connect videos to entities/topics by dictionary match on title+description."""
+    index = EntityIndex.from_db(db)
+    topics = db.scalars(select(models.Topic)).all()
+    made = 0
+    videos = db.scalars(select(models.Video)).all()
+    for video in videos:
+        text = f"{video.title} {video.description or ''}"
+        existing = {
+            (r.target_type, str(r.target_id))
+            for r in db.scalars(
+                select(models.VideoLink).where(models.VideoLink.video_id == video.id)
+            ).all()
+        }
+        for hit in index.match(video.title, video.description or ""):
+            key = ("entity", hit.entity_id)
+            if key not in existing:
+                db.add(
+                    models.VideoLink(
+                        video_id=video.id, target_type="entity", target_id=uuid.UUID(hit.entity_id)
+                    )
+                )
+                made += 1
+        low = text.lower()
+        for topic in topics:
+            if any(k.lower() in low for k in (topic.keywords or [])):
+                key = ("topic", str(topic.id))
+                if key not in existing:
+                    db.add(
+                        models.VideoLink(
+                            video_id=video.id, target_type="topic", target_id=topic.id
+                        )
+                    )
+                    made += 1
+    return made
+
+
+# --------------------------------------------------------------------------- entry
+
+
+def run_all(only_kinds: set[str] | None = None) -> dict:
+    started = datetime.now(timezone.utc)
+    totals = {"seen": 0, "written": 0, "sources": 0}
+    with session_scope() as db:
+        source_ids = db.scalars(
+            select(models.Source.id).where(models.Source.enabled.is_(True))
+        ).all()
+        kinds = {
+            sid: kind
+            for sid, kind in db.execute(
+                select(models.Source.id, models.Source.kind)
+            ).all()
+        }
+
+    for sid in source_ids:
+        if only_kinds and kinds.get(sid) not in only_kinds:
+            continue
+        stats = collect_source(sid)
+        totals["seen"] += stats["seen"]
+        totals["written"] += stats["written"]
+        totals["sources"] += 1
+
+    with session_scope() as db:
+        db.add(
+            models.IngestRun(
+                job="collect:" + (",".join(sorted(only_kinds)) if only_kinds else "all"),
+                started_at=started,
+                finished_at=datetime.now(timezone.utc),
+                ok=True,
+                items_seen=totals["seen"],
+                items_written=totals["written"],
+                detail=str(totals),
+            )
+        )
+    log.info("ingest run complete: %s", totals)
+    return totals

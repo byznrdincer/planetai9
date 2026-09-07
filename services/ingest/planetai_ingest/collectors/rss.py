@@ -1,0 +1,100 @@
+"""RSS/Atom collector (+ an arXiv variant that reuses the same feed parsing)."""
+
+from __future__ import annotations
+
+import logging
+from datetime import datetime, timezone
+from time import mktime
+
+import feedparser
+
+from planetai_ingest.collectors.base import BaseCollector, FetchResult, RawItem, http_client
+from planetai_ingest.text import clean_url, normalize_ws, strip_html
+from planetai_shared.settings import get_settings
+
+log = logging.getLogger(__name__)
+
+
+def _parsed_datetime(entry) -> datetime | None:
+    for key in ("published_parsed", "updated_parsed"):
+        value = entry.get(key)
+        if value:
+            return datetime.fromtimestamp(mktime(value), tz=timezone.utc)
+    return None
+
+
+def _entry_image(entry) -> str | None:
+    media = entry.get("media_content") or entry.get("media_thumbnail")
+    if media and isinstance(media, list) and media[0].get("url"):
+        return media[0]["url"]
+    for link in entry.get("links", []):
+        if link.get("rel") == "enclosure" and str(link.get("type", "")).startswith("image"):
+            return link.get("href")
+    return None
+
+
+class RssCollector(BaseCollector):
+    kind = "rss"
+
+    def fetch(self) -> FetchResult:
+        src = self.source
+        headers = {}
+        if src.etag:
+            headers["If-None-Match"] = src.etag
+        if src.last_modified:
+            headers["If-Modified-Since"] = src.last_modified
+
+        with http_client() as client:
+            resp = client.get(src.feed_url, headers=headers)
+
+        if resp.status_code == 304:
+            return FetchResult([], not_modified=True)
+        resp.raise_for_status()
+
+        feed = feedparser.parse(resp.content)
+        items: list[RawItem] = []
+        cap = get_settings().max_items_per_fetch
+        for entry in feed.entries[:cap]:
+            url = clean_url(entry.get("link") or "")
+            external_id = entry.get("id") or entry.get("guid") or url
+            title = normalize_ws(entry.get("title"))
+            if not url or not title:
+                continue
+            summary = strip_html(entry.get("summary") or entry.get("description"))
+            if not summary and entry.get("content"):
+                summary = strip_html(entry["content"][0].get("value"))
+            items.append(
+                RawItem(
+                    source_id=str(src.id),
+                    external_id=external_id[:500],
+                    url=url,
+                    title=title,
+                    summary=summary or None,
+                    published_at=_parsed_datetime(entry),
+                    author=normalize_ws(entry.get("author")) or None,
+                    image_url=_entry_image(entry),
+                )
+            )
+        return FetchResult(
+            items,
+            etag=resp.headers.get("ETag"),
+            last_modified=resp.headers.get("Last-Modified"),
+        )
+
+
+class ArxivCollector(RssCollector):
+    """arXiv's rss endpoint is standard RSS; we just tidy the fields."""
+
+    kind = "arxiv"
+
+    def fetch(self) -> FetchResult:
+        result = super().fetch()
+        for item in result.items:
+            # arXiv ids look like 'oai:arXiv.org:2401.01234' — keep the bare id
+            if "arXiv.org:" in item.external_id:
+                item.external_id = "arxiv:" + item.external_id.split("arXiv.org:")[-1]
+            # titles carry a trailing '. (arXiv:...)' sometimes
+            item.title = item.title.split(". (arXiv:")[0].strip()
+            if item.summary:
+                item.summary = item.summary.replace("\n", " ").strip()
+        return result

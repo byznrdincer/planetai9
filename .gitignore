@@ -8,3 +8,5 @@ __pycache__/
 .next/
 dist/
 *.log
+.ruff_cache/
+.pytest_cache/

@@ -1,0 +1,172 @@
+# External sources. Synced (upsert by slug) into the `sources` table on ingest start.
+# source_type: primary | official_announcement | major_news | research_paper | community | social
+# trust_weight: 0..1  (max across an event's sources feeds importance.source_reliability)
+
+- slug: openai-news
+  name: OpenAI News
+  homepage_url: https://openai.com/news/
+  feed_url: https://openai.com/news/rss.xml
+  kind: rss
+  source_type: official_announcement
+  trust_weight: 0.98
+  entity: openai
+  poll_interval_sec: 900
+
+- slug: deepmind-blog
+  name: Google DeepMind Blog
+  homepage_url: https://deepmind.google/discover/blog/
+  feed_url: https://deepmind.google/blog/rss.xml
+  kind: rss
+  source_type: official_announcement
+  trust_weight: 0.97
+  entity: google-deepmind
+  poll_interval_sec: 1800
+
+- slug: google-ai-blog
+  name: Google — The Keyword (AI)
+  homepage_url: https://blog.google/technology/ai/
+  feed_url: https://blog.google/technology/ai/rss/
+  kind: rss
+  source_type: official_announcement
+  trust_weight: 0.9
+  entity: google-deepmind
+  poll_interval_sec: 1800
+
+- slug: nvidia-blog
+  name: NVIDIA Blog
+  homepage_url: https://blogs.nvidia.com/
+  feed_url: https://blogs.nvidia.com/feed/
+  kind: rss
+  source_type: official_announcement
+  trust_weight: 0.88
+  entity: nvidia
+  poll_interval_sec: 1800
+
+- slug: huggingface-blog
+  name: Hugging Face Blog
+  homepage_url: https://huggingface.co/blog
+  feed_url: https://huggingface.co/blog/feed.xml
+  kind: rss
+  source_type: primary
+  trust_weight: 0.85
+  entity: hugging-face
+  poll_interval_sec: 1800
+
+- slug: microsoft-ai-blog
+  name: Microsoft AI Blog
+  homepage_url: https://blogs.microsoft.com/ai/
+  feed_url: https://blogs.microsoft.com/ai/feed/
+  kind: rss
+  source_type: official_announcement
+  trust_weight: 0.85
+  entity: microsoft
+  poll_interval_sec: 3600
+
+- slug: techcrunch-ai
+  name: TechCrunch — AI
+  homepage_url: https://techcrunch.com/category/artificial-intelligence/
+  feed_url: https://techcrunch.com/category/artificial-intelligence/feed/
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.72
+  poll_interval_sec: 600
+
+- slug: theverge-ai
+  name: The Verge — AI
+  homepage_url: https://www.theverge.com/ai-artificial-intelligence
+  feed_url: https://www.theverge.com/rss/ai-artificial-intelligence/index.xml
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.72
+  poll_interval_sec: 600
+
+- slug: venturebeat-ai
+  name: VentureBeat — AI
+  homepage_url: https://venturebeat.com/category/ai/
+  feed_url: https://venturebeat.com/category/ai/feed/
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.68
+  poll_interval_sec: 900
+
+- slug: arstechnica-ai
+  name: Ars Technica — AI
+  homepage_url: https://arstechnica.com/ai/
+  feed_url: https://arstechnica.com/ai/feed/
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.74
+  poll_interval_sec: 900
+
+- slug: mit-tech-review-ai
+  name: MIT Technology Review — AI
+  homepage_url: https://www.technologyreview.com/topic/artificial-intelligence/
+  feed_url: https://www.technologyreview.com/topic/artificial-intelligence/feed
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.78
+  poll_interval_sec: 1800
+
+- slug: import-ai
+  name: Import AI (Jack Clark)
+  homepage_url: https://importai.substack.com/
+  feed_url: https://importai.substack.com/feed
+  kind: rss
+  source_type: community
+  trust_weight: 0.7
+  poll_interval_sec: 3600
+
+- slug: simon-willison
+  name: Simon Willison's Weblog
+  homepage_url: https://simonwillison.net/
+  feed_url: https://simonwillison.net/atom/everything/
+  kind: rss
+  source_type: community
+  trust_weight: 0.66
+  poll_interval_sec: 1800
+
+- slug: bair-blog
+  name: Berkeley AI Research Blog
+  homepage_url: https://bair.berkeley.edu/blog/
+  feed_url: https://bair.berkeley.edu/blog/feed.xml
+  kind: rss
+  source_type: research_paper
+  trust_weight: 0.8
+  entity: berkeley
+  poll_interval_sec: 7200
+
+- slug: arxiv-cs-ai
+  name: arXiv cs.AI
+  homepage_url: https://arxiv.org/list/cs.AI/recent
+  feed_url: https://export.arxiv.org/rss/cs.AI
+  kind: arxiv
+  source_type: research_paper
+  trust_weight: 0.6
+  poll_interval_sec: 3600
+
+- slug: arxiv-cs-cl
+  name: arXiv cs.CL
+  homepage_url: https://arxiv.org/list/cs.CL/recent
+  feed_url: https://export.arxiv.org/rss/cs.CL
+  kind: arxiv
+  source_type: research_paper
+  trust_weight: 0.6
+  poll_interval_sec: 3600
+
+- slug: arxiv-cs-lg
+  name: arXiv cs.LG
+  homepage_url: https://arxiv.org/list/cs.LG/recent
+  feed_url: https://export.arxiv.org/rss/cs.LG
+  kind: arxiv
+  source_type: research_paper
+  trust_weight: 0.55
+  poll_interval_sec: 3600
+
+- slug: planetai-youtube
+  name: PlanetAI YouTube
+  homepage_url: https://www.youtube.com/
+  feed_url: null
+  kind: youtube
+  source_type: primary
+  trust_weight: 0.9
+  poll_interval_sec: 3600

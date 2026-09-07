@@ -1,0 +1,30 @@
+# Scored rule engine. Each matching rule adds `weight` to a category's score.
+# Highest total wins; `default` used when nothing matches.
+# match types: source_kind, source_slug, entity_type, entity_slug, keywords (any-of, substring, case-insensitive)
+
+default: Companies
+
+rules:
+  - { when: { source_kind: [arxiv] },                     add: { Research: 5 } }
+  - { when: { source_slug: [papers-with-code] },          add: { Research: 4 } }
+  - { when: { entity_type: [model] },                     add: { Models: 3 } }
+  - { when: { keywords: ["releases", "launches", "introducing", "announces", "unveils"], entity_type: [model] }, add: { Models: 3 } }
+  - { when: { keywords: ["benchmark", "context window", "tokens per second", "model card", "frontier model", "new model"] }, add: { Models: 2.5 } }
+
+  - { when: { keywords: ["robot", "humanoid", "embodied", "manipulation", "quadruped"] }, add: { Robotics: 5 } }
+  - { when: { keywords: ["agent", "agentic", "tool use", "autonomous", "multi-agent"] }, add: { Agents: 4 } }
+  - { when: { keywords: ["coding", "code model", "swe-bench", "ide", "pull request", "pair programmer", "software engineer agent"] }, add: { AICoding: 4.5 } }
+
+  - { when: { keywords: ["image generation", "text-to-image", "text-to-video", "video generation", "diffusion", "music generation"] }, add: { GenerativeAI: 4 } }
+  - { when: { keywords: ["object detection", "segmentation", "vision-language", "image recognition", "ocr"] }, add: { ComputerVision: 4 } }
+  - { when: { keywords: ["speech", "voice", "text-to-speech", "transcription", "audio model"] }, add: { VoiceAI: 4 } }
+  - { when: { keywords: ["clinical", "healthcare", "medical", "diagnosis", "drug discovery", "radiology"] }, add: { HealthcareAI: 5 } }
+  - { when: { keywords: ["trading", "fraud detection", "banking", "underwriting", "fintech ai"] }, add: { FinanceAI: 5 } }
+
+  - { when: { keywords: ["open weights", "open-source", "open source", "apache 2.0", "mit license", "weights released"] }, add: { OpenSource: 4 } }
+  - { when: { keywords: ["safety", "alignment", "red team", "jailbreak", "interpretability", "model welfare", "misuse"] }, add: { AISafety: 4.5 } }
+  - { when: { keywords: ["regulation", "eu ai act", "executive order", "policy", "lawsuit", "ban", "antitrust", "copyright"] }, add: { Regulation: 5 } }
+  - { when: { keywords: ["gpu", "datacenter", "data center", "training cluster", "inference chip", "tpu", "nvidia h", "b200", "supercomputer"] }, add: { Infrastructure: 4.5 } }
+
+  - { when: { keywords: ["raises", "funding", "valuation", "acquires", "acquisition", "ipo", "investment"] }, add: { Companies: 3 } }
+  - { when: { keywords: ["ceo", "hires", "resigns", "layoffs", "partnership", "deal"] }, add: { Companies: 2 } }
