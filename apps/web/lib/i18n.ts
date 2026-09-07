@@ -29,6 +29,7 @@ const tr = {
     video: "Video",
     marketplace: "AI Marketplace",
     authors: "Yazarlar",
+    about: "Biz Kimiz",
   },
   section: {
     latest: "Son Haberler",
@@ -118,6 +119,7 @@ const en: DictT = {
     video: "Video",
     marketplace: "AI Marketplace",
     authors: "Columnists",
+    about: "About",
   },
   section: {
     latest: "Latest News",

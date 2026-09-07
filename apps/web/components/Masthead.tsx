@@ -18,6 +18,7 @@ export async function Masthead() {
     { label: t.nav.video, href: "/videos" },
     { label: t.nav.marketplace, href: "/marketplace" },
     { label: t.nav.authors, href: "/yazarlar" },
+    { label: t.nav.about, href: "/hakkinda" },
     { label: "LLMRadar ↗", href: "https://llmradar.planetai9.com", external: true },
     { label: "PlanetAI9 ↗", href: "https://www.youtube.com/@planetai9", external: true },
   ];
