@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { EventCard } from "@/components/EventCard";
+import { EventRow } from "@/components/EventCard";
 import { api } from "@/lib/api";
 import { dateLabel } from "@/lib/format";
 import type { VideoDetail } from "@/lib/types";
@@ -17,9 +17,9 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
   }
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[1fr_320px]">
+    <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
       <div className="mx-auto w-full max-w-3xl space-y-5">
-        <div className="aspect-video overflow-hidden rounded border border-line">
+        <div className="aspect-video overflow-hidden rounded-xl border border-line">
           <iframe
             className="h-full w-full"
             src={`https://www.youtube-nocookie.com/embed/${video.youtube_id}`}
@@ -28,20 +28,18 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
             allowFullScreen
           />
         </div>
-        <div>
-          <h1 className="headline text-2xl leading-snug">{video.title}</h1>
-          <p className="mt-1 text-xs text-muted">{dateLabel(video.published_at)}</p>
-        </div>
+        <h1 className="text-2xl font-black leading-snug tracking-tight text-ink">{video.title}</h1>
+        <p className="text-xs text-muted">{dateLabel(video.published_at)}</p>
         {(video.related_entities.length > 0 || video.related_topics.length > 0) && (
           <div className="flex flex-wrap gap-2">
             {video.related_entities.map((e) => (
-              <Link key={e.slug} href={`/search?q=${encodeURIComponent(e.name)}`} className="chip">
+              <Link key={e.slug} href={`/entities/${e.slug}`} className="pill">
                 {e.name}
               </Link>
             ))}
             {video.related_topics.map((t) => (
-              <Link key={t.slug} href={`/trends/${t.slug}`} className="chip">
-                #{t.name}
+              <Link key={t.slug} href={`/trends/${t.slug}`} className="pill">
+                #{t.name.replace(/\s+/g, "")}
               </Link>
             ))}
           </div>
@@ -55,16 +53,14 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
 
       <aside>
         {video.related_events.length > 0 && (
-          <>
-            <div className="section-head">
-              <h2 className="headline text-lg">İlgili Haberler</h2>
-            </div>
-            <div className="space-y-7">
+          <div className="card p-4">
+            <h2 className="mb-2 text-[15px] font-black tracking-tight text-ink">İlgili Haberler</h2>
+            <div className="divide-y divide-line">
               {video.related_events.map((e) => (
-                <EventCard key={e.slug} event={e} />
+                <EventRow key={e.slug} event={e} />
               ))}
             </div>
-          </>
+          </div>
         )}
       </aside>
     </div>

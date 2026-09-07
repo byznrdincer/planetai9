@@ -21,20 +21,18 @@ export default async function SourcesPage() {
       title="Kaynaklar & Güven"
       lead="PlanetAI'deki her haber orijinal yayıncıya bağlanır. Güven ağırlığı, haberin önem puanını etkiler."
     >
-      <div className="divide-y divide-line border-y border-line">
+      <div className="card divide-y divide-line">
         {sources.map((s) => (
           <a
             key={s.slug}
             href={s.homepage_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-4 py-3 text-sm hover:text-brand-ink"
+            className="flex items-center gap-4 px-4 py-3 text-sm hover:text-accent"
           >
-            <span className="flex-1 font-semibold">{s.name}</span>
-            <span className="chip">{TYPE_LABEL[s.source_type] ?? s.source_type}</span>
-            <span className="w-20 text-right text-[11px] text-muted">
-              güven {s.trust_weight.toFixed(2)}
-            </span>
+            <span className="flex-1 font-semibold text-ink">{s.name}</span>
+            <span className="pill">{TYPE_LABEL[s.source_type] ?? s.source_type}</span>
+            <span className="w-20 text-right text-[11px] text-muted">güven {s.trust_weight.toFixed(2)}</span>
           </a>
         ))}
       </div>

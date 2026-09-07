@@ -11,10 +11,11 @@ export function Page({
 }) {
   return (
     <div className={wide ? "" : "mx-auto max-w-3xl"}>
-      <div className="section-head">
-        <h1 className="headline text-2xl">{title}</h1>
+      <div className="mb-6 flex items-center gap-2">
+        <span className="h-5 w-1 rounded bg-accent" />
+        <h1 className="text-2xl font-black tracking-tight text-ink">{title}</h1>
       </div>
-      {lead && <p className="-mt-2 mb-6 max-w-xl text-sm text-ink-2">{lead}</p>}
+      {lead && <p className="-mt-3 mb-6 max-w-xl text-sm text-ink-2">{lead}</p>}
       {children}
     </div>
   );

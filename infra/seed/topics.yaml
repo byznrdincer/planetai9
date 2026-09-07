@@ -1,15 +1,15 @@
 # Topics tracked by the trend engine. keywords are matched (case-insensitive,
-# word-boundary) against event title + summary.
-- { slug: ai-agents,      name: AI Agents,       kind: theme,   keywords: ["ai agent", "agentic", "autonomous agent", "tool use", "agent framework"] }
-- { slug: ai-coding,      name: AI Coding,       kind: theme,   keywords: ["coding agent", "code model", "swe-bench", "code generation", "ai ide", "pair programmer"] }
-- { slug: robotics,       name: Robotics,        kind: theme,   keywords: ["robot", "humanoid", "embodied", "manipulation", "teleoperation"] }
-- { slug: open-models,    name: Open Models,     kind: theme,   keywords: ["open weights", "open-source model", "open source model", "apache 2.0", "mit license"] }
-- { slug: voice-ai,       name: Voice AI,        kind: theme,   keywords: ["voice ai", "text-to-speech", "speech-to-text", "speech model", "realtime voice"] }
-- { slug: multimodal,     name: Multimodal AI,   kind: theme,   keywords: ["multimodal", "multi-modal", "vision-language", "image understanding", "video understanding"] }
-- { slug: reasoning,      name: Reasoning Models, kind: theme,  keywords: ["reasoning model", "chain of thought", "test-time compute", "inference-time", "thinking model"] }
-- { slug: ai-safety,      name: AI Safety,       kind: theme,   keywords: ["ai safety", "alignment", "red team", "jailbreak", "model welfare", "interpretability"] }
-- { slug: ai-regulation,  name: AI Regulation,   kind: theme,   keywords: ["ai act", "regulation", "executive order", "ai policy", "compliance", "ai ban"] }
-- { slug: ai-infra,       name: AI Infrastructure, kind: theme, keywords: ["gpu", "datacenter", "data center", "training cluster", "inference chip", "tpu", "h100", "b200"] }
-- { slug: ai-funding,     name: AI Funding,      kind: theme,   keywords: ["raises", "funding round", "series a", "series b", "series c", "valuation", "acquires", "acquisition"] }
-- { slug: image-gen,      name: Image Generation, kind: theme,  keywords: ["image generation", "text-to-image", "diffusion model", "image model"] }
-- { slug: video-gen,      name: Video Generation, kind: theme,  keywords: ["video generation", "text-to-video", "video model"] }
+# word-boundary) against event title + summary. name is shown in the UI (Turkish).
+- { slug: ai-agents,      name: YZ Ajanları,   kind: theme,   keywords: ["ai agent", "agentic", "autonomous agent", "tool use", "agent framework"] }
+- { slug: ai-coding,      name: YZ ile Kodlama, kind: theme,  keywords: ["coding agent", "code model", "swe-bench", "code generation", "ai ide", "pair programmer"] }
+- { slug: robotics,       name: Robotik,               kind: theme,   keywords: ["robot", "humanoid", "embodied", "manipulation", "teleoperation"] }
+- { slug: open-models,    name: Açık Modeller,         kind: theme,   keywords: ["open weights", "open-source model", "open source model", "apache 2.0", "mit license"] }
+- { slug: voice-ai,       name: Ses YZ,      kind: theme,   keywords: ["voice ai", "text-to-speech", "speech-to-text", "speech model", "realtime voice"] }
+- { slug: multimodal,     name: Çok Modlu YZ,  kind: theme,   keywords: ["multimodal", "multi-modal", "vision-language", "image understanding", "video understanding"] }
+- { slug: reasoning,      name: Akıl Yürütme, kind: theme,   keywords: ["reasoning model", "chain of thought", "test-time compute", "inference-time", "thinking model"] }
+- { slug: ai-safety,      name: YZ Güvenliği,  kind: theme,   keywords: ["ai safety", "alignment", "red team", "jailbreak", "model welfare", "interpretability"] }
+- { slug: ai-regulation,  name: YZ Regülasyonu, kind: theme,  keywords: ["ai act", "regulation", "executive order", "ai policy", "compliance", "ai ban"] }
+- { slug: ai-infra,       name: YZ Altyapısı,  kind: theme,   keywords: ["gpu", "datacenter", "data center", "training cluster", "inference chip", "tpu", "h100", "b200"] }
+- { slug: ai-funding,     name: YZ Yatırımları, kind: theme,  keywords: ["raises", "funding round", "series a", "series b", "series c", "valuation", "acquires", "acquisition"] }
+- { slug: image-gen,      name: Görsel Üretimi,        kind: theme,   keywords: ["image generation", "text-to-image", "diffusion model", "image model"] }
+- { slug: video-gen,      name: Video Üretimi,         kind: theme,   keywords: ["video generation", "text-to-video", "video model"] }

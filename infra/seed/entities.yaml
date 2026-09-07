@@ -20,15 +20,15 @@ companies:
   - { slug: stability-ai,    name: Stability AI,          tier: 0.50, aliases: ["StabilityAI"] }
 
 model_families:
-  - { slug: gpt,      name: GPT,      parent: openai,          aliases: ["GPT-4", "GPT-4o", "GPT-5", "ChatGPT", "o1", "o3"] }
-  - { slug: claude,   name: Claude,   parent: anthropic,       aliases: ["Claude Opus", "Claude Sonnet", "Claude Haiku", "Claude 3", "Claude 4"] }
-  - { slug: gemini,   name: Gemini,   parent: google-deepmind, aliases: ["Gemini Pro", "Gemini Ultra", "Gemini Flash", "Bard"] }
-  - { slug: llama,    name: Llama,    parent: meta-ai,         aliases: ["LLaMA", "Llama 3", "Llama 4"] }
-  - { slug: grok,     name: Grok,     parent: xai,             aliases: [] }
-  - { slug: qwen,     name: Qwen,     parent: alibaba,         aliases: ["Qwen2", "Qwen3"] }
-  - { slug: mistral-large, name: Mistral Large, parent: mistral, aliases: ["Mixtral", "Codestral"] }
-  - { slug: deepseek-r1, name: DeepSeek-R1, parent: deepseek,  aliases: ["DeepSeek V3", "DeepSeek-V3", "DeepSeek R1"] }
-  - { slug: kimi,     name: Kimi,     parent: moonshot,        aliases: ["Kimi K2"] }
+  - { slug: gpt,      name: GPT,      parent: openai,          tier: 1.0, desc: "OpenAI'nin amiral gemisi çok modlu model ailesi.", aliases: ["GPT-4", "GPT-4o", "GPT-5", "ChatGPT", "o1", "o3"] }
+  - { slug: claude,   name: Claude,   parent: anthropic,       tier: 1.0, desc: "Anthropic'in güvenlik odaklı asistan model ailesi.", aliases: ["Claude Opus", "Claude Sonnet", "Claude Haiku", "Claude 3", "Claude 4"] }
+  - { slug: gemini,   name: Gemini,   parent: google-deepmind, tier: 1.0, desc: "Google DeepMind'ın çok modlu model ailesi.", aliases: ["Gemini Pro", "Gemini Ultra", "Gemini Flash", "Bard"] }
+  - { slug: llama,    name: Llama,    parent: meta-ai,         tier: 0.85, desc: "Meta'nın açık ağırlıklı büyük dil modelleri.", aliases: ["LLaMA", "Llama 3", "Llama 4"] }
+  - { slug: grok,     name: Grok,     parent: xai,             tier: 0.8, desc: "xAI'nin gerçek zamanlı bilgiye erişen modeli.", aliases: [] }
+  - { slug: qwen,     name: Qwen,     parent: alibaba,         tier: 0.8, desc: "Alibaba'nın güçlü açık kaynak model ailesi.", aliases: ["Qwen2", "Qwen3"] }
+  - { slug: mistral-large, name: Mistral Large, parent: mistral, tier: 0.75, desc: "Mistral'ın yüksek performanslı amiral modeli.", aliases: ["Mixtral", "Codestral"] }
+  - { slug: deepseek-r1, name: DeepSeek-R1, parent: deepseek,  tier: 0.75, desc: "DeepSeek'in akıl yürütme odaklı açık modeli.", aliases: ["DeepSeek V3", "DeepSeek-V3", "DeepSeek R1"] }
+  - { slug: kimi,     name: Kimi,     parent: moonshot,        tier: 0.6, desc: "Moonshot AI'nin uzun bağlamlı modeli.", aliases: ["Kimi K2"] }
 
 products:
   - { slug: claude-code,   name: Claude Code,   parent: anthropic, tier: 0.70, aliases: [] }

@@ -272,10 +272,16 @@ def _recompute_event(db: Session, event: models.Event) -> None:
 
 
 def _fetch_og_image(url: str) -> str | None:
-    """Best-effort: fetch the page and read its social-share image. Never raises."""
+    """Best-effort: fetch the page and read its social-share image. Never raises.
+
+    Uses a tight timeout — a missing image must never hold up ingestion."""
     try:
-        with http_client() as client:
-            resp = client.get(url, headers={"Range": "bytes=0-120000"})
+        with httpx.Client(
+            headers={"User-Agent": _settings.user_agent},
+            timeout=httpx.Timeout(6.0, connect=4.0),
+            follow_redirects=True,
+        ) as client:
+            resp = client.get(url, headers={"Range": "bytes=0-160000"})
             if resp.status_code >= 400 or "text/html" not in resp.headers.get("content-type", ""):
                 return None
             return extract_og_image(resp.text, base_url=str(resp.url))

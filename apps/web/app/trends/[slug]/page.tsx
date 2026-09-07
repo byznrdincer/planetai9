@@ -18,12 +18,12 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ sl
 
   return (
     <Page
-      title={`#${trend.topic.name}`}
+      title={`#${trend.topic.name.replace(/\s+/g, "")}`}
       lead={`Son ${trend.window === "24h" ? "24 saatte" : "7 günde"} ${trend.event_count} haber · ${
         up ? "▲" : "▼"
       } ${Math.abs(trend.delta_pct).toFixed(0)}%`}
     >
-      <div className="grid gap-x-6 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {trend.sample_events.map((e) => (
           <EventCard key={e.slug} event={e} />
         ))}

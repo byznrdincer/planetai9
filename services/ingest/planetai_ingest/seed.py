@@ -54,6 +54,7 @@ def seed_entities(db: Session) -> None:
                 type_=str(etype),
                 aliases=row.get("aliases") or [],
                 tier=row.get("tier"),
+                description=row.get("desc"),
             )
             by_slug[row["slug"]] = ent
     # second pass: parent links

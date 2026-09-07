@@ -13,17 +13,25 @@ from planetai_shared.db import models
 router = APIRouter()
 
 
-@router.get("/entities", response_model=list[schemas.EntityRef])
+@router.get("/entities")
 def list_entities(
     db: Session = Depends(get_db),
     type: str | None = Query(None),
     limit: int = Query(200, ge=1, le=500),
-) -> list[schemas.EntityRef]:
+) -> list[dict]:
     stmt = select(models.Entity)
     if type:
         stmt = stmt.where(models.Entity.type.in_(type.split(",")))
     stmt = stmt.order_by(models.Entity.tier.desc(), models.Entity.name).limit(limit)
-    return [serializers.entity_ref(e) for e in db.scalars(stmt).all()]
+    return [
+        {
+            "slug": e.slug,
+            "name": e.name,
+            "type": e.type,
+            "description": e.description,
+        }
+        for e in db.scalars(stmt).all()
+    ]
 
 
 @router.get("/entities/{slug}", response_model=schemas.EntityDetail)

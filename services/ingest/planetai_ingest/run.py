@@ -13,6 +13,21 @@ import logging
 import sys
 
 
+def _bust_api_cache() -> None:
+    """Drop the API's cached list payloads after a data refresh."""
+    try:
+        import redis
+
+        from planetai_shared.settings import get_settings
+
+        client = redis.from_url(get_settings().redis_url)
+        for prefix in ("home", "news", "trending"):
+            for key in client.scan_iter(match=f"{prefix}*"):
+                client.delete(key)
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
@@ -44,6 +59,7 @@ def main(argv: list[str] | None = None) -> int:
         kinds = set(args.kinds.split(",")) if args.kinds else None
         totals = run_all(only_kinds=kinds)
         print(totals)
+        _bust_api_cache()
         return 0
 
     if args.cmd == "trends":
@@ -52,6 +68,7 @@ def main(argv: list[str] | None = None) -> int:
         compute_snapshots()
         n = refresh_top_signals()
         print(f"top signals: {n}")
+        _bust_api_cache()
         return 0
 
     if args.cmd == "scheduler":

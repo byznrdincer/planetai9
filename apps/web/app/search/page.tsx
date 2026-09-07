@@ -31,7 +31,7 @@ export default async function SearchPage({
     result.videos.length === 0;
 
   return (
-    <Page title={q ? `“${q}” için sonuçlar` : "Arama"}>
+    <Page title={q ? `"${q}" için sonuçlar` : "Arama"}>
       {q.length < 2 && <p className="text-sm text-muted">En az iki karakter yazın.</p>}
 
       <div className="space-y-10">
@@ -40,9 +40,9 @@ export default async function SearchPage({
             <p className="eyebrow mb-2">Kavramlar</p>
             <div className="flex flex-wrap gap-2">
               {result.entities.map((e) => (
-                <span key={e.slug} className="chip bg-ink text-paper">
+                <Link key={e.slug} href={`/entities/${e.slug}`} className="pill bg-accent text-white hover:bg-accent-ink">
                   {e.name}
-                </span>
+                </Link>
               ))}
             </div>
           </section>
@@ -50,10 +50,10 @@ export default async function SearchPage({
 
         {result.events.data.length > 0 && (
           <section>
-            <div className="section-head">
-              <h2 className="headline text-lg">Haberler · {result.events.count}</h2>
-            </div>
-            <div className="grid gap-x-6 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
+            <h2 className="mb-3 text-lg font-black tracking-tight text-ink">
+              Haberler · {result.events.count}
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {result.events.data.map((e) => (
                 <EventCard key={e.slug} event={e} />
               ))}
@@ -63,10 +63,10 @@ export default async function SearchPage({
 
         {result.research.data.length > 0 && (
           <section>
-            <div className="section-head">
-              <h2 className="headline text-lg">Araştırma · {result.research.count}</h2>
-            </div>
-            <div className="grid gap-x-6 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
+            <h2 className="mb-3 text-lg font-black tracking-tight text-ink">
+              Araştırma · {result.research.count}
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {result.research.data.map((e) => (
                 <EventCard key={e.slug} event={e} />
               ))}
@@ -76,10 +76,10 @@ export default async function SearchPage({
 
         {result.videos.length > 0 && (
           <section>
-            <div className="section-head">
-              <h2 className="headline text-lg">Video · {result.videos.length}</h2>
-            </div>
-            <div className="grid gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+            <h2 className="mb-3 text-lg font-black tracking-tight text-ink">
+              Video · {result.videos.length}
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {result.videos.map((v) => (
                 <VideoCard key={v.youtube_id} video={v} />
               ))}
@@ -89,7 +89,7 @@ export default async function SearchPage({
 
         {empty && (
           <p className="text-sm text-muted">
-            “{q}” için sonuç bulunamadı.{" "}
+            "{q}" için sonuç bulunamadı.{" "}
             <Link href="/news" className="link-accent">
               Haberlere göz atın →
             </Link>

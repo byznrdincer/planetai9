@@ -134,6 +134,31 @@ export interface CategoryCount {
   events_24h: number;
 }
 
+export interface EntityListItem {
+  slug: string;
+  name: string;
+  type: string;
+  description: string | null;
+}
+
+export interface EntityRelationOut {
+  relation: string;
+  direction: "in" | "out";
+  entity: EntityRef;
+}
+
+export interface EntityDetail {
+  slug: string;
+  name: string;
+  type: string;
+  description: string | null;
+  logo_url: string | null;
+  website_url: string | null;
+  relations: EntityRelationOut[];
+  latest_events: EventCard[];
+  videos: VideoCard[];
+}
+
 export interface Stats {
   entities: number;
   companies: number;

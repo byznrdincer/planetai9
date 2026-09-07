@@ -3,6 +3,7 @@ import { Archivo } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import { Masthead } from "@/components/Masthead";
+import { LogoMark } from "@/components/Logo";
 
 const archivo = Archivo({
   subsets: ["latin", "latin-ext"],
@@ -19,14 +20,17 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="tr" className={archivo.variable}>
-      <body className="min-h-screen bg-paper font-sans antialiased">
+      <body className="min-h-screen bg-canvas font-sans antialiased">
         <Masthead />
-        <main className="mx-auto max-w-content px-4 py-8">{children}</main>
-        <footer className="mt-8 border-t-2 border-ink">
-          <div className="mx-auto flex max-w-content flex-wrap items-center justify-between gap-2 px-4 py-8 text-[11px] uppercase tracking-widest text-muted">
-            <span>PlanetAI — Tek Gezegen. Her Yapay Zekâ Sinyali.</span>
-            <Link href="/sources" className="hover:text-brand-ink">
-              Kaynaklar & Güven
+        <main className="mx-auto max-w-content px-5 py-6">{children}</main>
+        <footer className="mt-10 border-t border-line bg-paper">
+          <div className="mx-auto flex max-w-content flex-wrap items-center justify-between gap-3 px-5 py-8 text-[12px] text-muted">
+            <span className="flex items-center gap-2">
+              <LogoMark className="h-5 w-5" />
+              PlanetAI — Tek Gezegen. Her Yapay Zekâ Sinyali.
+            </span>
+            <Link href="/sources" className="link-accent">
+              Kaynaklar &amp; Güven
             </Link>
           </div>
         </footer>

@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { SearchBox } from "./SearchBox";
+import { Wordmark } from "./Logo";
 
-const CATEGORY_NAV = [
-  ["Gündem", "/"],
-  ["Tüm Haberler", "/news"],
-  ["Modeller", "/news?category=Models"],
-  ["Şirketler", "/news?category=Companies"],
-  ["Ajanlar", "/news?category=Agents"],
+const NAV: [string, string][] = [
+  ["Ana Sayfa", "/"],
+  ["Gündem", "/news"],
+  ["Teknoloji", "/news?category=Infrastructure"],
+  ["Modeller", "/models"],
+  ["Araçlar", "/tools"],
+  ["Şirketler", "/companies"],
+  ["Analiz", "/trends"],
   ["Kodlama", "/news?category=AICoding"],
   ["Robotik", "/news?category=Robotics"],
   ["Güvenlik", "/news?category=AISafety"],
@@ -17,49 +20,59 @@ const CATEGORY_NAV = [
 
 export function Masthead() {
   const today = new Date().toLocaleDateString("tr-TR", {
-    weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
+    weekday: "long",
   });
 
   return (
-    <header className="border-b-2 border-ink bg-paper">
-      <div className="mx-auto max-w-content px-4">
-        <div className="flex items-center justify-between border-b border-line py-1.5 text-[11px] text-muted">
-          <span className="uppercase tracking-wide">{today}</span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-            Canlı yayında
-          </span>
-        </div>
-
-        <div className="flex items-center gap-4 py-4">
-          <Link href="/" className="flex items-baseline gap-2">
-            <span className="text-2xl font-black tracking-tightest text-ink">PlanetAI</span>
-            <span className="hidden text-[11px] font-semibold uppercase tracking-[0.18em] text-muted sm:inline">
-              Yapay Zekâ Haberleri
-            </span>
+    <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur">
+      <div className="mx-auto max-w-content px-5">
+        <div className="flex h-16 items-center gap-4">
+          <Link href="/">
+            <Wordmark />
           </Link>
-          <div className="ml-auto hidden w-64 md:block">
+          <div className="ml-auto hidden w-80 md:block">
             <SearchBox />
           </div>
+          <button
+            aria-label="Tema"
+            className="hidden h-9 w-9 items-center justify-center rounded-full border border-line text-muted hover:text-ink md:flex"
+          >
+            ☀
+          </button>
+          <button
+            aria-label="Profil"
+            className="hidden h-9 w-9 items-center justify-center rounded-full border border-line text-muted hover:text-ink md:flex"
+          >
+            ◔
+          </button>
         </div>
       </div>
 
-      <nav className="border-t border-line bg-paper">
-        <div className="mx-auto flex max-w-content gap-1 overflow-x-auto px-4 py-1.5 text-[13px] font-semibold">
-          {CATEGORY_NAV.map(([label, href]) => (
-            <Link
-              key={label}
-              href={href}
-              className="whitespace-nowrap rounded px-2.5 py-1 text-ink-2 hover:bg-wash hover:text-brand-ink"
-            >
-              {label}
-            </Link>
-          ))}
+      <div className="border-t border-line">
+        <div className="mx-auto flex max-w-content items-center gap-1 px-5">
+          <nav className="flex flex-1 gap-0.5 overflow-x-auto py-2 text-[13px] font-semibold">
+            {NAV.map(([label, href]) => (
+              <Link
+                key={label}
+                href={href}
+                className="whitespace-nowrap rounded-md px-2.5 py-1 text-ink-2 hover:bg-wash hover:text-ink"
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+          <div className="hidden shrink-0 items-center gap-3 pl-4 text-[12px] text-muted lg:flex">
+            <span>{today}</span>
+            <span className="flex items-center gap-1.5 font-semibold text-live">
+              <span className="h-1.5 w-1.5 rounded-full bg-live" />
+              Canlı Yayın
+            </span>
+          </div>
         </div>
-      </nav>
+      </div>
     </header>
   );
 }

@@ -7,36 +7,43 @@
 }
 
 body {
-  background-color: #ffffff;
-  color: #141414;
+  background-color: #f5f6f8;
+  color: #0f172a;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 ::selection {
-  background: #d42a20;
+  background: #2563eb;
   color: #fff;
 }
 
 @layer components {
+  .card {
+    @apply rounded-xl border border-line bg-paper shadow-card;
+  }
   .kicker {
-    @apply text-[11px] font-bold uppercase tracking-[0.14em] text-brand;
+    @apply text-[11px] font-bold uppercase tracking-[0.12em] text-accent;
   }
   .eyebrow {
-    @apply text-[12px] font-bold uppercase tracking-[0.16em] text-ink;
-  }
-  .section-head {
-    @apply mb-5 flex items-baseline justify-between border-b-2 border-ink pb-2;
+    @apply text-[13px] font-bold tracking-tight text-ink;
   }
   .headline {
-    @apply font-black tracking-tightest text-ink;
+    @apply font-bold tracking-tight text-ink;
   }
-  .chip {
-    @apply inline-flex items-center gap-1 rounded-full bg-wash px-2.5 py-0.5 text-[11px] font-semibold text-ink-2;
+  .pill {
+    @apply inline-flex items-center rounded-full bg-wash px-2.5 py-1 text-[12px] font-semibold text-ink-2 hover:bg-line;
   }
   .link-accent {
-    @apply font-semibold text-accent underline-offset-2 hover:underline;
+    @apply font-semibold text-accent hover:text-accent-ink;
   }
+  .cat-badge {
+    @apply inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white;
+  }
+}
+
+.hero-fade {
+  background: linear-gradient(0deg, rgba(6, 12, 25, 0.92) 0%, rgba(6, 12, 25, 0.35) 45%, rgba(6, 12, 25, 0.05) 75%);
 }
 
 @media (prefers-reduced-motion: reduce) {
