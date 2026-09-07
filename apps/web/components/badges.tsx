@@ -30,7 +30,10 @@ export function ImportanceDot({ score }: { score: number }) {
           ? "bg-impact-medium"
           : "bg-impact-low";
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs text-text-dim" title={`Importance ${score.toFixed(1)}/10`}>
+    <span
+      className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted"
+      title={`Önem ${score.toFixed(1)}/10`}
+    >
       <span className={`h-2 w-2 rounded-full ${color}`} />
       {score.toFixed(1)}
     </span>

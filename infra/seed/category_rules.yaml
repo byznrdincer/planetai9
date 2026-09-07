@@ -5,7 +5,7 @@
 default: Companies
 
 rules:
-  - { when: { source_kind: [arxiv] },                     add: { Research: 5 } }
+  - { when: { source_kind: [arxiv] },                     add: { Research: 12 } }
   - { when: { source_slug: [papers-with-code] },          add: { Research: 4 } }
   - { when: { entity_type: [model] },                     add: { Models: 3 } }
   - { when: { keywords: ["releases", "launches", "introducing", "announces", "unveils"], entity_type: [model] }, add: { Models: 3 } }

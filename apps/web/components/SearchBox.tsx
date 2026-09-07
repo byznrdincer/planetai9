@@ -16,9 +16,9 @@ export function SearchBox() {
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Search the AI universe…"
-        aria-label="Search"
-        className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-text placeholder:text-text-dim focus:border-accent focus:outline-none"
+        placeholder="AI evreninde ara…"
+        aria-label="Ara"
+        className="w-full rounded-lg border border-line bg-surface px-3 py-1.5 text-sm text-ink placeholder:text-muted focus:border-accent focus:outline-none"
       />
     </form>
   );

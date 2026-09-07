@@ -40,6 +40,16 @@ def list_events(
 
     if category and category.lower() != "all":
         stmt = stmt.where(models.Event.category == category)
+    elif not source:
+        # the default feed is "news" — papers have their own surface (/research)
+        arxiv_events = (
+            select(models.Article.event_id)
+            .join(models.Source, models.Source.id == models.Article.source_id)
+            .where(models.Source.kind == "arxiv", models.Article.event_id.isnot(None))
+        )
+        stmt = stmt.where(
+            models.Event.category != "Research", models.Event.id.not_in(arxiv_events)
+        )
     if importance_min is not None:
         stmt = stmt.where(models.Event.importance >= importance_min)
     if impact:

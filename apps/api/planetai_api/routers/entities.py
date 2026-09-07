@@ -4,11 +4,26 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from fastapi import Query
+
 from planetai_api import schemas, serializers
 from planetai_api.db import get_db
 from planetai_shared.db import models
 
 router = APIRouter()
+
+
+@router.get("/entities", response_model=list[schemas.EntityRef])
+def list_entities(
+    db: Session = Depends(get_db),
+    type: str | None = Query(None),
+    limit: int = Query(200, ge=1, le=500),
+) -> list[schemas.EntityRef]:
+    stmt = select(models.Entity)
+    if type:
+        stmt = stmt.where(models.Entity.type.in_(type.split(",")))
+    stmt = stmt.order_by(models.Entity.tier.desc(), models.Entity.name).limit(limit)
+    return [serializers.entity_ref(e) for e in db.scalars(stmt).all()]
 
 
 @router.get("/entities/{slug}", response_model=schemas.EntityDetail)

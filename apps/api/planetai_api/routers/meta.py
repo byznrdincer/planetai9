@@ -40,6 +40,22 @@ def categories(db: Session = Depends(get_db)) -> list[schemas.CategoryCount]:
     ]
 
 
+@router.get("/stats")
+def stats(db: Session = Depends(get_db)) -> dict:
+    def count(model, *where):
+        return int(db.scalar(select(func.count()).select_from(model).where(*where)) or 0)
+
+    return {
+        "entities": count(models.Entity),
+        "companies": count(models.Entity, models.Entity.type == "company"),
+        "models": count(models.Entity, models.Entity.type.in_(["model", "product"])),
+        "sources": count(models.Source, models.Source.enabled.is_(True)),
+        "articles": count(models.Article),
+        "events": count(models.Event, models.Event.status == "active"),
+        "topics": count(models.Topic),
+    }
+
+
 @router.get("/healthz")
 def healthz(db: Session = Depends(get_db)) -> dict:
     last_run = db.scalar(

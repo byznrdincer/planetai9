@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { EventCard } from "@/components/EventCard";
+import { Radar } from "@/components/Radar";
+import { StatTile, compact } from "@/components/StatTile";
 import { TrendRow } from "@/components/TrendRow";
 import { VideoCard } from "@/components/VideoCard";
 import { CategoryChip, ImpactBadge, ImportanceDot } from "@/components/badges";
 import { apiSafe } from "@/lib/api";
 import { clockTime } from "@/lib/format";
-import type { HomePayload } from "@/lib/types";
+import type { HomePayload, Stats } from "@/lib/types";
 
 export const revalidate = 60;
 
@@ -16,43 +18,93 @@ const EMPTY: HomePayload = {
   videos: [],
   timeline: [],
 };
+const EMPTY_STATS: Stats = {
+  entities: 0,
+  companies: 0,
+  models: 0,
+  sources: 0,
+  articles: 0,
+  events: 0,
+  topics: 0,
+};
 
 export default async function HomePage() {
-  const home = await apiSafe<HomePayload>("/home", EMPTY, { revalidate: 60, tags: ["home"] });
+  const [home, stats] = await Promise.all([
+    apiSafe<HomePayload>("/home", EMPTY, { revalidate: 60, tags: ["home"] }),
+    apiSafe<Stats>("/stats", EMPTY_STATS, { revalidate: 120 }),
+  ]);
   const [lead, ...rest] = home.top_signals;
 
   return (
-    <div className="space-y-12">
-      <section className="pt-4">
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          Explore the AI Universe
-        </h1>
-        <p className="mt-2 text-text-dim">What&apos;s happening in AI right now?</p>
+    <div>
+      {/* hero */}
+      <section className="grid items-center gap-10 py-6 lg:grid-cols-[1.15fr_0.85fr]">
+        <div>
+          <p className="eyebrow text-accent">AI Intelligence Platform</p>
+          <h1 className="mt-4 text-[clamp(2.6rem,5.5vw,4.4rem)] font-black leading-[0.95] tracking-tightest text-ink">
+            Yapay zekâ
+            <br />
+            dünyasının
+            <br />
+            <span className="bg-gradient-to-r from-accent to-accent-2 bg-clip-text text-transparent">
+              nabzını tut.
+            </span>
+          </h1>
+          <p className="mt-5 max-w-md text-ink-2">
+            Haberleri, model duyurularını, araçları ve teknoloji değişimlerini tek merkezden,
+            kaynaklarıyla birlikte takip et.
+          </p>
+          <div className="mt-6 flex gap-3">
+            <Link
+              href="/news"
+              className="rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-bg hover:bg-accent/90"
+            >
+              Haberlere git →
+            </Link>
+            <Link
+              href="/trends"
+              className="rounded-lg border border-line px-4 py-2.5 text-sm font-semibold text-ink hover:border-accent/60"
+            >
+              Trendler
+            </Link>
+          </div>
+        </div>
+        <div className="relative mx-auto aspect-square w-full max-w-[360px]">
+          <Radar centerValue={compact(stats.events)} centerLabel="İzlenen olay" />
+        </div>
       </section>
 
+      {/* stat tiles */}
+      <section className="grid grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-4">
+        <StatTile label="İzlenen Kaynak" value={compact(stats.sources)} hint="RSS · arXiv · YouTube" />
+        <StatTile label="AI Entity" value={compact(stats.entities)} hint="şirket · model · araç" />
+        <StatTile label="Toplanan Haber" value={compact(stats.articles)} hint="orijinal kaynaklı" />
+        <StatTile label="Tespit Edilen Olay" value={compact(stats.events)} hint="dedup sonrası" />
+      </section>
+
+      {/* top signal */}
       {lead && (
-        <section>
-          <h2 className="section-title mb-3">🔥 Top Signal</h2>
-          <Link
-            href={`/news/${lead.slug}`}
-            className="card group block p-6 transition-colors hover:border-accent/50"
-          >
-            <div className="mb-3 flex flex-wrap items-center gap-2">
+        <section className="mt-14">
+          <p className="eyebrow mb-3">🔥 Top Signal</p>
+          <Link href={`/news/${lead.slug}`} className="card card-hover group block p-6 lg:p-8">
+            <div className="mb-3 flex flex-wrap items-center gap-3">
               <CategoryChip category={lead.category} />
               <ImpactBadge impact={lead.impact} />
               <ImportanceDot score={lead.importance} />
             </div>
-            <h3 className="text-2xl font-semibold leading-tight group-hover:text-white">
+            <h2 className="max-w-3xl text-2xl font-black leading-tight tracking-tight text-ink group-hover:text-white lg:text-3xl">
               {lead.title}
-            </h3>
-            {lead.summary && <p className="mt-2 max-w-2xl text-text-dim">{lead.summary}</p>}
-            <div className="mt-4 flex flex-wrap gap-x-3 text-sm text-text-dim">
-              {lead.primary_entity && <span className="text-accent">{lead.primary_entity.name}</span>}
+            </h2>
+            {lead.summary && <p className="mt-3 max-w-2xl text-ink-2">{lead.summary}</p>}
+            <div className="mt-4 flex flex-wrap gap-x-4 text-[11px] uppercase tracking-wide text-muted">
+              {lead.primary_entity && (
+                <span className="font-semibold text-accent">{lead.primary_entity.name}</span>
+              )}
               {lead.source_count > 1 && <span>Covered by {lead.source_count} sources</span>}
             </div>
           </Link>
           {rest.length > 0 && (
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {rest.map((e) => (
                 <EventCard key={e.slug} event={e} compact />
               ))}
@@ -61,12 +113,13 @@ export default async function HomePage() {
         </section>
       )}
 
-      <section className="grid gap-8 lg:grid-cols-[1fr_300px]">
+      {/* latest + trending + timeline */}
+      <section className="mt-14 grid gap-10 lg:grid-cols-[1fr_320px]">
         <div>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="section-title">Latest AI News</h2>
-            <Link href="/news" className="text-xs text-accent hover:underline">
-              View all →
+          <div className="mb-4 flex items-baseline justify-between">
+            <p className="eyebrow">Son AI Haberleri</p>
+            <Link href="/news" className="text-[11px] uppercase tracking-wide link-accent">
+              Tümü →
             </Link>
           </div>
           <div className="space-y-3">
@@ -74,53 +127,53 @@ export default async function HomePage() {
               <EventCard key={e.slug} event={e} />
             ))}
             {home.latest_news.length === 0 && (
-              <p className="text-sm text-text-dim">No news yet — run the ingest pipeline.</p>
+              <p className="text-sm text-muted">Henüz haber yok — ingest pipeline&apos;ı çalıştırın.</p>
             )}
           </div>
         </div>
 
-        <aside className="space-y-8">
+        <aside className="space-y-10">
           <div>
-            <h2 className="section-title mb-2">Trending</h2>
-            <div className="card p-1">
+            <p className="eyebrow mb-2">Trending</p>
+            <div className="card px-3 py-1">
               {home.trending.map((t) => (
                 <TrendRow key={t.topic.slug} trend={t} />
               ))}
               {home.trending.length === 0 && (
-                <p className="p-3 text-sm text-text-dim">No trend data yet.</p>
+                <p className="px-1 py-3 text-sm text-muted">Trend verisi yok.</p>
               )}
             </div>
           </div>
-
           <div>
-            <h2 className="section-title mb-2">AI Timeline</h2>
-            <div className="card divide-y divide-border">
+            <p className="eyebrow mb-2">AI Timeline</p>
+            <div className="card divide-y divide-line">
               {home.timeline.slice(0, 12).map((t) => (
                 <Link
                   key={t.slug}
                   href={`/news/${t.slug}`}
-                  className="flex gap-3 p-3 text-sm hover:bg-surface-2"
+                  className="flex gap-3 p-3 text-sm hover:bg-surface-2/60"
                 >
-                  <span className="shrink-0 font-mono text-xs text-text-dim">
+                  <span className="shrink-0 font-mono text-[11px] text-muted">
                     {clockTime(t.time)}
                   </span>
-                  <span className="line-clamp-2">{t.title}</span>
+                  <span className="line-clamp-2 text-ink-2">{t.title}</span>
                 </Link>
               ))}
               {home.timeline.length === 0 && (
-                <p className="p-3 text-sm text-text-dim">Quiet on the radar.</p>
+                <p className="p-3 text-sm text-muted">Radar sakin.</p>
               )}
             </div>
           </div>
         </aside>
       </section>
 
+      {/* videos */}
       {home.videos.length > 0 && (
-        <section>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="section-title">PlanetAI Videos</h2>
-            <Link href="/videos" className="text-xs text-accent hover:underline">
-              View all →
+        <section className="mt-14">
+          <div className="mb-4 flex items-baseline justify-between">
+            <p className="eyebrow">PlanetAI Videos</p>
+            <Link href="/videos" className="text-[11px] uppercase tracking-wide link-accent">
+              Tümü →
             </Link>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -130,27 +183,6 @@ export default async function HomePage() {
           </div>
         </section>
       )}
-
-      <section>
-        <h2 className="section-title mb-3">Explore the AI Planet</h2>
-        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {[
-            ["News", "/news"],
-            ["Trends", "/trends"],
-            ["Videos", "/videos"],
-            ["Sources", "/sources"],
-            ["Search", "/search?q=ai"],
-          ].map(([label, href]) => (
-            <Link
-              key={href}
-              href={href}
-              className="card p-4 text-center text-sm font-medium hover:border-accent/50"
-            >
-              {label}
-            </Link>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }

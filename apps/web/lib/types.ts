@@ -133,3 +133,13 @@ export interface CategoryCount {
   category: string;
   events_24h: number;
 }
+
+export interface Stats {
+  entities: number;
+  companies: number;
+  models: number;
+  sources: number;
+  articles: number;
+  events: number;
+  topics: number;
+}
