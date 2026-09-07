@@ -56,9 +56,22 @@ then `uv run planetai-ingest collect --kinds youtube`.
 | `python -m planetai_api.moderate approve <slug>` | publish a pending marketplace app |
 | `python -m planetai_api.moderate reject <slug>` | reject a submission |
 
-## Köşe yazısı ekleme (opinion_posts)
-Şimdilik doğrudan DB'ye: `INSERT INTO opinion_posts (id, slug, author_id, title, dek, body, status, published_at, created_at, updated_at) VALUES (...)`.
-Yazar `authors` tablosundan (`beyza-nur-dincer` seed'li). `body` düz metin, paragraflar `\n\n` ile ayrılır; `## Başlık` satırı alt başlık olur.
+## Köşe yazısı ekleme
+En kolay yol — `infra/seed/editorial.yaml` içindeki `columns:` listesine ekle, sonra `uv run planetai-ingest seed`:
+```yaml
+columns:
+  - slug: 2026-yapay-zeka-ajanlari
+    author: beyza-nur-dincer
+    title: "2026: Ajanlar yılı mı, balon mu?"
+    dek: "Kısa özet / spot cümle."
+    published_at: 2026-09-08
+    body: |
+      İlk paragraf...
+
+      ## Ara başlık
+      İkinci paragraf...
+```
+`body` düz metin; paragraflar boş satırla ayrılır, `## ` ile başlayan satır alt başlık olur. Seed idempotent — aynı slug'ı tekrar çalıştırmak yazıyı günceller.
 
 ## Ports
 | service | port | note |
