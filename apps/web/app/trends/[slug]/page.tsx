@@ -6,11 +6,7 @@ import type { TopicTrend } from "@/lib/types";
 
 export const revalidate = 120;
 
-export default async function TrendDetailPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function TrendDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   let trend: TopicTrend;
   try {
@@ -21,15 +17,13 @@ export default async function TrendDetailPage({
   const up = trend.delta_pct >= 0;
 
   return (
-    <Page section="Trend" title={`#${trend.topic.name}`}>
-      <p className="mb-6 text-sm text-ink-2">
-        Son {trend.window} içinde {trend.event_count} olay ·{" "}
-        <span className={up ? "text-sage" : "text-impact-critical"}>
-          {up ? "↑" : "↓"} {Math.abs(trend.delta_pct).toFixed(0)}%
-        </span>{" "}
-        · ağırlıklı skor {trend.weighted_score.toFixed(1)}
-      </p>
-      <div className="grid gap-3">
+    <Page
+      title={`#${trend.topic.name}`}
+      lead={`Son ${trend.window === "24h" ? "24 saatte" : "7 günde"} ${trend.event_count} haber · ${
+        up ? "▲" : "▼"
+      } ${Math.abs(trend.delta_pct).toFixed(0)}%`}
+    >
+      <div className="grid gap-x-6 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
         {trend.sample_events.map((e) => (
           <EventCard key={e.slug} event={e} />
         ))}

@@ -3,60 +3,45 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
-  background-color: #070b14;
-  color: #eaeef7;
+  background-color: #ffffff;
+  color: #141414;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  background-image:
-    radial-gradient(1100px 520px at 12% -10%, rgba(91, 140, 255, 0.13), transparent 60%),
-    radial-gradient(900px 460px at 92% -5%, rgba(156, 107, 255, 0.11), transparent 55%);
-  background-attachment: fixed;
 }
 
 ::selection {
-  background: #c9f24e;
-  color: #070b14;
+  background: #d42a20;
+  color: #fff;
 }
 
 @layer components {
-  .card {
-    @apply rounded-xl border border-line bg-surface/70 backdrop-blur-sm transition-colors;
-  }
-  .card-hover {
-    @apply hover:border-accent/50;
-  }
-  .chip {
-    @apply inline-flex items-center gap-1 rounded-full border border-line bg-surface-2/60 px-2.5 py-0.5 text-[11px] font-medium text-ink-2;
+  .kicker {
+    @apply text-[11px] font-bold uppercase tracking-[0.14em] text-brand;
   }
   .eyebrow {
-    @apply text-[11px] font-semibold uppercase tracking-[0.2em] text-muted;
+    @apply text-[12px] font-bold uppercase tracking-[0.16em] text-ink;
+  }
+  .section-head {
+    @apply mb-5 flex items-baseline justify-between border-b-2 border-ink pb-2;
+  }
+  .headline {
+    @apply font-black tracking-tightest text-ink;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full bg-wash px-2.5 py-0.5 text-[11px] font-semibold text-ink-2;
   }
   .link-accent {
-    @apply text-accent underline-offset-4 hover:underline;
+    @apply font-semibold text-accent underline-offset-2 hover:underline;
   }
-}
-
-@keyframes radar-sweep {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-.radar-sweep {
-  transform-origin: center;
-  animation: radar-sweep 7s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
 }

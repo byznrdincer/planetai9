@@ -1,22 +1,36 @@
+const RTF_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
+  ["year", 60 * 60 * 24 * 365],
+  ["month", 60 * 60 * 24 * 30],
+  ["day", 60 * 60 * 24],
+  ["hour", 60 * 60],
+  ["minute", 60],
+];
+
 export function relativeTime(iso: string): string {
-  const then = new Date(iso).getTime();
-  const diff = Date.now() - then;
-  const min = Math.round(diff / 60000);
-  if (min < 1) return "just now";
-  if (min < 60) return `${min}m ago`;
-  const hr = Math.round(min / 60);
-  if (hr < 24) return `${hr}h ago`;
-  const day = Math.round(hr / 24);
-  if (day < 30) return `${day}d ago`;
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const diffSec = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (diffSec < 60) return "az önce";
+  for (const [unit, secs] of RTF_UNITS) {
+    if (diffSec >= secs) {
+      const n = Math.floor(diffSec / secs);
+      const map: Record<string, [string, string]> = {
+        year: ["yıl", "yıl"],
+        month: ["ay", "ay"],
+        day: ["gün", "gün"],
+        hour: ["saat", "saat"],
+        minute: ["dakika", "dakika"],
+      };
+      return `${n} ${map[unit][0]} önce`;
+    }
+  }
+  return "az önce";
 }
 
 export function clockTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+  return new Date(iso).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+}
+
+export function dateLabel(iso: string): string {
+  return new Date(iso).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
 }
 
 export function duration(sec: number): string {
@@ -29,23 +43,30 @@ export function duration(sec: number): string {
 }
 
 export const CATEGORY_LABEL: Record<string, string> = {
-  Models: "Models",
-  Companies: "Companies",
-  Research: "Research",
-  Robotics: "Robotics",
-  Agents: "AI Agents",
-  AICoding: "AI Coding",
-  GenerativeAI: "Generative AI",
-  ComputerVision: "Computer Vision",
-  VoiceAI: "Voice AI",
-  HealthcareAI: "Healthcare AI",
-  FinanceAI: "Finance AI",
-  OpenSource: "Open Source",
-  AISafety: "AI Safety",
-  Regulation: "Regulation",
-  Infrastructure: "Infrastructure",
+  Models: "Modeller",
+  Companies: "Şirketler",
+  Research: "Araştırma",
+  Robotics: "Robotik",
+  Agents: "Yapay Zekâ Ajanları",
+  AICoding: "Yazılım & Kodlama",
+  GenerativeAI: "Üretken Yapay Zekâ",
+  ComputerVision: "Bilgisayarlı Görü",
+  VoiceAI: "Ses Yapay Zekâsı",
+  HealthcareAI: "Sağlıkta Yapay Zekâ",
+  FinanceAI: "Finansta Yapay Zekâ",
+  OpenSource: "Açık Kaynak",
+  AISafety: "Yapay Zekâ Güvenliği",
+  Regulation: "Regülasyon",
+  Infrastructure: "Altyapı",
 };
 
 export function categoryLabel(c: string): string {
   return CATEGORY_LABEL[c] ?? c;
 }
+
+export const IMPACT_LABEL: Record<string, string> = {
+  low: "düşük etki",
+  medium: "orta etki",
+  high: "yüksek etki",
+  critical: "kritik",
+};

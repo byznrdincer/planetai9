@@ -1,13 +1,11 @@
 import Link from "next/link";
-import { EventCard } from "@/components/EventCard";
-import { Radar } from "@/components/Radar";
-import { StatTile, compact } from "@/components/StatTile";
+import { EventCard, EventRow } from "@/components/EventCard";
+import { FeaturedStory } from "@/components/FeaturedStory";
 import { TrendRow } from "@/components/TrendRow";
 import { VideoCard } from "@/components/VideoCard";
-import { CategoryChip, ImpactBadge, ImportanceDot } from "@/components/badges";
 import { apiSafe } from "@/lib/api";
 import { clockTime } from "@/lib/format";
-import type { HomePayload, Stats } from "@/lib/types";
+import type { HomePayload } from "@/lib/types";
 
 export const revalidate = 60;
 
@@ -18,165 +16,93 @@ const EMPTY: HomePayload = {
   videos: [],
   timeline: [],
 };
-const EMPTY_STATS: Stats = {
-  entities: 0,
-  companies: 0,
-  models: 0,
-  sources: 0,
-  articles: 0,
-  events: 0,
-  topics: 0,
-};
 
 export default async function HomePage() {
-  const [home, stats] = await Promise.all([
-    apiSafe<HomePayload>("/home", EMPTY, { revalidate: 60, tags: ["home"] }),
-    apiSafe<Stats>("/stats", EMPTY_STATS, { revalidate: 120 }),
-  ]);
-  const [lead, ...rest] = home.top_signals;
+  const home = await apiSafe<HomePayload>("/home", EMPTY, { revalidate: 60, tags: ["home"] });
+
+  const featurePool = home.top_signals.length ? home.top_signals : home.latest_news;
+  const [feature, ...topRest] = featurePool;
+  const secondary = topRest.slice(0, 4);
+  const featuredSlugs = new Set([feature?.slug, ...secondary.map((e) => e.slug)]);
+  const grid = home.latest_news.filter((e) => !featuredSlugs.has(e.slug));
 
   return (
-    <div>
-      {/* hero */}
-      <section className="grid items-center gap-10 py-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <div>
-          <p className="eyebrow text-accent">AI Intelligence Platform</p>
-          <h1 className="mt-4 text-[clamp(2.6rem,5.5vw,4.4rem)] font-black leading-[0.95] tracking-tightest text-ink">
-            Yapay zekâ
-            <br />
-            dünyasının
-            <br />
-            <span className="bg-gradient-to-r from-accent to-accent-2 bg-clip-text text-transparent">
-              nabzını tut.
-            </span>
-          </h1>
-          <p className="mt-5 max-w-md text-ink-2">
-            Haberleri, model duyurularını, araçları ve teknoloji değişimlerini tek merkezden,
-            kaynaklarıyla birlikte takip et.
-          </p>
-          <div className="mt-6 flex gap-3">
-            <Link
-              href="/news"
-              className="rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-bg hover:bg-accent/90"
-            >
-              Haberlere git →
-            </Link>
-            <Link
-              href="/trends"
-              className="rounded-lg border border-line px-4 py-2.5 text-sm font-semibold text-ink hover:border-accent/60"
-            >
-              Trendler
-            </Link>
+    <div className="space-y-12">
+      {/* manşet */}
+      {feature && (
+        <section className="grid gap-8 border-b border-line pb-10 lg:grid-cols-[1.55fr_1fr]">
+          <FeaturedStory event={feature} />
+          <div className="divide-y divide-line lg:border-l lg:border-line lg:pl-8">
+            {secondary.map((e) => (
+              <EventRow key={e.slug} event={e} />
+            ))}
           </div>
-        </div>
-        <div className="relative mx-auto aspect-square w-full max-w-[360px]">
-          <Radar centerValue={compact(stats.events)} centerLabel="İzlenen olay" />
-        </div>
-      </section>
-
-      {/* stat tiles */}
-      <section className="grid grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-4">
-        <StatTile label="İzlenen Kaynak" value={compact(stats.sources)} hint="RSS · arXiv · YouTube" />
-        <StatTile label="AI Entity" value={compact(stats.entities)} hint="şirket · model · araç" />
-        <StatTile label="Toplanan Haber" value={compact(stats.articles)} hint="orijinal kaynaklı" />
-        <StatTile label="Tespit Edilen Olay" value={compact(stats.events)} hint="dedup sonrası" />
-      </section>
-
-      {/* top signal */}
-      {lead && (
-        <section className="mt-14">
-          <p className="eyebrow mb-3">🔥 Top Signal</p>
-          <Link href={`/news/${lead.slug}`} className="card card-hover group block p-6 lg:p-8">
-            <div className="mb-3 flex flex-wrap items-center gap-3">
-              <CategoryChip category={lead.category} />
-              <ImpactBadge impact={lead.impact} />
-              <ImportanceDot score={lead.importance} />
-            </div>
-            <h2 className="max-w-3xl text-2xl font-black leading-tight tracking-tight text-ink group-hover:text-white lg:text-3xl">
-              {lead.title}
-            </h2>
-            {lead.summary && <p className="mt-3 max-w-2xl text-ink-2">{lead.summary}</p>}
-            <div className="mt-4 flex flex-wrap gap-x-4 text-[11px] uppercase tracking-wide text-muted">
-              {lead.primary_entity && (
-                <span className="font-semibold text-accent">{lead.primary_entity.name}</span>
-              )}
-              {lead.source_count > 1 && <span>Covered by {lead.source_count} sources</span>}
-            </div>
-          </Link>
-          {rest.length > 0 && (
-            <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {rest.map((e) => (
-                <EventCard key={e.slug} event={e} compact />
-              ))}
-            </div>
-          )}
         </section>
       )}
 
-      {/* latest + trending + timeline */}
-      <section className="mt-14 grid gap-10 lg:grid-cols-[1fr_320px]">
+      <section className="grid gap-10 lg:grid-cols-[1fr_320px]">
+        {/* son haberler grid */}
         <div>
-          <div className="mb-4 flex items-baseline justify-between">
-            <p className="eyebrow">Son AI Haberleri</p>
-            <Link href="/news" className="text-[11px] uppercase tracking-wide link-accent">
+          <div className="section-head">
+            <h2 className="headline text-xl">Son Haberler</h2>
+            <Link href="/news" className="text-xs link-accent">
               Tümü →
             </Link>
           </div>
-          <div className="space-y-3">
-            {home.latest_news.map((e) => (
+          <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2">
+            {grid.map((e) => (
               <EventCard key={e.slug} event={e} />
             ))}
-            {home.latest_news.length === 0 && (
-              <p className="text-sm text-muted">Henüz haber yok — ingest pipeline&apos;ı çalıştırın.</p>
+            {grid.length === 0 && (
+              <p className="text-sm text-muted">Henüz haber yok.</p>
             )}
           </div>
         </div>
 
+        {/* yan sütun */}
         <aside className="space-y-10">
           <div>
-            <p className="eyebrow mb-2">Trending</p>
-            <div className="card px-3 py-1">
+            <div className="section-head">
+              <h2 className="headline text-xl">Öne Çıkan Konular</h2>
+            </div>
+            <div>
               {home.trending.map((t) => (
                 <TrendRow key={t.topic.slug} trend={t} />
               ))}
               {home.trending.length === 0 && (
-                <p className="px-1 py-3 text-sm text-muted">Trend verisi yok.</p>
+                <p className="py-3 text-sm text-muted">Trend verisi yok.</p>
               )}
             </div>
           </div>
+
           <div>
-            <p className="eyebrow mb-2">AI Timeline</p>
-            <div className="card divide-y divide-line">
-              {home.timeline.slice(0, 12).map((t) => (
-                <Link
-                  key={t.slug}
-                  href={`/news/${t.slug}`}
-                  className="flex gap-3 p-3 text-sm hover:bg-surface-2/60"
-                >
-                  <span className="shrink-0 font-mono text-[11px] text-muted">
-                    {clockTime(t.time)}
-                  </span>
-                  <span className="line-clamp-2 text-ink-2">{t.title}</span>
+            <div className="section-head">
+              <h2 className="headline text-xl">Zaman Çizelgesi</h2>
+            </div>
+            <div className="divide-y divide-line">
+              {home.timeline.slice(0, 10).map((t) => (
+                <Link key={t.slug} href={`/news/${t.slug}`} className="flex gap-3 py-2.5 text-sm hover:text-brand-ink">
+                  <span className="shrink-0 font-mono text-[11px] text-muted">{clockTime(t.time)}</span>
+                  <span className="line-clamp-2">{t.title}</span>
                 </Link>
               ))}
               {home.timeline.length === 0 && (
-                <p className="p-3 text-sm text-muted">Radar sakin.</p>
+                <p className="py-3 text-sm text-muted">Sakin bir gün.</p>
               )}
             </div>
           </div>
         </aside>
       </section>
 
-      {/* videos */}
       {home.videos.length > 0 && (
-        <section className="mt-14">
-          <div className="mb-4 flex items-baseline justify-between">
-            <p className="eyebrow">PlanetAI Videos</p>
-            <Link href="/videos" className="text-[11px] uppercase tracking-wide link-accent">
+        <section>
+          <div className="section-head">
+            <h2 className="headline text-xl">PlanetAI Video</h2>
+            <Link href="/videos" className="text-xs link-accent">
               Tümü →
             </Link>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-x-5 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
             {home.videos.slice(0, 4).map((v) => (
               <VideoCard key={v.youtube_id} video={v} />
             ))}

@@ -14,6 +14,27 @@ _SENT_SPLIT = re.compile(r"(?<=[.!?])\s+")
 _TRACKING = re.compile(r"[?&](utm_[^=]+|ref|fbclid|gclid|mc_cid|mc_eid)=[^&]*", re.I)
 
 
+def extract_og_image(html: str, base_url: str = "") -> str | None:
+    """Pull an og:image / twitter:image / first large <img> out of a page."""
+    from urllib.parse import urljoin
+
+    tree = HTMLParser(html)
+    for sel, attr in (
+        ('meta[property="og:image"]', "content"),
+        ('meta[name="og:image"]', "content"),
+        ('meta[name="twitter:image"]', "content"),
+        ('meta[property="twitter:image"]', "content"),
+        ('link[rel="image_src"]', "href"),
+    ):
+        node = tree.css_first(sel)
+        if node and node.attributes.get(attr):
+            return urljoin(base_url, node.attributes[attr].strip())
+    article = tree.css_first("article img, main img, figure img")
+    if article and article.attributes.get("src"):
+        return urljoin(base_url, article.attributes["src"].strip())
+    return None
+
+
 def strip_html(raw: str | None) -> str:
     if not raw:
         return ""

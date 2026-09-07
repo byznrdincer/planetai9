@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -11,13 +12,17 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from planetai_ingest import config
+import httpx
+
 from planetai_ingest.collectors import RawItem, collector_for
+from planetai_ingest.collectors.base import http_client
 from planetai_ingest.pipeline import classify, dedup
 from planetai_ingest.pipeline.entities import EntityIndex, EntityHit, choose_primary
 from planetai_ingest.pipeline.score import persist_factors, score_event
 from planetai_ingest.text import (
     clean_url,
     content_hash,
+    extract_og_image,
     simhash64,
     strip_html,
     summarize_excerpt,
@@ -29,6 +34,15 @@ from planetai_shared.settings import get_settings
 
 log = logging.getLogger(__name__)
 _settings = get_settings()
+
+_AI_TERMS = re.compile(
+    r"\b(a\.?i\.?|artificial intelligence|machine learning|deep learning|llm|"
+    r"large language model|neural net|transformer|diffusion|gpt|chatgpt|claude|gemini|"
+    r"llama|mistral|deepseek|qwen|grok|openai|anthropic|deepmind|hugging ?face|nvidia|"
+    r"agent|agentic|chatbot|inference|fine[- ]tun|training run|benchmark|multimodal|"
+    r"model|dataset|robot|autonomous|yapay zek[aâ]|makine öğrenme|üretken)\b",
+    re.I,
+)
 
 
 def collect_source(source_id: uuid.UUID) -> dict:
@@ -104,7 +118,18 @@ def _ingest_item(
 
     hits = index.match(item.title, summary_src)
     title_anchor_ids = frozenset(h.entity_id for h in hits if h.in_title)
+
+    # relevance gate: drop off-topic posts from broad feeds (e.g. a personal blog's
+    # non-AI entries). Keep anything that names a known entity or reads as AI.
+    if source.kind != "arxiv" and not hits:
+        if not _AI_TERMS.search(f"{item.title}\n{summary_src}"):
+            return False
+
     sh = simhash64(f"{item.title} {clean_summary or ''}")
+
+    image_url = item.image_url
+    if not image_url and source.kind != "arxiv":
+        image_url = _fetch_og_image(url)
 
     article = models.Article(
         source_id=source.id,
@@ -118,7 +143,7 @@ def _ingest_item(
         lang=item.lang,
         published_at=published,
         fetched_at=datetime.now(timezone.utc),
-        image_url=item.image_url,
+        image_url=image_url,
         content_hash=content_hash(item.title, url),
         dedup_simhash=sh,
     )
@@ -134,9 +159,11 @@ def _ingest_item(
     )
     event = dedup.find_event(db, draft)
     if event is None:
-        event = _create_event(db, source, item, clean_summary, hits, topics, published)
+        event = _create_event(db, source, item, clean_summary, hits, topics, published, image_url)
     else:
         _attach_to_event(db, event, source, hits)
+        if not event.image_url and image_url:
+            event.image_url = image_url
 
     article.event_id = event.id
     db.flush()
@@ -153,6 +180,7 @@ def _create_event(
     hits: list[EntityHit],
     topics: list[dict],
     published: datetime,
+    image_url: str | None = None,
 ) -> models.Event:
     primary = choose_primary(hits)
     category = classify.classify_category(
@@ -170,7 +198,7 @@ def _create_event(
         primary_entity_id=uuid.UUID(primary.entity_id) if primary else None,
         first_seen_at=published,
         last_activity_at=published,
-        image_url=item.image_url,
+        image_url=image_url or item.image_url,
         source_count=1,
         status="active",
     )
@@ -241,6 +269,18 @@ def _recompute_event(db: Session, event: models.Event) -> None:
     event.importance = total
     event.impact = band
     persist_factors(db, event, factors, total)
+
+
+def _fetch_og_image(url: str) -> str | None:
+    """Best-effort: fetch the page and read its social-share image. Never raises."""
+    try:
+        with http_client() as client:
+            resp = client.get(url, headers={"Range": "bytes=0-120000"})
+            if resp.status_code >= 400 or "text/html" not in resp.headers.get("content-type", ""):
+                return None
+            return extract_og_image(resp.text, base_url=str(resp.url))
+    except (httpx.HTTPError, ValueError, UnicodeError):
+        return None
 
 
 def _unique_slug(db: Session, title: str) -> str:

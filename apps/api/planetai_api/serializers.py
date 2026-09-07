@@ -143,7 +143,7 @@ def _related_events(db: Session, event: models.Event, limit: int = 6) -> list[mo
     ).all()
     if not entity_ids:
         return []
-    rows = db.scalars(
+    query = (
         select(models.Event)
         .join(models.EventEntity, models.EventEntity.event_id == models.Event.id)
         .where(
@@ -153,7 +153,11 @@ def _related_events(db: Session, event: models.Event, limit: int = 6) -> list[mo
         )
         .order_by(models.Event.last_activity_at.desc())
         .limit(limit * 3)
-    ).all()
+    )
+    # keep related list on-topic with the article unless the article itself is research
+    if event.category != "Research":
+        query = query.where(models.Event.category != "Research")
+    rows = db.scalars(query).all()
     seen: set = set()
     out: list[models.Event] = []
     for e in rows:

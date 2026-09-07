@@ -9,18 +9,14 @@ export default async function VideosPage() {
   const videos = await apiSafe<VideoCardT[]>("/videos?limit=36", []);
 
   return (
-    <Page section="Medya" title="PlanetAI Video" wide>
-      <p className="mb-6 max-w-lg text-sm text-ink-2">
-        PlanetAI&apos;nin medya ayağı — explainer&apos;lar, model incelemeleri ve AI haberleri.
-      </p>
+    <Page title="PlanetAI Video" lead="Açıklayıcı videolar, model incelemeleri ve yapay zekâ haberleri.">
       {videos.length === 0 ? (
-        <div className="card p-6 text-sm text-ink-2">
-          Henüz video yok. <code className="text-sage">PLANETAI_YOUTUBE_API_KEY</code> ve{" "}
-          <code className="text-sage">PLANETAI_YOUTUBE_CHANNEL_ID</code> ayarlayıp{" "}
-          <code className="text-sage">planetai-ingest collect --kinds youtube</code> çalıştırın.
+        <div className="rounded border border-line bg-wash p-6 text-sm text-ink-2">
+          Henüz video yok. YouTube API anahtarı ve kanal kimliği tanımlanınca videolar otomatik
+          çekilecek.
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {videos.map((v) => (
             <VideoCard key={v.youtube_id} video={v} />
           ))}
