@@ -107,6 +107,51 @@
   trust_weight: 0.78
   poll_interval_sec: 1800
 
+- slug: ft-technology
+  name: Financial Times — Technology
+  homepage_url: https://www.ft.com/artificial-intelligence
+  feed_url: https://www.ft.com/technology?format=rss
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.82
+  poll_interval_sec: 1800
+
+- slug: wsj-tech
+  name: The Wall Street Journal — Tech
+  homepage_url: https://www.wsj.com/tech/ai
+  feed_url: https://feeds.a.dj.com/rss/RSSWSJD.xml
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.82
+  poll_interval_sec: 1800
+
+- slug: bloomberg-technology
+  name: Bloomberg — Technology
+  homepage_url: https://www.bloomberg.com/technology
+  feed_url: https://feeds.bloomberg.com/technology/news.rss
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.8
+  poll_interval_sec: 1800
+
+- slug: wired-ai
+  name: WIRED — AI
+  homepage_url: https://www.wired.com/tag/artificial-intelligence/
+  feed_url: https://www.wired.com/feed/tag/ai/latest/rss
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.74
+  poll_interval_sec: 1800
+
+- slug: the-register-ai
+  name: The Register — AI/ML
+  homepage_url: https://www.theregister.com/software/ai_ml/
+  feed_url: https://www.theregister.com/software/ai_ml/headlines.atom
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.7
+  poll_interval_sec: 1800
+
 - slug: import-ai
   name: Import AI (Jack Clark)
   homepage_url: https://importai.substack.com/

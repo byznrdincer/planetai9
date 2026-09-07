@@ -1,4 +1,5 @@
 import { categoryLabel } from "@/lib/format";
+import type { Locale } from "@/lib/i18n";
 import { catColor } from "@/lib/category";
 
 export function Cover({
@@ -34,10 +35,10 @@ export function Cover({
   );
 }
 
-export function CatBadge({ category }: { category: string }) {
+export function CatBadge({ category, locale = "tr" }: { category: string; locale?: Locale }) {
   return (
     <span className="cat-badge" style={{ backgroundColor: catColor(category) }}>
-      {categoryLabel(category)}
+      {categoryLabel(category, locale)}
     </span>
   );
 }

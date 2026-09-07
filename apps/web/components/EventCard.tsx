@@ -1,10 +1,19 @@
 import Link from "next/link";
 import { relativeTime } from "@/lib/format";
+import type { Locale } from "@/lib/i18n";
 import type { EventCard as EventCardT } from "@/lib/types";
 import { CatBadge, Cover } from "./Cover";
 
-/** Big image on top, headline + dek below. WSJ-style. */
-export function EventCard({ event, size = "md" }: { event: EventCardT; size?: "md" | "lg" }) {
+export function EventCard({
+  event,
+  size = "md",
+  locale = "tr",
+}: {
+  event: EventCardT;
+  size?: "md" | "lg";
+  locale?: Locale;
+}) {
+  const kaynak = locale === "tr" ? "kaynak" : "sources";
   return (
     <article className="group">
       <Link href={`/news/${event.slug}`} className="block">
@@ -15,7 +24,7 @@ export function EventCard({ event, size = "md" }: { event: EventCardT; size?: "m
             className={size === "lg" ? "aspect-[16/9]" : "aspect-[3/2]"}
           />
           <span className="absolute left-2 top-2">
-            <CatBadge category={event.category} />
+            <CatBadge category={event.category} locale={locale} />
           </span>
         </div>
         <h3
@@ -33,11 +42,13 @@ export function EventCard({ event, size = "md" }: { event: EventCardT; size?: "m
         <div className="mt-2 flex flex-wrap items-center gap-x-2 text-[11px] text-muted">
           <span className="font-semibold text-ink-2">{event.top_source?.name}</span>
           <span>·</span>
-          <span>{relativeTime(event.published_at)}</span>
+          <span>{relativeTime(event.published_at, locale)}</span>
           {event.source_count > 1 && (
             <>
               <span>·</span>
-              <span>{event.source_count} kaynak</span>
+              <span>
+                {event.source_count} {kaynak}
+              </span>
             </>
           )}
         </div>
@@ -46,8 +57,15 @@ export function EventCard({ event, size = "md" }: { event: EventCardT; size?: "m
   );
 }
 
-/** Compact numbered/thumbnail row for rails. */
-export function EventRow({ event, index }: { event: EventCardT; index?: number }) {
+export function EventRow({
+  event,
+  index,
+  locale = "tr",
+}: {
+  event: EventCardT;
+  index?: number;
+  locale?: Locale;
+}) {
   return (
     <Link href={`/news/${event.slug}`} className="group flex gap-3 border-b border-line py-3 last:border-b-0">
       {typeof index === "number" && (
@@ -61,7 +79,7 @@ export function EventRow({ event, index }: { event: EventCardT; index?: number }
           {event.title}
         </h4>
         <div className="mt-1 text-[11px] text-muted">
-          {event.top_source?.name} · {relativeTime(event.published_at)}
+          {event.top_source?.name} · {relativeTime(event.published_at, locale)}
         </div>
       </div>
     </Link>

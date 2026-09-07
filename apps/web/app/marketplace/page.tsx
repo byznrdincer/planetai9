@@ -2,39 +2,43 @@ import Link from "next/link";
 import { MarketplaceForm } from "@/components/MarketplaceForm";
 import { Page } from "@/components/Page";
 import { apiSafe } from "@/lib/api";
+import { getDict, getLocale } from "@/lib/i18n";
 import type { MarketplaceApp } from "@/lib/types";
 
 export const revalidate = 120;
 
-const CATS: [string, string][] = [
-  ["", "Tümü"],
-  ["mcp", "MCP Sunucuları"],
-  ["llm", "LLM"],
-  ["stt", "Konuşma → Metin"],
-  ["tts", "Metin → Konuşma"],
-  ["agent", "Ajanlar"],
-  ["tool", "Araçlar"],
-  ["other", "Diğer"],
-];
+const CATS: Record<string, { tr: string; en: string }> = {
+  "": { tr: "Tümü", en: "All" },
+  mcp: { tr: "MCP Sunucuları", en: "MCP Servers" },
+  llm: { tr: "LLM", en: "LLM" },
+  stt: { tr: "Konuşma → Metin", en: "Speech → Text" },
+  tts: { tr: "Metin → Konuşma", en: "Text → Speech" },
+  agent: { tr: "Ajanlar", en: "Agents" },
+  tool: { tr: "Araçlar", en: "Tools" },
+  other: { tr: "Diğer", en: "Other" },
+};
 
-const PRICING: Record<string, string> = { free: "Ücretsiz", freemium: "Freemium", paid: "Ücretli" };
+const PRICING: Record<string, { tr: string; en: string }> = {
+  free: { tr: "Ücretsiz", en: "Free" },
+  freemium: { tr: "Freemium", en: "Freemium" },
+  paid: { tr: "Ücretli", en: "Paid" },
+};
 
 export default async function MarketplacePage({
   searchParams,
 }: {
   searchParams: Promise<{ category?: string }>;
 }) {
+  const locale = await getLocale();
+  const t = await getDict();
   const category = (await searchParams).category ?? "";
   const qs = category ? `?category=${category}` : "";
   const apps = await apiSafe<MarketplaceApp[]>(`/marketplace${qs}`, []);
 
   return (
-    <Page
-      title="AI Marketplace"
-      lead="Topluluğun geliştirdiği faydalı yapay zekâ uygulamaları — MCP sunucuları, LLM'ler, STT/TTS araçları, ajanlar. Kendi projeni de paylaşabilirsin."
-    >
+    <Page title={t.marketplace.title} lead={t.marketplace.lead}>
       <div className="mb-6 flex flex-wrap gap-1.5">
-        {CATS.map(([slug, label]) => (
+        {Object.entries(CATS).map(([slug, label]) => (
           <Link
             key={slug}
             href={`/marketplace${slug ? `?category=${slug}` : ""}`}
@@ -42,7 +46,7 @@ export default async function MarketplacePage({
               category === slug ? "bg-ink text-white" : "bg-wash text-ink-2 hover:bg-line"
             }`}
           >
-            {label}
+            {label[locale]}
           </Link>
         ))}
       </div>
@@ -69,30 +73,25 @@ export default async function MarketplacePage({
             </div>
             <p className="mt-3 flex-1 text-[13px] text-ink-2">{a.tagline}</p>
             <div className="mt-3 flex items-center gap-2 text-[11px] text-muted">
-              <span className="pill">{PRICING[a.pricing] ?? a.pricing}</span>
+              <span className="pill">{PRICING[a.pricing]?.[locale] ?? a.pricing}</span>
               <span>·</span>
               <span>{a.author_name}</span>
               {a.repo_url && (
                 <>
                   <span>·</span>
-                  <span className="text-accent">kaynak ↗</span>
+                  <span className="text-accent">{t.marketplace.source}</span>
                 </>
               )}
             </div>
           </a>
         ))}
-        {apps.length === 0 && (
-          <p className="text-sm text-muted">Bu kategoride henüz uygulama yok.</p>
-        )}
+        {apps.length === 0 && <p className="text-sm text-muted">{t.marketplace.empty}</p>}
       </div>
 
       <section id="oner" className="mt-14 scroll-mt-24 border-t-2 border-ink pt-8">
-        <h2 className="text-xl font-black tracking-tight text-ink">Uygulamanı öner</h2>
-        <p className="mt-1 max-w-lg text-sm text-ink-2">
-          Yaptığın yapay zekâ uygulamasını PlanetAI9 topluluğuyla paylaş. Gönderiler incelendikten
-          sonra yayınlanır.
-        </p>
-        <MarketplaceForm />
+        <h2 className="text-xl font-black tracking-tight text-ink">{t.marketplace.suggestTitle}</h2>
+        <p className="mt-1 max-w-lg text-sm text-ink-2">{t.marketplace.suggestBody}</p>
+        <MarketplaceForm locale={locale} labels={{ submitted: t.marketplace.submitted, send: t.marketplace.send, sending: t.marketplace.sending }} />
       </section>
     </Page>
   );

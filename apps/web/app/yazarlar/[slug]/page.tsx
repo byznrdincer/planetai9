@@ -3,14 +3,22 @@ import { notFound } from "next/navigation";
 import { Page } from "@/components/Page";
 import { api } from "@/lib/api";
 import { dateLabel } from "@/lib/format";
+import { getDict, getLocale } from "@/lib/i18n";
 import type { AuthorDetail, ColumnCard } from "@/lib/types";
 
 export const revalidate = 180;
 
-const LINK_LABEL: Record<string, string> = { youtube: "YouTube", site: "Web", x: "X", linkedin: "LinkedIn" };
+const LINK_LABEL: Record<string, string> = {
+  youtube: "YouTube",
+  site: "Web",
+  x: "X",
+  linkedin: "LinkedIn",
+};
 
 export default async function AuthorPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const locale = await getLocale();
+  const t = await getDict();
   let data: { author: AuthorDetail; columns: ColumnCard[] };
   try {
     data = await api(`/authors/${slug}`, { revalidate: 180 });
@@ -38,11 +46,11 @@ export default async function AuthorPage({ params }: { params: Promise<{ slug: s
             <Link href={`/kose/${c.slug}`} className="group block">
               <h2 className="headline text-xl leading-tight group-hover:text-accent">{c.title}</h2>
               {c.dek && <p className="mt-1.5 text-[14px] text-ink-2">{c.dek}</p>}
-              <p className="mt-2 text-[11px] text-muted">{dateLabel(c.published_at)}</p>
+              <p className="mt-2 text-[11px] text-muted">{dateLabel(c.published_at, locale)}</p>
             </Link>
           </li>
         ))}
-        {columns.length === 0 && <li className="py-5 text-sm text-muted">Henüz köşe yazısı yok.</li>}
+        {columns.length === 0 && <li className="py-5 text-sm text-muted">{t.authors.noPosts}</li>}
       </ul>
     </Page>
   );

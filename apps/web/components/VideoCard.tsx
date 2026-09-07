@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { duration, relativeTime } from "@/lib/format";
+import type { Locale } from "@/lib/i18n";
 import type { VideoCard as VideoCardT } from "@/lib/types";
 
-export function VideoCard({ video }: { video: VideoCardT }) {
+export function VideoCard({ video, locale = "tr" }: { video: VideoCardT; locale?: Locale }) {
   return (
     <Link href={`/videos/${video.youtube_id}`} className="card group block overflow-hidden">
       <div className="relative aspect-video bg-wash">
@@ -25,7 +26,7 @@ export function VideoCard({ video }: { video: VideoCardT }) {
         <h3 className="line-clamp-2 text-sm font-bold leading-snug text-ink group-hover:text-accent">
           {video.title}
         </h3>
-        <p className="mt-1 text-[11px] text-muted">{relativeTime(video.published_at)}</p>
+        <p className="mt-1 text-[11px] text-muted">{relativeTime(video.published_at, locale)}</p>
       </div>
     </Link>
   );

@@ -1,23 +1,25 @@
 import Link from "next/link";
+import { clockTime } from "@/lib/format";
+import type { DictT, Locale } from "@/lib/i18n";
 import type { ColumnCardLite, EventCard, MarketplaceApp, TopicTrend } from "@/lib/types";
 
-function Head({ title, href }: { title: string; href?: string }) {
+function Head({ title, href, seeAll }: { title: string; href?: string; seeAll: string }) {
   return (
     <div className="mb-3 flex items-baseline justify-between border-b-2 border-ink pb-1.5">
       <h3 className="text-[15px] font-black tracking-tight text-ink">{title}</h3>
       {href && (
         <Link href={href} className="text-[11px] font-semibold text-accent hover:text-accent-ink">
-          Tümü →
+          {seeAll}
         </Link>
       )}
     </div>
   );
 }
 
-export function MostRead({ events }: { events: EventCard[] }) {
+export function MostRead({ events, t }: { events: EventCard[]; t: DictT }) {
   return (
     <div>
-      <Head title="En Çok Okunan" href="/news?sort=importance" />
+      <Head title={t.section.mostRead} href="/news?sort=importance" seeAll={t.common.seeAll} />
       <ol>
         {events.map((e, i) => (
           <li key={e.slug}>
@@ -29,34 +31,34 @@ export function MostRead({ events }: { events: EventCard[] }) {
             </Link>
           </li>
         ))}
-        {events.length === 0 && <li className="py-3 text-[13px] text-muted">Veri yok.</li>}
+        {events.length === 0 && <li className="py-3 text-[13px] text-muted">{t.common.noData}</li>}
       </ol>
     </div>
   );
 }
 
-export function TrendPills({ trends }: { trends: TopicTrend[] }) {
+export function TrendPills({ trends, t }: { trends: TopicTrend[]; t: DictT }) {
   return (
     <div>
-      <Head title="Trendler" href="/trends" />
+      <Head title={t.section.trends} href="/trends" seeAll={t.common.seeAll} />
       <div className="flex flex-wrap gap-2 pt-1">
-        {trends.map((t) => (
-          <Link key={t.topic.slug} href={`/trends/${t.topic.slug}`} className="pill">
-            #{t.topic.name.replace(/\s+/g, "")}
+        {trends.map((tr) => (
+          <Link key={tr.topic.slug} href={`/trends/${tr.topic.slug}`} className="pill">
+            #{tr.topic.name.replace(/\s+/g, "")}
           </Link>
         ))}
-        {trends.length === 0 && <span className="text-[13px] text-muted">Veri yok.</span>}
+        {trends.length === 0 && <span className="text-[13px] text-muted">{t.common.noData}</span>}
       </div>
     </div>
   );
 }
 
-export function ColumnsRail({ columns }: { columns: ColumnCardLite[] }) {
+export function ColumnsRail({ columns, t }: { columns: ColumnCardLite[]; t: DictT }) {
   return (
     <div>
-      <Head title="Yazarlardan" href="/yazarlar" />
+      <Head title={t.section.fromAuthors} href="/yazarlar" seeAll={t.common.seeAll} />
       {columns.length === 0 ? (
-        <p className="py-2 text-[13px] text-muted">Köşe yazıları çok yakında.</p>
+        <p className="py-2 text-[13px] text-muted">{t.authors.soon}</p>
       ) : (
         <ul className="divide-y divide-line">
           {columns.map((c) => (
@@ -77,10 +79,10 @@ export function ColumnsRail({ columns }: { columns: ColumnCardLite[] }) {
   );
 }
 
-export function MarketplaceRail({ apps }: { apps: MarketplaceApp[] }) {
+export function MarketplaceRail({ apps, t }: { apps: MarketplaceApp[]; t: DictT }) {
   return (
     <div>
-      <Head title="AI Marketplace" href="/marketplace" />
+      <Head title={t.marketplace.title} href="/marketplace" seeAll={t.common.seeAll} />
       <ul className="divide-y divide-line">
         {apps.slice(0, 5).map((a) => (
           <li key={a.slug}>
@@ -102,13 +104,13 @@ export function MarketplaceRail({ apps }: { apps: MarketplaceApp[] }) {
             </a>
           </li>
         ))}
-        {apps.length === 0 && <li className="py-2 text-[13px] text-muted">Henüz uygulama yok.</li>}
+        {apps.length === 0 && <li className="py-2 text-[13px] text-muted">{t.common.noData}</li>}
       </ul>
       <Link
         href="/marketplace#oner"
         className="mt-3 block rounded-md border border-accent px-3 py-2 text-center text-[12px] font-bold text-accent hover:bg-accent hover:text-white"
       >
-        + Uygulamanı öner
+        {t.marketplace.suggest}
       </Link>
     </div>
   );
@@ -116,26 +118,30 @@ export function MarketplaceRail({ apps }: { apps: MarketplaceApp[] }) {
 
 export function TimelineRail({
   items,
+  t,
+  locale,
 }: {
   items: { slug: string; title: string; time: string }[];
+  t: DictT;
+  locale: Locale;
 }) {
   return (
     <div>
-      <Head title="Son Dakika" href="/news" />
+      <Head title={t.section.breaking} href="/news" seeAll={t.common.seeAll} />
       <ul className="divide-y divide-line">
-        {items.slice(0, 8).map((t) => (
-          <li key={t.slug}>
-            <Link href={`/news/${t.slug}`} className="group flex gap-2.5 py-2.5">
+        {items.slice(0, 8).map((it) => (
+          <li key={it.slug}>
+            <Link href={`/news/${it.slug}`} className="group flex gap-2.5 py-2.5">
               <span className="shrink-0 font-mono text-[11px] text-muted">
-                {new Date(t.time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+                {clockTime(it.time, locale)}
               </span>
               <span className="text-[13px] font-semibold leading-snug text-ink group-hover:text-accent">
-                {t.title}
+                {it.title}
               </span>
             </Link>
           </li>
         ))}
-        {items.length === 0 && <li className="py-2 text-[13px] text-muted">Sakin.</li>}
+        {items.length === 0 && <li className="py-2 text-[13px] text-muted">{t.common.quiet}</li>}
       </ul>
     </div>
   );

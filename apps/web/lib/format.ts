@@ -1,4 +1,8 @@
-const RTF_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
+import type { Locale } from "./i18n";
+
+export { categoryLabel, impactLabel } from "./i18n";
+
+const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
   ["year", 60 * 60 * 24 * 365],
   ["month", 60 * 60 * 24 * 30],
   ["day", 60 * 60 * 24],
@@ -6,31 +10,41 @@ const RTF_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
   ["minute", 60],
 ];
 
-export function relativeTime(iso: string): string {
+const TR_UNIT: Record<string, string> = {
+  year: "yıl",
+  month: "ay",
+  day: "gün",
+  hour: "saat",
+  minute: "dakika",
+};
+
+export function relativeTime(iso: string, locale: Locale = "tr"): string {
   const diffSec = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diffSec < 60) return "az önce";
-  for (const [unit, secs] of RTF_UNITS) {
+  if (diffSec < 60) return locale === "tr" ? "az önce" : "just now";
+  const rtf = new Intl.RelativeTimeFormat(locale === "tr" ? "tr" : "en", { numeric: "always" });
+  for (const [unit, secs] of UNITS) {
     if (diffSec >= secs) {
       const n = Math.floor(diffSec / secs);
-      const map: Record<string, [string, string]> = {
-        year: ["yıl", "yıl"],
-        month: ["ay", "ay"],
-        day: ["gün", "gün"],
-        hour: ["saat", "saat"],
-        minute: ["dakika", "dakika"],
-      };
-      return `${n} ${map[unit][0]} önce`;
+      if (locale === "tr") return `${n} ${TR_UNIT[unit]} önce`;
+      return rtf.format(-n, unit);
     }
   }
-  return "az önce";
+  return locale === "tr" ? "az önce" : "just now";
 }
 
-export function clockTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+export function clockTime(iso: string, locale: Locale = "tr"): string {
+  return new Date(iso).toLocaleTimeString(locale === "tr" ? "tr-TR" : "en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
-export function dateLabel(iso: string): string {
-  return new Date(iso).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+export function dateLabel(iso: string, locale: Locale = "tr"): string {
+  return new Date(iso).toLocaleDateString(locale === "tr" ? "tr-TR" : "en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 }
 
 export function duration(sec: number): string {
@@ -41,32 +55,3 @@ export function duration(sec: number): string {
     ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
     : `${m}:${String(s).padStart(2, "0")}`;
 }
-
-export const CATEGORY_LABEL: Record<string, string> = {
-  Models: "Modeller",
-  Companies: "Şirketler",
-  Research: "Araştırma",
-  Robotics: "Robotik",
-  Agents: "Yapay Zekâ Ajanları",
-  AICoding: "Yazılım & Kodlama",
-  GenerativeAI: "Üretken Yapay Zekâ",
-  ComputerVision: "Bilgisayarlı Görü",
-  VoiceAI: "Ses Yapay Zekâsı",
-  HealthcareAI: "Sağlıkta Yapay Zekâ",
-  FinanceAI: "Finansta Yapay Zekâ",
-  OpenSource: "Açık Kaynak",
-  AISafety: "Yapay Zekâ Güvenliği",
-  Regulation: "Regülasyon",
-  Infrastructure: "Altyapı",
-};
-
-export function categoryLabel(c: string): string {
-  return CATEGORY_LABEL[c] ?? c;
-}
-
-export const IMPACT_LABEL: Record<string, string> = {
-  low: "düşük etki",
-  medium: "orta etki",
-  high: "yüksek etki",
-  critical: "kritik",
-};

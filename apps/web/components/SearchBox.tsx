@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export function SearchBox() {
+export function SearchBox({ placeholder }: { placeholder: string }) {
   const router = useRouter();
   const [q, setQ] = useState("");
   return (
@@ -18,8 +18,8 @@ export function SearchBox() {
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Haberlerde ara…"
-        aria-label="Ara"
+        placeholder={placeholder}
+        aria-label="Search"
         className="w-full rounded-full border border-line bg-canvas py-2 pl-8 pr-3 text-sm text-ink placeholder:text-muted focus:border-accent focus:bg-paper focus:outline-none"
       />
     </form>

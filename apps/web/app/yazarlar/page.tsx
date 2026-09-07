@@ -2,22 +2,25 @@ import Link from "next/link";
 import { Page } from "@/components/Page";
 import { apiSafe } from "@/lib/api";
 import { dateLabel } from "@/lib/format";
+import { getDict, getLocale } from "@/lib/i18n";
 import type { AuthorRef, ColumnCard } from "@/lib/types";
 
 export const revalidate = 120;
 
 export default async function AuthorsPage() {
+  const locale = await getLocale();
+  const t = await getDict();
   const [authors, columns] = await Promise.all([
     apiSafe<AuthorRef[]>("/authors", []),
     apiSafe<ColumnCard[]>("/columns?limit=40", []),
   ]);
 
   return (
-    <Page title="Yazarlar" lead="PlanetAI9 köşe yazıları — sektörün kırılma noktaları ve Türkiye'nin yapay zekâ ekosistemi.">
+    <Page title={t.authors.title} lead={t.authors.lead}>
       <div className="grid gap-10 lg:grid-cols-[1fr_260px]">
         <div>
           {columns.length === 0 ? (
-            <p className="text-sm text-muted">Köşe yazıları çok yakında yayında.</p>
+            <p className="text-sm text-muted">{t.authors.soon}</p>
           ) : (
             <ul className="divide-y divide-line border-t-2 border-ink">
               {columns.map((c) => (
@@ -31,7 +34,7 @@ export default async function AuthorsPage() {
                       {c.title}
                     </h2>
                     {c.dek && <p className="mt-1.5 text-[14px] text-ink-2">{c.dek}</p>}
-                    <p className="mt-2 text-[11px] text-muted">{dateLabel(c.published_at)}</p>
+                    <p className="mt-2 text-[11px] text-muted">{dateLabel(c.published_at, locale)}</p>
                   </Link>
                 </li>
               ))}
@@ -41,7 +44,7 @@ export default async function AuthorsPage() {
 
         <aside>
           <h3 className="mb-3 border-b-2 border-ink pb-1.5 text-[15px] font-black tracking-tight">
-            Yazarlar
+            {t.authors.listLabel}
           </h3>
           <ul className="divide-y divide-line">
             {authors.map((a) => (

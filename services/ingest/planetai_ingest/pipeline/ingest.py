@@ -43,6 +43,9 @@ _AI_TERMS = re.compile(
     r"model|dataset|robot|autonomous|yapay zek[aâ]|makine öğrenme|üretken)\b",
     re.I,
 )
+# entity names that are ordinary words / big conglomerates — a bare match here
+# does not by itself make a story "about AI".
+_AMBIGUOUS_ENTITIES = {"amazon", "microsoft", "google", "meta", "apple"}
 
 
 def collect_source(source_id: uuid.UUID) -> dict:
@@ -119,9 +122,11 @@ def _ingest_item(
     hits = index.match(item.title, summary_src)
     title_anchor_ids = frozenset(h.entity_id for h in hits if h.in_title)
 
-    # relevance gate: drop off-topic posts from broad feeds (e.g. a personal blog's
-    # non-AI entries). Keep anything that names a known entity or reads as AI.
-    if source.kind != "arxiv" and not hits:
+    # relevance gate: drop off-topic posts from broad feeds. Keep anything that
+    # names a *specific* AI entity or reads as AI. Common-word company names
+    # (Amazon, Apple...) alone are not enough — they need an AI term too.
+    strong_hit = any(h.name.lower() not in _AMBIGUOUS_ENTITIES for h in hits)
+    if source.kind != "arxiv" and not strong_hit:
         if not _AI_TERMS.search(f"{item.title}\n{summary_src}"):
             return False
 
