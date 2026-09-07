@@ -204,26 +204,46 @@ export function dictFor(locale: Locale): DictT {
 
 // ---- category + impact labels -------------------------------------------------
 
-const CATEGORY: Record<string, { tr: string; en: string }> = {
-  Models: { tr: "Modeller", en: "Models" },
-  Companies: { tr: "Şirketler", en: "Companies" },
-  Research: { tr: "Araştırma", en: "Research" },
-  Robotics: { tr: "Robotik", en: "Robotics" },
-  Agents: { tr: "Yapay Zekâ Ajanları", en: "AI Agents" },
-  AICoding: { tr: "Yazılım & Kodlama", en: "AI Coding" },
-  GenerativeAI: { tr: "Üretken Yapay Zekâ", en: "Generative AI" },
-  ComputerVision: { tr: "Bilgisayarlı Görü", en: "Computer Vision" },
-  VoiceAI: { tr: "Ses Yapay Zekâsı", en: "Voice AI" },
-  HealthcareAI: { tr: "Sağlıkta Yapay Zekâ", en: "Healthcare AI" },
-  FinanceAI: { tr: "Finansta Yapay Zekâ", en: "Finance AI" },
-  OpenSource: { tr: "Açık Kaynak", en: "Open Source" },
-  AISafety: { tr: "Yapay Zekâ Güvenliği", en: "AI Safety" },
-  Regulation: { tr: "Regülasyon", en: "Regulation" },
-  Infrastructure: { tr: "Altyapı", en: "Infrastructure" },
+// Internal categories collapse into a small, editorial display taxonomy.
+export const CATEGORY_BUCKET: Record<string, string> = {
+  Models: "AI",
+  Companies: "AI",
+  Agents: "AI",
+  GenerativeAI: "AI",
+  VoiceAI: "AI",
+  ComputerVision: "AI",
+  HealthcareAI: "AI",
+  FinanceAI: "AI",
+  Robotics: "Robotics",
+  AICoding: "Coding",
+  AISafety: "Security",
+  Regulation: "Regulation",
+  Research: "Research",
+  Infrastructure: "Infra",
+  OpenSource: "OpenSource",
 };
 
+const BUCKET_LABEL: Record<string, { tr: string; en: string }> = {
+  AI: { tr: "Yapay Zekâ", en: "AI" },
+  Robotics: { tr: "Robotik", en: "Robotics" },
+  Coding: { tr: "Kodlama", en: "Coding" },
+  Security: { tr: "Güvenlik", en: "Security" },
+  Regulation: { tr: "Regülasyon", en: "Regulation" },
+  Research: { tr: "Araştırma", en: "Research" },
+  Infra: { tr: "Altyapı", en: "Infrastructure" },
+  OpenSource: { tr: "Açık Kaynak", en: "Open Source" },
+};
+
+export function categoryBucket(c: string): string {
+  return CATEGORY_BUCKET[c] ?? "AI";
+}
+
 export function categoryLabel(c: string, locale: Locale): string {
-  return CATEGORY[c]?.[locale] ?? c;
+  return BUCKET_LABEL[categoryBucket(c)]?.[locale] ?? c;
+}
+
+export function bucketLabel(bucket: string, locale: Locale): string {
+  return BUCKET_LABEL[bucket]?.[locale] ?? bucket;
 }
 
 export function impactLabel(i: string, locale: Locale): string {

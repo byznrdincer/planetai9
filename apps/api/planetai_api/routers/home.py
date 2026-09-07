@@ -19,7 +19,7 @@ _settings = get_settings()
 
 @router.get("/home", response_model=schemas.HomePayload)
 def home(db: Session = Depends(get_db)) -> schemas.HomePayload:
-    cached = cache.get("home:v2")
+    cached = cache.get("home:v3")
     if cached:
         return schemas.HomePayload.model_validate(cached)
 
@@ -71,6 +71,25 @@ def home(db: Session = Depends(get_db)) -> schemas.HomePayload:
         .limit(3)
     ).all()
 
+    def section(cat: str, limit: int = 4) -> list:
+        return db.scalars(
+            select(models.Event)
+            .where(
+                models.Event.status == "active",
+                models.Event.category == cat,
+                models.Event.id.not_in(research_event_ids),
+            )
+            .order_by(models.Event.last_activity_at.desc())
+            .limit(limit)
+        ).all()
+
+    sections = {
+        "models": section("Models"),
+        "robotics": section("Robotics"),
+        "coding": section("AICoding"),
+        "security": section("AISafety"),
+    }
+
     since = datetime.now(timezone.utc) - timedelta(hours=24)
     timeline_events = db.scalars(
         select(models.Event)
@@ -87,6 +106,7 @@ def home(db: Session = Depends(get_db)) -> schemas.HomePayload:
         top_signals=[serializers.event_card(db, e) for e in top_signals],
         latest_news=[serializers.event_card(db, e) for e in latest],
         popular=[serializers.event_card(db, e) for e in popular],
+        sections={k: [serializers.event_card(db, e) for e in v] for k, v in sections.items()},
         trending=build_trends(db, window="24h", limit=8),
         videos=[serializers.video_card(v) for v in videos],
         columns=[
@@ -112,5 +132,5 @@ def home(db: Session = Depends(get_db)) -> schemas.HomePayload:
             for e in timeline_events
         ],
     )
-    cache.set("home:v2", payload.model_dump(), _settings.cache_ttl_home_sec)
+    cache.set("home:v3", payload.model_dump(), _settings.cache_ttl_home_sec)
     return payload

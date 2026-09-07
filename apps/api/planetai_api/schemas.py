@@ -137,6 +137,7 @@ class HomePayload(BaseModel):
     videos: list[VideoCard]
     timeline: list[TimelineItem]
     columns: list[ColumnCardLite]
+    sections: dict[str, list[EventCard]]
 
 
 class Page(BaseModel):
@@ -174,6 +175,7 @@ class EntityRelationOut(BaseModel):
 class CategoryCount(BaseModel):
     category: str
     events_24h: int
+    events_total: int = 0
 
 
 EventDetail.model_rebuild()

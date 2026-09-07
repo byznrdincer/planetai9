@@ -18,6 +18,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    func,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -306,6 +307,19 @@ class OpinionPost(Base, TimestampMixin):
     author: Mapped[Author] = relationship(back_populates="posts")
 
     __table_args__ = (Index("ix_opinion_published", "status", "published_at"),)
+
+
+class NewsletterSubscriber(Base):
+    __tablename__ = "newsletter_subscribers"
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    email: Mapped[str] = mapped_column(String(320), unique=True)
+    locale: Mapped[str] = mapped_column(String(4), default="tr")
+    confirmed: Mapped[bool] = mapped_column(Boolean, default=False)
+    source: Mapped[str | None] = mapped_column(String(40))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
 
 class IngestRun(Base):

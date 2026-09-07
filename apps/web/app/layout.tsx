@@ -1,47 +1,35 @@
 import type { Metadata } from "next";
-import { Archivo } from "next/font/google";
-import Link from "next/link";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Masthead } from "@/components/Masthead";
-import { LogoMark } from "@/components/Logo";
-import { getDict, getLocale } from "@/lib/i18n";
+import { SiteFooter } from "@/components/SiteFooter";
+import { getLocale } from "@/lib/i18n";
 
-const archivo = Archivo({
+const inter = Inter({
   subsets: ["latin", "latin-ext"],
-  weight: ["400", "500", "600", "700", "800", "900"],
-  variable: "--font-archivo",
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
   title: "PlanetAI9 — Yapay Zekâ Haberleri",
   description:
-    "Yapay zekâ dünyasındaki gelişmeleri, model duyurularını ve araştırmaları tek bir yerde takip et.",
+    "Yapay zekâ dünyasındaki gelişmeleri, model duyurularını, araçları ve regülasyonları Türkçe takip et.",
 };
+
+const THEME_INIT = `try{if(localStorage.getItem('planetai_theme')==='dark'){document.documentElement.classList.add('dark')}}catch(e){}`;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale();
-  const t = await getDict();
   return (
-    <html lang={locale} className={archivo.variable}>
-      <body className="min-h-screen bg-canvas font-sans antialiased">
+    <html lang={locale} className={inter.variable} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
+      </head>
+      <body className="min-h-screen bg-paper font-sans antialiased dark:bg-d-paper">
         <Masthead />
-        <main className="mx-auto max-w-content px-5 py-6">{children}</main>
-        <footer className="mt-10 border-t border-line bg-paper">
-          <div className="mx-auto flex max-w-content flex-wrap items-center justify-between gap-3 px-5 py-8 text-[12px] text-muted">
-            <span className="flex items-center gap-2">
-              <LogoMark className="h-5 w-5" />
-              {t.common.footer}
-            </span>
-            <span className="flex gap-4">
-              <Link href="/hakkinda" className="link-accent">
-                {locale === "tr" ? "Biz Kimiz" : "About"}
-              </Link>
-              <Link href="/sources" className="link-accent">
-                {t.common.sourcesLink}
-              </Link>
-            </span>
-          </div>
-        </footer>
+        <main className="mx-auto max-w-content px-5 py-8 sm:px-8 sm:py-12">{children}</main>
+        <SiteFooter />
       </body>
     </html>
   );

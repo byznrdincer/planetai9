@@ -125,6 +125,7 @@ export interface HomePayload {
   videos: VideoCard[];
   timeline: TimelineItem[];
   columns: ColumnCardLite[];
+  sections: Record<string, EventCard[]>;
 }
 
 export interface MarketplaceApp {
@@ -186,6 +187,7 @@ export interface SearchResult {
 export interface CategoryCount {
   category: string;
   events_24h: number;
+  events_total: number;
 }
 
 export interface EntityListItem {

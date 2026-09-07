@@ -13,14 +13,16 @@ export function LangToggle({ locale }: { locale: Locale }) {
   }
 
   return (
-    <div className="flex items-center rounded-full border border-line text-[11px] font-bold">
+    <div className="flex items-center rounded-full border border-line p-0.5 text-[11px] font-bold dark:border-d-line">
       {(["tr", "en"] as const).map((l) => (
         <button
           key={l}
           onClick={() => set(l)}
           aria-pressed={locale === l}
-          className={`rounded-full px-2 py-1 uppercase ${
-            locale === l ? "bg-ink text-white" : "text-muted hover:text-ink"
+          className={`rounded-full px-2 py-1 uppercase transition-colors ${
+            locale === l
+              ? "bg-ink text-white dark:bg-white dark:text-ink"
+              : "text-muted hover:text-ink dark:hover:text-d-ink"
           }`}
         >
           {l}

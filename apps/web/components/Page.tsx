@@ -11,11 +11,16 @@ export function Page({
 }) {
   return (
     <div className={wide ? "" : "mx-auto max-w-3xl"}>
-      <div className="mb-6 flex items-center gap-2">
-        <span className="h-5 w-1 rounded bg-accent" />
-        <h1 className="text-2xl font-black tracking-tight text-ink">{title}</h1>
-      </div>
-      {lead && <p className="-mt-3 mb-6 max-w-xl text-sm text-ink-2">{lead}</p>}
+      <header className="mb-8">
+        <h1 className="text-[28px] font-extrabold tracking-tight3 text-ink dark:text-d-ink sm:text-[32px]">
+          {title}
+        </h1>
+        {lead && (
+          <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-ink-2 dark:text-d-ink-2">
+            {lead}
+          </p>
+        )}
+      </header>
       {children}
     </div>
   );

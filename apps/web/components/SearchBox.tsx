@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Search } from "lucide-react";
 
 export function SearchBox({ placeholder }: { placeholder: string }) {
   const router = useRouter();
@@ -14,13 +15,13 @@ export function SearchBox({ placeholder }: { placeholder: string }) {
       }}
       className="relative"
     >
-      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">⌕</span>
+      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder={placeholder}
         aria-label="Search"
-        className="w-full rounded-full border border-line bg-canvas py-2 pl-8 pr-3 text-sm text-ink placeholder:text-muted focus:border-accent focus:bg-paper focus:outline-none"
+        className="w-full rounded-full border border-line bg-canvas py-2 pl-10 pr-4 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent focus:bg-paper dark:border-d-line dark:bg-d-wash dark:text-d-ink"
       />
     </form>
   );

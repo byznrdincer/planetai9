@@ -24,10 +24,23 @@ def _decode_cursor(cursor: str) -> tuple[datetime, str]:
     return datetime.fromisoformat(ts), id_
 
 
+CATEGORY_BUCKET = {
+    "AI": ["Models", "Companies", "Agents", "GenerativeAI", "VoiceAI", "ComputerVision", "HealthcareAI", "FinanceAI"],
+    "Robotics": ["Robotics"],
+    "Coding": ["AICoding"],
+    "Security": ["AISafety"],
+    "Regulation": ["Regulation"],
+    "Research": ["Research"],
+    "Infra": ["Infrastructure"],
+    "OpenSource": ["OpenSource"],
+}
+
+
 @router.get("/events", response_model=schemas.Page)
 def list_events(
     db: Session = Depends(get_db),
     category: str | None = None,
+    bucket: str | None = None,
     entity: str | None = None,
     source: str | None = None,
     importance_min: float | None = None,
@@ -38,7 +51,16 @@ def list_events(
 ) -> schemas.Page:
     stmt = select(models.Event).where(models.Event.status == "active")
 
-    if category and category.lower() != "all":
+    if bucket and bucket in CATEGORY_BUCKET:
+        stmt = stmt.where(models.Event.category.in_(CATEGORY_BUCKET[bucket]))
+        if bucket != "Research":
+            arxiv_events = (
+                select(models.Article.event_id)
+                .join(models.Source, models.Source.id == models.Article.source_id)
+                .where(models.Source.kind == "arxiv", models.Article.event_id.isnot(None))
+            )
+            stmt = stmt.where(models.Event.id.not_in(arxiv_events))
+    elif category and category.lower() != "all":
         stmt = stmt.where(models.Event.category == category)
     elif not source:
         # the default feed is "news" — papers have their own surface (/research)
