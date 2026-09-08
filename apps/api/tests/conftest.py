@@ -28,5 +28,10 @@ def pytest_collection_modifyitems(config, items):
 @pytest.fixture(scope="session")
 def client() -> TestClient:
     from planetai_api.main import app
+    from planetai_api.ratelimit import limiter
+
+    # tests exercise rate-limited endpoints repeatedly (and the limiter's
+    # fixed-window state lives in Redis across runs) — turn it off here.
+    limiter.enabled = False
 
     return TestClient(app)

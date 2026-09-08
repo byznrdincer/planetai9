@@ -47,6 +47,9 @@ services:
       <<: *common-env
       PLANETAI_CORS_ORIGINS: ${SITE_URL}
       PLANETAI_DOCS_ENABLED: "false"
+      PLANETAI_ADMIN_TOKEN: ${ADMIN_TOKEN:-}
+      PLANETAI_AUTHOR_KEYS: ${AUTHOR_KEYS:-}
+      PLANETAI_MODERATOR_AUTHORS: ${MODERATOR_AUTHORS:-}
       PORT: "8000"
     depends_on:
       postgres: { condition: service_healthy }
@@ -66,6 +69,7 @@ services:
     environment:
       <<: *common-env
       PLANETAI_YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
+      PLANETAI_GOOGLE_TRANSLATE_API_KEY: ${GOOGLE_TRANSLATE_API_KEY:-}
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }

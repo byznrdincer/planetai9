@@ -50,9 +50,66 @@ def test_marketplace_submission_lands_pending(client):
     r = client.post("/api/v1/marketplace", json=payload)
     assert r.status_code == 201
     assert r.json()["status"] == "pending"
-    # it must NOT appear in the public (approved) listing
-    listed = client.get("/api/v1/marketplace").json()
-    assert all(a["name"] != "PyTest Sample App" for a in listed)
+    slug = r.json()["slug"]
+    try:
+        # it must NOT appear in the public (approved) listing
+        listed = client.get("/api/v1/marketplace").json()
+        assert all(a["name"] != "PyTest Sample App" for a in listed)
+    finally:
+        from planetai_shared.db import models
+        from planetai_shared.db.base import session_scope
+
+        with session_scope() as db:
+            db.query(models.MarketplaceApp).filter_by(slug=slug).delete()
+
+
+def test_marketplace_queue_hidden_without_token(client, monkeypatch):
+    from planetai_api.routers import marketplace
+
+    # no admin token AND no moderator authors ⇒ the moderation surface must 404
+    monkeypatch.setattr(marketplace._settings, "admin_token", None, raising=False)
+    monkeypatch.setattr(marketplace._settings, "moderator_authors", [], raising=False)
+    assert client.get("/api/v1/marketplace/queue").status_code == 404
+
+
+def test_marketplace_admin_moderation_flow(client, monkeypatch):
+    from planetai_api.routers import marketplace
+
+    monkeypatch.setattr(marketplace._settings, "admin_token", "test-secret", raising=False)
+
+    assert client.get("/api/v1/marketplace/queue").status_code == 401
+    assert (
+        client.get("/api/v1/marketplace/queue", headers={"X-Admin-Token": "wrong"}).status_code
+        == 401
+    )
+
+    hdr = {"X-Admin-Token": "test-secret"}
+    sub = client.post(
+        "/api/v1/marketplace",
+        json={
+            "name": "Admin Flow App",
+            "category": "agent",
+            "tagline": "submitted to exercise the moderation endpoints",
+            "url": "https://example.com/admin-flow",
+            "author_name": "Test Suite",
+        },
+    )
+    slug = sub.json()["slug"]
+    try:
+        queue = client.get("/api/v1/marketplace/queue", headers=hdr).json()
+        assert any(a["slug"] == slug and a["status"] == "pending" for a in queue)
+
+        upd = client.post(
+            f"/api/v1/marketplace/{slug}/status", headers=hdr, json={"status": "approved"}
+        )
+        assert upd.status_code == 200 and upd.json()["status"] == "approved"
+        assert any(a["slug"] == slug for a in client.get("/api/v1/marketplace").json())
+    finally:
+        from planetai_shared.db import models
+        from planetai_shared.db.base import session_scope
+
+        with session_scope() as db:
+            db.query(models.MarketplaceApp).filter_by(slug=slug).delete()
 
 
 def test_marketplace_rejects_bad_category(client):
@@ -67,3 +124,177 @@ def test_marketplace_rejects_bad_category(client):
         },
     )
     assert r.status_code == 422
+
+
+def test_author_studio_hidden_without_keys(client, monkeypatch):
+    from planetai_api.routers import authors
+
+    # no author keys configured ⇒ the studio surface must 404 (stay invisible)
+    monkeypatch.setattr(authors._settings, "author_keys", {}, raising=False)
+    assert client.get("/api/v1/authors/me/studio").status_code == 404
+    assert (
+        client.get(
+            "/api/v1/authors/me/studio", headers={"X-Author-Key": "ayhan-demirci:whatever"}
+        ).status_code
+        == 404
+    )
+
+
+def test_author_studio_write_flow(client, monkeypatch):
+    from planetai_api.routers import authors
+
+    monkeypatch.setitem(authors._settings.author_keys, "ayhan-demirci", "test-key")
+    hdr = {"X-Author-Key": "ayhan-demirci:test-key"}
+
+    assert client.get("/api/v1/authors/me/studio").status_code == 401
+    assert (
+        client.get(
+            "/api/v1/authors/me/studio", headers={"X-Author-Key": "ayhan-demirci:x"}
+        ).status_code
+        == 401
+    )
+
+    body = "İlk paragraf, anlamlı ve yeterince uzun bir cümle burada duruyor.\n\nİkinci paragraf da öyle."
+    created = client.post(
+        "/api/v1/authors/me/columns",
+        headers=hdr,
+        json={"title": "Test köşe yazısı", "dek": "kısa spot", "body": body, "status": "draft"},
+    )
+    assert created.status_code == 201
+    slug = created.json()["slug"]
+    try:
+        # draft ⇒ not in the public feed
+        assert all(c["slug"] != slug for c in client.get("/api/v1/columns").json())
+
+        pub = client.patch(
+            f"/api/v1/authors/me/columns/{slug}",
+            headers=hdr,
+            json={"title": "Test köşe yazısı", "dek": "spot", "body": body, "status": "published"},
+        )
+        assert pub.status_code == 200 and pub.json()["status"] == "published"
+        assert any(c["slug"] == slug for c in client.get("/api/v1/columns").json())
+
+        # another author's key cannot touch it
+        monkeypatch.setitem(authors._settings.author_keys, "someone-else", "k2")
+        forbidden = client.patch(
+            f"/api/v1/authors/me/columns/{slug}",
+            headers={"X-Author-Key": "someone-else:k2"},
+            json={"title": "hijack denemesi", "body": body, "status": "draft"},
+        )
+        assert forbidden.status_code == 404
+    finally:
+        from planetai_shared.db import models
+        from planetai_shared.db.base import session_scope
+
+        with session_scope() as db:
+            db.query(models.OpinionPost).filter_by(slug=slug).delete()
+
+
+def test_moderator_author_can_work_marketplace_queue(client, monkeypatch):
+    from planetai_api.routers import authors, marketplace
+
+    monkeypatch.setitem(authors._settings.author_keys, "ayhan-demirci", "mk")
+    monkeypatch.setattr(
+        marketplace._settings, "author_keys", authors._settings.author_keys, raising=False
+    )
+    monkeypatch.setattr(
+        marketplace._settings, "moderator_authors", ["ayhan-demirci"], raising=False
+    )
+
+    good = {"X-Author-Key": "ayhan-demirci:mk"}
+    # studio payload advertises the capability
+    assert client.get("/api/v1/authors/me/studio", headers=good).json()["is_moderator"] is True
+    # a non-moderator author key is rejected from the queue
+    monkeypatch.setitem(authors._settings.author_keys, "no-mod", "x")
+    assert (
+        client.get("/api/v1/marketplace/queue", headers={"X-Author-Key": "no-mod:x"}).status_code
+        == 401
+    )
+
+    assert client.get("/api/v1/marketplace/queue", headers=good).status_code == 200
+
+    sub = client.post(
+        "/api/v1/marketplace",
+        json={
+            "name": "Moderator Flow App",
+            "category": "tool",
+            "tagline": "exercise the moderator-author approval path",
+            "url": "https://example.com/mod-flow",
+            "author_name": "Test",
+        },
+    )
+    slug = sub.json()["slug"]
+    try:
+        upd = client.post(
+            f"/api/v1/marketplace/{slug}/status", headers=good, json={"status": "approved"}
+        )
+        assert upd.status_code == 200 and upd.json()["status"] == "approved"
+        assert any(a["slug"] == slug for a in client.get("/api/v1/marketplace").json())
+    finally:
+        from planetai_shared.db import models
+        from planetai_shared.db.base import session_scope
+
+        with session_scope() as db:
+            db.query(models.MarketplaceApp).filter_by(slug=slug).delete()
+
+
+def test_events_window_and_region_world(client):
+    assert client.get("/api/v1/events?window=24h&limit=5").status_code == 200
+    assert client.get("/api/v1/events?window=bogus&limit=5").status_code == 200  # ignored
+
+    world = client.get("/api/v1/events?region=world&limit=30").json()["data"]
+    tr = client.get("/api/v1/events?region=TR&limit=30").json()["data"]
+    world_slugs = {e["slug"] for e in world}
+    tr_slugs = {e["slug"] for e in tr}
+    assert world_slugs.isdisjoint(tr_slugs)  # a story is in exactly one region
+
+
+def test_event_translation_served_by_lang(client):
+    import uuid
+
+    from planetai_shared.db import models
+    from planetai_shared.db.base import session_scope
+
+    slug = f"pytest-xlate-{uuid.uuid4().hex[:8]}"
+    with session_scope() as db:
+        ev = models.Event(
+            slug=slug,
+            title="Yerli yapay zekâ modeli tanıtıldı",
+            summary="Türkçe özet.",
+            category="Models",
+            lang="tr",
+            impact="low",
+            importance=1,
+            source_count=1,
+            first_seen_at="2026-09-01T00:00:00Z",
+            last_activity_at="2026-09-08T00:00:00Z",
+            status="active",
+        )
+        db.add(ev)
+        db.flush()
+        db.add(
+            models.EventTranslation(
+                event_id=ev.id,
+                target_lang="en",
+                title="Homegrown AI model unveiled",
+                summary="English summary.",
+                status="done",
+                source_hash="x",
+            )
+        )
+        ev_id = ev.id
+
+    try:
+        default = client.get(f"/api/v1/events/{slug}").json()
+        assert default["title"] == "Yerli yapay zekâ modeli tanıtıldı"
+
+        en = client.get(f"/api/v1/events/{slug}?lang=en").json()
+        assert en["title"] == "Homegrown AI model unveiled"
+
+        # TR requested for a TR-origin story ⇒ still the original
+        tr = client.get(f"/api/v1/events/{slug}?lang=tr").json()
+        assert tr["title"] == "Yerli yapay zekâ modeli tanıtıldı"
+    finally:
+        with session_scope() as db:
+            db.query(models.EventTranslation).filter_by(event_id=ev_id).delete()
+            db.query(models.Event).filter_by(id=ev_id).delete()

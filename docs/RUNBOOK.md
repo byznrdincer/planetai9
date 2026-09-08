@@ -51,13 +51,25 @@ then `uv run planetai-ingest collect --kinds youtube`.
 | `planetai-ingest seed` | upsert seed YAML into DB (idempotent) — sources, entities, topics, authors, marketplace apps |
 | `planetai-ingest collect [--kinds rss,arxiv,youtube]` | one collection pass (fetches OG images, busts API cache) |
 | `planetai-ingest trends` | recompute trend snapshots + refresh top signals |
-| `planetai-ingest scheduler` | APScheduler loop (10m news / 60m arxiv+yt / 30m trends) |
+| `planetai-ingest translate [--limit N]` | translate pending events TR↔EN (Google Cloud Translation; see docs/07-translation.md) |
+| `planetai-ingest scheduler` | APScheduler loop (10m news / 60m arxiv+yt / 20m translate / 30m trends) |
 | `python -m planetai_api.moderate list` | list AI Marketplace submissions with status |
 | `python -m planetai_api.moderate approve <slug>` | publish a pending marketplace app |
 | `python -m planetai_api.moderate reject <slug>` | reject a submission |
 
 ## Köşe yazısı ekleme
-En kolay yol — `infra/seed/editorial.yaml` içindeki `columns:` listesine ekle, sonra `uv run planetai-ingest seed`:
+
+**Yazar stüdyosu (`/yazar`)** — yazarın kendisi tarayıcıdan yazar, taslak saklar, yayınlar.
+`.env` içine `PLANETAI_AUTHOR_KEYS=<slug>:<secret>[,<slug2>:<secret2>]` ekle (prod: `AUTHOR_KEYS`).
+Yazar `/yazar` adresinden slug + secret ile girer; yalnızca kendi yazılarını görür/düzenler.
+Anahtar tanımlı değilse `/yazar` 404 döner.
+
+**Marketplace moderasyonu yazar stüdyosundan** — `PLANETAI_MODERATOR_AUTHORS=<slug>,<slug2>`
+(prod: `MODERATOR_AUTHORS`) listesindeki yazarlar `/yazar` içinde "Marketplace Başvuruları"
+sekmesini görür; topluluk başvurularını oradan onaylar/reddeder. Aynı işi `/yonetim` + admin
+token da yapar. İkisinden biri tanımlıysa `/marketplace/queue` erişilebilir olur.
+
+**Alternatif — seed** — `infra/seed/editorial.yaml` içindeki `columns:` listesine ekle, sonra `uv run planetai-ingest seed`:
 ```yaml
 columns:
   - slug: 2026-yapay-zeka-ajanlari
