@@ -42,9 +42,9 @@ _AI_TERMS = re.compile(
     r"large language model|neural net|transformer|diffusion|gpt|chatgpt|claude|gemini|"
     r"llama|mistral|deepseek|qwen|grok|openai|anthropic|deepmind|hugging ?face|nvidia|"
     r"agent|agentic|chatbot|inference|fine[- ]tun|training run|benchmark|multimodal|"
-    r"model|dataset|robot|autonomous|"
-    r"yapay zek[aâ]|makine öğren|derin öğren|büyük dil model|üretken|sohbet bot|"
-    r"dil model|yapay sinir|otonom)\b",
+    r"language model|foundation model|frontier model|reasoning model|open model|robot|"
+    r"yapay zek[aâ]|makine öğren|derin öğren|büyük dil model|üretken yapay|sohbet bot|"
+    r"dil model|yapay sinir|otonom sürüş|otonom araç)\b",
     re.I,
 )
 # entity names that are ordinary words / big conglomerates — a bare match here

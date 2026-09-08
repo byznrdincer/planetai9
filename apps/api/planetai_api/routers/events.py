@@ -36,12 +36,16 @@ CATEGORY_BUCKET = {
 }
 
 
+TR_SOURCE_SLUGS = ("webrazzi", "shiftdelete", "techinside", "donanimhaber", "log-tr")
+
+
 @router.get("/events", response_model=schemas.Page)
 def list_events(
     db: Session = Depends(get_db),
     category: str | None = None,
     bucket: str | None = None,
     topic: str | None = None,
+    region: str | None = None,
     entity: str | None = None,
     source: str | None = None,
     importance_min: float | None = None,
@@ -80,6 +84,20 @@ def list_events(
         stmt = stmt.join(
             models.EventTopic, models.EventTopic.event_id == models.Event.id
         ).where(models.EventTopic.topic_id == tp.id)
+    if region and region.upper() == "TR":
+        tr_source_events = (
+            select(models.Article.event_id)
+            .join(models.Source, models.Source.id == models.Article.source_id)
+            .where(models.Source.slug.in_(TR_SOURCE_SLUGS), models.Article.event_id.isnot(None))
+        )
+        tr_topic_events = (
+            select(models.EventTopic.event_id)
+            .join(models.Topic, models.Topic.id == models.EventTopic.topic_id)
+            .where(models.Topic.slug == "turkiye")
+        )
+        stmt = stmt.where(
+            models.Event.id.in_(tr_source_events.union(tr_topic_events))
+        )
     if importance_min is not None:
         stmt = stmt.where(models.Event.importance >= importance_min)
     if impact:

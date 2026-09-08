@@ -41,6 +41,7 @@ def main(argv: list[str] | None = None) -> int:
     p_collect.add_argument("--kinds", help="comma list: rss,arxiv,youtube,html_blog")
 
     sub.add_parser("trends", help="compute trend snapshots + refresh top signals")
+    sub.add_parser("retag", help="re-run topic matching over existing events")
     sub.add_parser("scheduler", help="run the long-lived scheduler")
 
     args = parser.parse_args(argv)
@@ -68,6 +69,13 @@ def main(argv: list[str] | None = None) -> int:
         compute_snapshots()
         n = refresh_top_signals()
         print(f"top signals: {n}")
+        _bust_api_cache()
+        return 0
+
+    if args.cmd == "retag":
+        from planetai_ingest.retag import run as retag_run
+
+        print(f"new links: {retag_run()}")
         _bust_api_cache()
         return 0
 

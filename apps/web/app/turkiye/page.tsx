@@ -13,7 +13,7 @@ export default async function TurkiyePage() {
   const tr = locale === "tr";
 
   const [news, videos] = await Promise.all([
-    apiSafe<PageT>("/events?topic=turkiye&limit=24&sort=recent", {
+    apiSafe<PageT>("/events?region=TR&limit=24&sort=recent", {
       data: [],
       next_cursor: null,
       count: 0,
