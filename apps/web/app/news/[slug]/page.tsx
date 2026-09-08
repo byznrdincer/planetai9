@@ -40,7 +40,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         )}
         <div className="mt-5 border-y border-line py-3 dark:border-d-line">
           <Meta
-            summary={event.summary}
+            summary={event.body.join(" ") || event.summary}
             date={event.last_activity_at}
             source={primary?.source.name}
             locale={locale}
