@@ -35,11 +35,30 @@ def _top_source(db: Session, event: models.Event) -> models.Source | None:
     return row
 
 
-def event_card(db: Session, event: models.Event) -> schemas.EventCard:
+def localized_text(
+    db: Session, event: models.Event, lang: str | None
+) -> tuple[str, str | None, str | None]:
+    """(title, summary, body_text) in `lang`, falling back to the stored original.
+
+    A missing or not-yet-`done` translation transparently yields the original, so
+    a story is never hidden by a failed translation.
+    """
+    title, summary, body = event.title, event.summary, event.body_text
+    if lang and lang != event.lang:
+        tr = db.get(models.EventTranslation, (event.id, lang))
+        if tr is not None and tr.status == "done":
+            title = tr.title or title
+            summary = tr.summary or summary
+            body = tr.body_text or body
+    return title, summary, body
+
+
+def event_card(db: Session, event: models.Event, lang: str | None = None) -> schemas.EventCard:
+    title, summary, _ = localized_text(db, event, lang)
     return schemas.EventCard(
         slug=event.slug,
-        title=event.title,
-        summary=event.summary,
+        title=title,
+        summary=summary,
         category=event.category,
         impact=event.impact,
         importance=float(event.importance),
@@ -64,7 +83,8 @@ def video_card(video: models.Video) -> schemas.VideoCard:
     )
 
 
-def event_detail(db: Session, event: models.Event) -> schemas.EventDetail:
+def event_detail(db: Session, event: models.Event, lang: str | None = None) -> schemas.EventDetail:
+    title, summary, body_text = localized_text(db, event, lang)
     entity_rows = db.execute(
         select(models.EventEntity, models.Entity)
         .join(models.Entity, models.Entity.id == models.EventEntity.entity_id)
@@ -118,9 +138,9 @@ def event_detail(db: Session, event: models.Event) -> schemas.EventDetail:
 
     return schemas.EventDetail(
         slug=event.slug,
-        title=event.title,
-        summary=event.summary,
-        body=[p.strip() for p in (event.body_text or "").split("\n\n") if p.strip()],
+        title=title,
+        summary=summary,
+        body=[p.strip() for p in (body_text or "").split("\n\n") if p.strip()],
         why_it_matters=event.why_it_matters,
         category=event.category,
         impact=event.impact,
@@ -136,7 +156,7 @@ def event_detail(db: Session, event: models.Event) -> schemas.EventDetail:
         ],
         sources=sources,
         importance_factors=fout,
-        related_events=[event_card(db, e) for e in related],
+        related_events=[event_card(db, e, lang) for e in related],
         related_videos=[video_card(v) for v in related_videos],
     )
 

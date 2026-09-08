@@ -111,6 +111,7 @@ def seed_sources(db: Session) -> None:
         src.feed_url = row.get("feed_url")
         src.kind = row["kind"]
         src.source_type = row["source_type"]
+        src.lang = row.get("lang", "en")
         src.trust_weight = row.get("trust_weight", 0.5)
         src.poll_interval_sec = row.get("poll_interval_sec", 900)
         src.enabled = row.get("enabled", True)

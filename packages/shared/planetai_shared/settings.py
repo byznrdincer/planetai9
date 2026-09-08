@@ -14,7 +14,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="PLANETAI_", env_file=".env", extra="ignore")
+    # enable_decoding=False: env values for list/dict fields (cors_origins, author_keys)
+    # arrive as raw strings for our own `mode="before"` validators to split — no JSON parsing.
+    model_config = SettingsConfigDict(
+        env_prefix="PLANETAI_", env_file=".env", extra="ignore", enable_decoding=False
+    )
 
     env: Literal["dev", "staging", "production"] = "dev"
 
@@ -28,6 +32,10 @@ class Settings(BaseSettings):
     http_timeout_sec: float = 20.0
     youtube_api_key: str | None = None
     youtube_channel_id: str | None = None
+    # Google Cloud Translation API v2 key; unset ⇒ translation pipeline is a no-op
+    google_translate_api_key: str | None = None
+    translate_max_attempts: int = 4  # retry a failed event translation up to this many times
+    translate_max_age_days: int = 21  # only translate events fresher than this
     max_article_age_days: int = 75
     max_items_per_fetch: int = 120
     dedup_lookback_hours: int = 72
@@ -41,15 +49,34 @@ class Settings(BaseSettings):
     rate_limit_default: str = "120/minute"
     rate_limit_submit: str = "8/hour"
     docs_enabled: bool = True
+    # shared secret for the /yonetim moderation panel; unset ⇒ panel disabled
+    admin_token: str | None = None
+    # per-author keys for the /yazar studio: "slug:secret,slug2:secret2"; empty ⇒ studio disabled
+    author_keys: dict[str, str] = {}
+    # author slugs allowed to moderate the AI Marketplace queue from their studio: "slug,slug2"
+    moderator_authors: list[str] = []
 
     # feature flags
     ai_enrich_enabled: bool = False
 
-    @field_validator("cors_origins", mode="before")
+    @field_validator("cors_origins", "moderator_authors", mode="before")
     @classmethod
     def _split_origins(cls, v: object) -> object:
         if isinstance(v, str):
             return [o.strip() for o in v.split(",") if o.strip()]
+        return v
+
+    @field_validator("author_keys", mode="before")
+    @classmethod
+    def _parse_author_keys(cls, v: object) -> object:
+        if isinstance(v, str):
+            out: dict[str, str] = {}
+            for part in v.split(","):
+                if ":" in part:
+                    slug, key = part.split(":", 1)
+                    if slug.strip() and key.strip():
+                        out[slug.strip()] = key.strip()
+            return out
         return v
 
     @property

@@ -40,6 +40,8 @@ def main(argv: list[str] | None = None) -> int:
     p_collect.add_argument("--kinds", help="comma list: rss,arxiv,youtube,html_blog")
 
     sub.add_parser("trends", help="compute trend snapshots + refresh top signals")
+    p_tr = sub.add_parser("translate", help="translate pending events between TR and EN")
+    p_tr.add_argument("--limit", type=int, default=60, help="max events per pass")
     sub.add_parser("retag", help="re-run topic matching over existing events")
     sub.add_parser("scheduler", help="run the long-lived scheduler")
 
@@ -68,6 +70,13 @@ def main(argv: list[str] | None = None) -> int:
         compute_snapshots()
         n = refresh_top_signals()
         print(f"top signals: {n}")
+        _bust_api_cache()
+        return 0
+
+    if args.cmd == "translate":
+        from planetai_ingest.pipeline.translate import run as translate_run
+
+        print(translate_run(limit=args.limit))
         _bust_api_cache()
         return 0
 

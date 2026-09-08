@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from planetai_api import cache, schemas, serializers
-from planetai_api.db import get_db
+from planetai_api.db import get_db, get_lang
 from planetai_api.routers.trends import build_trends
 
 router = APIRouter()
@@ -18,8 +18,12 @@ _settings = get_settings()
 
 
 @router.get("/home", response_model=schemas.HomePayload)
-def home(db: Session = Depends(get_db)) -> schemas.HomePayload:
-    cached = cache.get("home:v3")
+def home(
+    db: Session = Depends(get_db),
+    lang: str | None = Depends(get_lang),
+) -> schemas.HomePayload:
+    cache_key = f"home:v4:{lang or 'tr'}"
+    cached = cache.get(cache_key)
     if cached:
         return schemas.HomePayload.model_validate(cached)
 
@@ -103,11 +107,11 @@ def home(db: Session = Depends(get_db)) -> schemas.HomePayload:
     ).all()
 
     payload = schemas.HomePayload(
-        top_signals=[serializers.event_card(db, e) for e in top_signals],
-        latest_news=[serializers.event_card(db, e) for e in latest],
-        popular=[serializers.event_card(db, e) for e in popular],
-        sections={k: [serializers.event_card(db, e) for e in v] for k, v in sections.items()},
-        trending=build_trends(db, window="24h", limit=8),
+        top_signals=[serializers.event_card(db, e, lang) for e in top_signals],
+        latest_news=[serializers.event_card(db, e, lang) for e in latest],
+        popular=[serializers.event_card(db, e, lang) for e in popular],
+        sections={k: [serializers.event_card(db, e, lang) for e in v] for k, v in sections.items()},
+        trending=build_trends(db, window="24h", limit=8, lang=lang),
         videos=[serializers.video_card(v) for v in videos],
         columns=[
             schemas.ColumnCardLite(
@@ -125,12 +129,12 @@ def home(db: Session = Depends(get_db)) -> schemas.HomePayload:
             schemas.TimelineItem(
                 time=e.last_activity_at,
                 slug=e.slug,
-                title=e.title,
+                title=serializers.localized_text(db, e, lang)[0],
                 category=e.category,
                 impact=e.impact,
             )
             for e in timeline_events
         ],
     )
-    cache.set("home:v3", payload.model_dump(), _settings.cache_ttl_home_sec)
+    cache.set(cache_key, payload.model_dump(), _settings.cache_ttl_home_sec)
     return payload

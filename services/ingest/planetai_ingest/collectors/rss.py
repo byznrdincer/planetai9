@@ -85,6 +85,7 @@ class RssCollector(BaseCollector):
                     published_at=_parsed_datetime(entry),
                     author=normalize_ws(entry.get("author")) or None,
                     image_url=_entry_image(entry),
+                    lang=src.lang or "en",
                     extra={"content_html": content_html} if content_html else {},
                 )
             )

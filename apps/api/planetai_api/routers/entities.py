@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from planetai_api import schemas, serializers
-from planetai_api.db import get_db
+from planetai_api.db import get_db, get_lang
 
 router = APIRouter()
 
@@ -33,7 +33,11 @@ def list_entities(
 
 
 @router.get("/entities/{slug}", response_model=schemas.EntityDetail)
-def get_entity(slug: str, db: Session = Depends(get_db)) -> schemas.EntityDetail:
+def get_entity(
+    slug: str,
+    db: Session = Depends(get_db),
+    lang: str | None = Depends(get_lang),
+) -> schemas.EntityDetail:
     ent = db.scalar(select(models.Entity).where(models.Entity.slug == slug))
     if ent is None:
         raise HTTPException(404, "entity not found")
@@ -96,6 +100,6 @@ def get_entity(slug: str, db: Session = Depends(get_db)) -> schemas.EntityDetail
         logo_url=ent.logo_url,
         website_url=ent.website_url,
         relations=relations,
-        latest_events=[serializers.event_card(db, e) for e in latest_events],
+        latest_events=[serializers.event_card(db, e, lang) for e in latest_events],
         videos=[serializers.video_card(v) for v in videos],
     )
