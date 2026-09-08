@@ -1,16 +1,20 @@
 from __future__ import annotations
 
-from datetime import datetime
+import uuid
+from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from planetai_shared.db import models
-from pydantic import BaseModel
+from planetai_shared.settings import get_settings
+from pydantic import BaseModel, Field
+from slugify import slugify
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from planetai_api.db import get_db
 
 router = APIRouter()
+_settings = get_settings()
 
 
 class AuthorRef(BaseModel):
@@ -101,3 +105,153 @@ def get_column(slug: str, db: Session = Depends(get_db)) -> ColumnDetail:
     if p is None or p.status != "published":
         raise HTTPException(404, "column not found")
     return ColumnDetail(**_card(p).model_dump(), body=p.body)
+
+
+# --- author studio (X-Author-Key: "<slug>:<secret>") --------------------------
+
+
+class MyColumn(BaseModel):
+    slug: str
+    title: str
+    dek: str | None
+    body: str
+    hero_image_url: str | None
+    status: str
+    published_at: datetime
+    updated_at: datetime
+
+
+class StudioPayload(BaseModel):
+    author: AuthorDetail
+    columns: list[MyColumn]
+    is_moderator: bool  # may also moderate the AI Marketplace queue
+
+
+class ColumnInput(BaseModel):
+    title: str = Field(min_length=4, max_length=200)
+    dek: str | None = Field(default=None, max_length=300)
+    body: str = Field(min_length=40)
+    hero_image_url: str | None = Field(default=None, max_length=600)
+    status: str = Field(default="draft", pattern="^(draft|published)$")
+
+
+def require_author(
+    x_author_key: str | None = Header(default=None),
+    db: Session = Depends(get_db),
+) -> models.Author:
+    """Guard for the writer studio. 404 when unconfigured so the surface stays invisible."""
+    if not _settings.author_keys:
+        raise HTTPException(404, "not found")
+    if not x_author_key or ":" not in x_author_key:
+        raise HTTPException(401, "geçersiz yazar anahtarı")
+    slug, secret = x_author_key.split(":", 1)
+    if not secret or _settings.author_keys.get(slug) != secret:
+        raise HTTPException(401, "geçersiz yazar anahtarı")
+    author = db.scalar(select(models.Author).where(models.Author.slug == slug))
+    if author is None:
+        raise HTTPException(404, "yazar bulunamadı")
+    return author
+
+
+def _bust_columns_cache() -> None:
+    try:
+        import redis
+
+        client = redis.from_url(_settings.redis_url)
+        for pattern in ("home*", "columns*"):
+            for key in client.scan_iter(match=pattern):
+                client.delete(key)
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _my_column(p: models.OpinionPost) -> MyColumn:
+    return MyColumn(
+        slug=p.slug,
+        title=p.title,
+        dek=p.dek,
+        body=p.body,
+        hero_image_url=p.hero_image_url,
+        status=p.status,
+        published_at=p.published_at,
+        updated_at=p.updated_at,
+    )
+
+
+def _author_detail(a: models.Author) -> AuthorDetail:
+    return AuthorDetail(
+        slug=a.slug,
+        name=a.name,
+        role=a.role,
+        avatar_url=a.avatar_url,
+        bio=a.bio,
+        links=a.links or {},
+    )
+
+
+@router.get("/authors/me/studio", response_model=StudioPayload)
+def my_studio(
+    author: models.Author = Depends(require_author),
+    db: Session = Depends(get_db),
+) -> StudioPayload:
+    posts = db.scalars(
+        select(models.OpinionPost)
+        .where(models.OpinionPost.author_id == author.id)
+        .order_by(models.OpinionPost.published_at.desc())
+    ).all()
+    return StudioPayload(
+        author=_author_detail(author),
+        columns=[_my_column(p) for p in posts],
+        is_moderator=author.slug in _settings.moderator_authors,
+    )
+
+
+@router.post("/authors/me/columns", response_model=MyColumn, status_code=201)
+def create_my_column(
+    payload: ColumnInput,
+    author: models.Author = Depends(require_author),
+    db: Session = Depends(get_db),
+) -> MyColumn:
+    slug = f"{slugify(payload.title)[:200] or 'kose'}-{uuid.uuid4().hex[:6]}"
+    now = datetime.now(UTC)
+    post = models.OpinionPost(
+        slug=slug,
+        author_id=author.id,
+        title=payload.title,
+        dek=payload.dek,
+        body=payload.body.strip(),
+        hero_image_url=payload.hero_image_url,
+        status=payload.status,
+        published_at=now,
+    )
+    db.add(post)
+    db.commit()
+    db.refresh(post)
+    if post.status == "published":
+        _bust_columns_cache()
+    return _my_column(post)
+
+
+@router.patch("/authors/me/columns/{slug}", response_model=MyColumn)
+def update_my_column(
+    slug: str,
+    payload: ColumnInput,
+    author: models.Author = Depends(require_author),
+    db: Session = Depends(get_db),
+) -> MyColumn:
+    post = db.scalar(select(models.OpinionPost).where(models.OpinionPost.slug == slug))
+    if post is None or post.author_id != author.id:
+        raise HTTPException(404, "yazı bulunamadı")
+    was_published = post.status == "published"
+    post.title = payload.title
+    post.dek = payload.dek
+    post.body = payload.body.strip()
+    post.hero_image_url = payload.hero_image_url
+    if payload.status == "published" and not was_published:
+        post.published_at = datetime.now(UTC)
+    post.status = payload.status
+    db.commit()
+    db.refresh(post)
+    if post.status == "published" or was_published:
+        _bust_columns_cache()
+    return _my_column(post)
