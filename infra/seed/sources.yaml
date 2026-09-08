@@ -374,16 +374,6 @@
   trust_weight: 0.45
   poll_interval_sec: 3600
 
-- slug: nvidia-dev-blog
-  name: NVIDIA Developer Blog
-  homepage_url: https://developer.nvidia.com/blog/
-  feed_url: https://developer.nvidia.com/blog/feed/
-  kind: rss
-  source_type: official_announcement
-  trust_weight: 0.8
-  entity: nvidia
-  poll_interval_sec: 3600
-
 - slug: planetai-youtube
   name: PlanetAI YouTube
   homepage_url: https://www.youtube.com/

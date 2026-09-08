@@ -54,11 +54,18 @@ def extract_article_paragraphs(html: str, *, max_chars: int = 4800, max_paras: i
 
     # pick the container with the most paragraph text
     best, best_len = None, 0
-    for cand in tree.css("article, main, [role=main], .post-content, .article-body, .entry-content"):
+    sel = (
+        "article, main, [role=main], .post-content, .article-body, .article-content, "
+        ".entry-content, .wp-block-post-content, .td-post-content, .tdb_single_content, "
+        ".c-article, .content__article-body, [itemprop=articleBody]"
+    )
+    for cand in tree.css(sel):
         length = sum(len(p.text() or "") for p in cand.css("p"))
         if length > best_len:
             best, best_len = cand, length
-    root = best or tree.body or tree
+    body_len = sum(len(p.text() or "") for p in (tree.body.css("p") if tree.body else []))
+    root = tree.body if best is None or best_len < body_len * 0.55 else best
+    root = root or tree
 
     out: list[str] = []
     total = 0

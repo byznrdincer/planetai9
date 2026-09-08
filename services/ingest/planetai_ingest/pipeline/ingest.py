@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import re
 import uuid
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 
 from slugify import slugify
@@ -47,6 +48,7 @@ _AI_TERMS = re.compile(
 # entity names that are ordinary words / big conglomerates — a bare match here
 # does not by itself make a story "about AI".
 _AMBIGUOUS_ENTITIES = {"amazon", "microsoft", "google", "meta", "apple"}
+_BODY_MIN = 1400  # below this we fetch the article page for fuller text
 
 
 def collect_source(source_id: uuid.UUID) -> dict:
@@ -80,9 +82,33 @@ def collect_source(source_id: uuid.UUID) -> dict:
 
         index = EntityIndex.from_db(db)
         topics = _topics_payload(db)
+
+        # pre-fetch article pages concurrently for items we haven't seen
+        cutoff = datetime.now(timezone.utc) - timedelta(days=_settings.max_article_age_days)
+        known = {
+            r
+            for r in db.scalars(
+                select(models.Article.external_id).where(models.Article.source_id == source.id)
+            ).all()
+        }
+        to_fetch = [
+            it
+            for it in result.items
+            if it.external_id not in known
+            and (it.published_at or datetime.now(timezone.utc)) >= cutoff
+            and source.kind != "arxiv"
+            and len(extract_article_paragraphs(it.extra.get("content_html", ""))) < _BODY_MIN
+        ]
+        pages: dict[str, tuple[str | None, str]] = {}
+        if to_fetch:
+            with ThreadPoolExecutor(max_workers=8) as pool:
+                futures = {pool.submit(_fetch_page, clean_url(it.url)): it.url for it in to_fetch}
+                for fut in as_completed(futures):
+                    pages[futures[fut]] = fut.result()
+
         for item in result.items:
             stats["seen"] += 1
-            if _ingest_item(db, source, item, index, topics):
+            if _ingest_item(db, source, item, index, topics, pages.get(item.url)):
                 stats["written"] += 1
     return stats
 
@@ -100,6 +126,7 @@ def _ingest_item(
     item: RawItem,
     index: EntityIndex,
     topics: list[dict],
+    page: tuple[str | None, str] | None = None,
 ) -> bool:
     existing = db.scalar(
         select(models.Article).where(
@@ -133,19 +160,20 @@ def _ingest_item(
 
     sh = simhash64(f"{item.title} {clean_summary or ''}")
 
-    # article body: prefer the feed's own syndicated content, else fetch & extract
+    # article body: prefer the feed's own syndicated content, else the fetched page
     feed_html = item.extra.get("content_html", "")
     body_text = extract_article_paragraphs(feed_html) if feed_html else ""
     image_url = item.image_url
 
-    if source.kind != "arxiv" and (not image_url or len(body_text) < 400):
-        og, page_html = _fetch_page(url)
-        image_url = image_url or og
-        if len(body_text) < 400 and page_html:
-            body_text = extract_article_paragraphs(page_html)
-
     if source.kind == "arxiv":
         body_text = summary_src  # abstracts are already the full text
+    elif len(body_text) < _BODY_MIN or not image_url:
+        og, page_html = page if page is not None else _fetch_page(url)
+        image_url = image_url or og
+        if page_html:
+            page_body = extract_article_paragraphs(page_html)
+            if len(page_body) > len(body_text):
+                body_text = page_body
     body_text = body_text or None
 
     article = models.Article(

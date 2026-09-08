@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     youtube_api_key: str | None = None
     youtube_channel_id: str | None = None
     max_article_age_days: int = 75
-    max_items_per_fetch: int = 250
+    max_items_per_fetch: int = 120
     dedup_lookback_hours: int = 72
     dedup_title_similarity: float = 0.82  # 0..1 rapidfuzz token_set_ratio / 100
     dedup_simhash_max_distance: int = 4
