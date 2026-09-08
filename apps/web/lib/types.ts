@@ -55,6 +55,7 @@ export interface EventDetail {
   slug: string;
   title: string;
   summary: string | null;
+  body: string[];
   why_it_matters: string | null;
   category: string;
   impact: EventCard["impact"];

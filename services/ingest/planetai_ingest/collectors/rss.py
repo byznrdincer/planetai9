@@ -70,8 +70,11 @@ class RssCollector(BaseCollector):
             if not url or not title:
                 continue
             summary = strip_html(entry.get("summary") or entry.get("description"))
-            if not summary and entry.get("content"):
-                summary = strip_html(entry["content"][0].get("value"))
+            content_html = ""
+            if entry.get("content"):
+                content_html = entry["content"][0].get("value") or ""
+            if not summary and content_html:
+                summary = strip_html(content_html)
             items.append(
                 RawItem(
                     source_id=str(src.id),
@@ -82,6 +85,7 @@ class RssCollector(BaseCollector):
                     published_at=_parsed_datetime(entry),
                     author=normalize_ws(entry.get("author")) or None,
                     image_url=_entry_image(entry),
+                    extra={"content_html": content_html} if content_html else {},
                 )
             )
         return FetchResult(

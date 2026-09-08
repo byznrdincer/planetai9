@@ -116,6 +116,7 @@ def event_detail(db: Session, event: models.Event) -> schemas.EventDetail:
         slug=event.slug,
         title=event.title,
         summary=event.summary,
+        body=[p.strip() for p in (event.body_text or "").split("\n\n") if p.strip()],
         why_it_matters=event.why_it_matters,
         category=event.category,
         impact=event.impact,

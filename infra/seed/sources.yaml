@@ -207,6 +207,183 @@
   trust_weight: 0.55
   poll_interval_sec: 3600
 
+- slug: the-decoder
+  name: The Decoder
+  homepage_url: https://the-decoder.com/
+  feed_url: https://the-decoder.com/feed/
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.72
+  poll_interval_sec: 900
+
+- slug: ai-news
+  name: AI News
+  homepage_url: https://www.artificialintelligence-news.com/
+  feed_url: https://www.artificialintelligence-news.com/feed/
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.68
+  poll_interval_sec: 1800
+
+- slug: venturebeat-ai-2
+  name: VentureBeat AI
+  homepage_url: https://venturebeat.com/category/ai/
+  feed_url: https://venturebeat.com/category/ai/feed/
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.68
+  poll_interval_sec: 1800
+
+- slug: marktechpost
+  name: MarkTechPost
+  homepage_url: https://www.marktechpost.com/
+  feed_url: https://www.marktechpost.com/feed/
+  kind: rss
+  source_type: community
+  trust_weight: 0.58
+  poll_interval_sec: 1800
+
+- slug: syncedreview
+  name: Synced
+  homepage_url: https://syncedreview.com/
+  feed_url: https://syncedreview.com/feed/
+  kind: rss
+  source_type: community
+  trust_weight: 0.62
+  poll_interval_sec: 1800
+
+- slug: deeplearning-batch
+  name: DeepLearning.AI — The Batch
+  homepage_url: https://www.deeplearning.ai/the-batch/
+  feed_url: https://www.deeplearning.ai/the-batch/rss.xml
+  kind: rss
+  source_type: community
+  trust_weight: 0.75
+  poll_interval_sec: 7200
+
+- slug: mit-news-ai
+  name: MIT News — AI
+  homepage_url: https://news.mit.edu/topic/artificial-intelligence2
+  feed_url: https://news.mit.edu/rss/topic/artificial-intelligence2
+  kind: rss
+  source_type: research_paper
+  trust_weight: 0.8
+  entity: mit
+  poll_interval_sec: 3600
+
+- slug: stanford-hai
+  name: Stanford HAI
+  homepage_url: https://hai.stanford.edu/news
+  feed_url: https://hai.stanford.edu/news/rss.xml
+  kind: rss
+  source_type: research_paper
+  trust_weight: 0.8
+  entity: stanford
+  poll_interval_sec: 7200
+
+- slug: google-research-blog
+  name: Google Research Blog
+  homepage_url: https://research.google/blog/
+  feed_url: https://research.google/blog/rss/
+  kind: rss
+  source_type: official_announcement
+  trust_weight: 0.88
+  entity: google-deepmind
+  poll_interval_sec: 3600
+
+- slug: microsoft-research-blog
+  name: Microsoft Research Blog
+  homepage_url: https://www.microsoft.com/en-us/research/blog/
+  feed_url: https://www.microsoft.com/en-us/research/feed/
+  kind: rss
+  source_type: official_announcement
+  trust_weight: 0.85
+  entity: microsoft
+  poll_interval_sec: 3600
+
+- slug: aws-ml-blog
+  name: AWS Machine Learning Blog
+  homepage_url: https://aws.amazon.com/blogs/machine-learning/
+  feed_url: https://aws.amazon.com/blogs/machine-learning/feed/
+  kind: rss
+  source_type: official_announcement
+  trust_weight: 0.78
+  entity: amazon
+  poll_interval_sec: 3600
+
+- slug: ieee-spectrum-robotics
+  name: IEEE Spectrum — Robotics
+  homepage_url: https://spectrum.ieee.org/topic/robotics/
+  feed_url: https://spectrum.ieee.org/feeds/topic/robotics.rss
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.8
+  poll_interval_sec: 3600
+
+- slug: the-robot-report
+  name: The Robot Report
+  homepage_url: https://www.therobotreport.com/
+  feed_url: https://www.therobotreport.com/feed/
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.7
+  poll_interval_sec: 3600
+
+- slug: 404media
+  name: 404 Media
+  homepage_url: https://www.404media.co/
+  feed_url: https://www.404media.co/rss/
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.7
+  poll_interval_sec: 1800
+
+- slug: latent-space
+  name: Latent Space
+  homepage_url: https://www.latent.space/
+  feed_url: https://www.latent.space/feed
+  kind: rss
+  source_type: community
+  trust_weight: 0.66
+  poll_interval_sec: 7200
+
+- slug: the-gradient
+  name: The Gradient
+  homepage_url: https://thegradient.pub/
+  feed_url: https://thegradient.pub/rss/
+  kind: rss
+  source_type: community
+  trust_weight: 0.68
+  poll_interval_sec: 10800
+
+- slug: reddit-artificial
+  name: r/artificial
+  homepage_url: https://www.reddit.com/r/artificial/
+  feed_url: https://www.reddit.com/r/artificial/top/.rss?t=day
+  kind: rss
+  source_type: community
+  trust_weight: 0.45
+  poll_interval_sec: 3600
+
+- slug: reddit-localllama
+  name: r/LocalLLaMA
+  homepage_url: https://www.reddit.com/r/LocalLLaMA/
+  feed_url: https://www.reddit.com/r/LocalLLaMA/top/.rss?t=day
+  kind: rss
+  source_type: community
+  trust_weight: 0.45
+  poll_interval_sec: 3600
+
+- slug: nvidia-dev-blog
+  name: NVIDIA Developer Blog
+  homepage_url: https://developer.nvidia.com/blog/
+  feed_url: https://developer.nvidia.com/blog/feed/
+  kind: rss
+  source_type: official_announcement
+  trust_weight: 0.8
+  entity: nvidia
+  poll_interval_sec: 3600
+
 - slug: planetai-youtube
   name: PlanetAI YouTube
   homepage_url: https://www.youtube.com/

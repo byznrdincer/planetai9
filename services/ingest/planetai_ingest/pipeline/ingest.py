@@ -22,6 +22,7 @@ from planetai_ingest.pipeline.score import persist_factors, score_event
 from planetai_ingest.text import (
     clean_url,
     content_hash,
+    extract_article_paragraphs,
     extract_og_image,
     simhash64,
     strip_html,
@@ -132,9 +133,20 @@ def _ingest_item(
 
     sh = simhash64(f"{item.title} {clean_summary or ''}")
 
+    # article body: prefer the feed's own syndicated content, else fetch & extract
+    feed_html = item.extra.get("content_html", "")
+    body_text = extract_article_paragraphs(feed_html) if feed_html else ""
     image_url = item.image_url
-    if not image_url and source.kind != "arxiv":
-        image_url = _fetch_og_image(url)
+
+    if source.kind != "arxiv" and (not image_url or len(body_text) < 400):
+        og, page_html = _fetch_page(url)
+        image_url = image_url or og
+        if len(body_text) < 400 and page_html:
+            body_text = extract_article_paragraphs(page_html)
+
+    if source.kind == "arxiv":
+        body_text = summary_src  # abstracts are already the full text
+    body_text = body_text or None
 
     article = models.Article(
         source_id=source.id,
@@ -145,6 +157,7 @@ def _ingest_item(
         raw_summary=summary_src or None,
         clean_summary=clean_summary,
         body_excerpt=body_excerpt,
+        body_text=body_text,
         lang=item.lang,
         published_at=published,
         fetched_at=datetime.now(timezone.utc),
@@ -270,28 +283,37 @@ def _recompute_event(db: Session, event: models.Event) -> None:
     if agg[1]:
         event.last_activity_at = max(event.last_activity_at, agg[1])
 
+    # keep the richest available body on the event
+    bodies = db.scalars(
+        select(models.Article.body_text).where(
+            models.Article.event_id == event.id, models.Article.body_text.isnot(None)
+        )
+    ).all()
+    if bodies:
+        best = max(bodies, key=len)
+        if not event.body_text or len(best) > len(event.body_text):
+            event.body_text = best
+
     total, band, factors = score_event(db, event)
     event.importance = total
     event.impact = band
     persist_factors(db, event, factors, total)
 
 
-def _fetch_og_image(url: str) -> str | None:
-    """Best-effort: fetch the page and read its social-share image. Never raises.
-
-    Uses a tight timeout — a missing image must never hold up ingestion."""
+def _fetch_page(url: str) -> tuple[str | None, str]:
+    """Fetch a page once; return (og_image, full_html). Never raises."""
     try:
         with httpx.Client(
             headers={"User-Agent": _settings.user_agent},
-            timeout=httpx.Timeout(6.0, connect=4.0),
+            timeout=httpx.Timeout(8.0, connect=4.0),
             follow_redirects=True,
         ) as client:
-            resp = client.get(url, headers={"Range": "bytes=0-160000"})
+            resp = client.get(url)
             if resp.status_code >= 400 or "text/html" not in resp.headers.get("content-type", ""):
-                return None
-            return extract_og_image(resp.text, base_url=str(resp.url))
+                return None, ""
+            return extract_og_image(resp.text, base_url=str(resp.url)), resp.text
     except (httpx.HTTPError, ValueError, UnicodeError):
-        return None
+        return None, ""
 
 
 def _unique_slug(db: Session, title: str) -> str:

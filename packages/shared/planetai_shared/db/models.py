@@ -89,6 +89,7 @@ class Event(Base, TimestampMixin):
     slug: Mapped[str] = mapped_column(String(220), unique=True)
     title: Mapped[str] = mapped_column(Text)
     summary: Mapped[str | None] = mapped_column(Text)
+    body_text: Mapped[str | None] = mapped_column(Text)  # best multi-paragraph excerpt
     why_it_matters: Mapped[str | None] = mapped_column(Text)
     category: Mapped[str] = mapped_column(String(30))
     primary_entity_id: Mapped[uuid.UUID | None] = mapped_column(
@@ -128,6 +129,7 @@ class Article(Base, TimestampMixin):
     raw_summary: Mapped[str | None] = mapped_column(Text)
     clean_summary: Mapped[str | None] = mapped_column(Text)
     body_excerpt: Mapped[str | None] = mapped_column(Text)
+    body_text: Mapped[str | None] = mapped_column(Text)  # multi-paragraph excerpt
     lang: Mapped[str] = mapped_column(String(8), default="en")
     published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

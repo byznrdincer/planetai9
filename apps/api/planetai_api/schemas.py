@@ -67,6 +67,7 @@ class EventDetail(BaseModel):
     slug: str
     title: str
     summary: str | None
+    body: list[str]
     why_it_matters: str | None
     category: str
     impact: str

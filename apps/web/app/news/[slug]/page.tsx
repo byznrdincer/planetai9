@@ -56,6 +56,30 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           />
         )}
 
+        {event.body.length > 0 && (
+          <div className="mt-8 space-y-5">
+            {event.body.map((p, i) => (
+              <p key={i} className="text-[17px] leading-[1.8] text-ink dark:text-d-ink">
+                {p}
+              </p>
+            ))}
+            {primary && (
+              <p className="pt-1 text-[13px] text-ink-2 dark:text-d-ink-2">
+                {tr ? "Bu haber " : "This story is based on reporting by "}
+                <a
+                  href={primary.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="link-accent"
+                >
+                  {primary.source.name}
+                </a>
+                {tr ? " kaynağından derlenmiştir." : "."}
+              </p>
+            )}
+          </div>
+        )}
+
         {event.why_it_matters && (
           <div className="mt-8 rounded-card border border-line bg-canvas p-5 dark:border-d-line dark:bg-d-canvas">
             <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-accent">

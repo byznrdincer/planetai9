@@ -35,6 +35,44 @@ def extract_og_image(html: str, base_url: str = "") -> str | None:
     return None
 
 
+_BOILER = re.compile(
+    r"^(sign up|subscribe|read more|advertisement|share this|related:|image:|photo:|"
+    r"getty images|reuters|associated press|©|all rights reserved|follow us|"
+    r"this article|you might also|recommended|newsletter|cookie)",
+    re.I,
+)
+_DROP_SELECTORS = "figure,figcaption,aside,nav,footer,header,form,script,style,.ad,.advertisement,.newsletter,.related,.share,.social,.promo"
+
+
+def extract_article_paragraphs(html: str, *, max_chars: int = 4800, max_paras: int = 14) -> str:
+    """Pull the main article prose out of a page. Excerpt, not full reproduction."""
+    if not html:
+        return ""
+    tree = HTMLParser(html)
+    for node in tree.css(_DROP_SELECTORS):
+        node.decompose()
+
+    # pick the container with the most paragraph text
+    best, best_len = None, 0
+    for cand in tree.css("article, main, [role=main], .post-content, .article-body, .entry-content"):
+        length = sum(len(p.text() or "") for p in cand.css("p"))
+        if length > best_len:
+            best, best_len = cand, length
+    root = best or tree.body or tree
+
+    out: list[str] = []
+    total = 0
+    for p in root.css("p"):
+        txt = _WS.sub(" ", (p.text() or "")).strip()
+        if len(txt) < 40 or _BOILER.match(txt):
+            continue
+        out.append(txt)
+        total += len(txt)
+        if len(out) >= max_paras or total >= max_chars:
+            break
+    return "\n\n".join(out)
+
+
 def strip_html(raw: str | None) -> str:
     if not raw:
         return ""
