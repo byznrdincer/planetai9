@@ -375,10 +375,12 @@
   poll_interval_sec: 3600
 
 - slug: planetai-youtube
-  name: PlanetAI YouTube
-  homepage_url: https://www.youtube.com/
+  name: PlanetAI9 YouTube
+  homepage_url: https://www.youtube.com/@planetai9
   feed_url: null
   kind: youtube
   source_type: primary
   trust_weight: 0.9
   poll_interval_sec: 3600
+  config:
+    handle: "@planetai9"

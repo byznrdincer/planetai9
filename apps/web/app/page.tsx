@@ -99,7 +99,7 @@ export default async function HomePage() {
             {latest.length === 0 && <p className="text-sm text-ink-2">{t.common.noNews}</p>}
           </div>
         </div>
-        <HomeSidebar trends={home.trending} t={t} locale={locale} />
+        <HomeSidebar trends={home.trending} videos={home.videos} t={t} locale={locale} />
       </section>
 
       {home.videos.length > 0 && (

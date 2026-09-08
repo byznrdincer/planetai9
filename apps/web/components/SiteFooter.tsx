@@ -12,8 +12,8 @@ export async function SiteFooter() {
     { label: tr ? "Hakkımızda" : "About", href: "/hakkinda" },
     { label: tr ? "Gizlilik Politikası" : "Privacy", href: "/gizlilik" },
     { label: tr ? "İletişim" : "Contact", href: "/hakkinda#iletisim" },
-    { label: "AI Marketplace", href: "/marketplace" },
-    { label: "LLMRadar", href: "https://llmradar.planetai9.com", external: true },
+    { label: tr ? "Kaynaklar" : "Sources", href: "/sources" },
+    { label: "RSS", href: "/api/rss", external: true },
   ];
 
   const socials = [
