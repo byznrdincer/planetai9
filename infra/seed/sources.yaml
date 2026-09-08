@@ -61,6 +61,7 @@
   trust_weight: 0.85
   entity: microsoft
   poll_interval_sec: 3600
+  enabled: false  # blogs.microsoft.com/ai/ retired (410); MS coverage via microsoft-research-blog
 
 - slug: techcrunch-ai
   name: TechCrunch — AI
@@ -233,6 +234,7 @@
   source_type: major_news
   trust_weight: 0.68
   poll_interval_sec: 1800
+  enabled: false  # duplicate of venturebeat-ai (same feed URL)
 
 - slug: marktechpost
   name: MarkTechPost
@@ -260,6 +262,7 @@
   source_type: community
   trust_weight: 0.75
   poll_interval_sec: 7200
+  enabled: false  # feed 404s — no working public RSS as of 2026-09
 
 - slug: mit-news-ai
   name: MIT News — AI
@@ -375,6 +378,7 @@
   poll_interval_sec: 3600
 
 - slug: webrazzi
+  lang: tr
   name: Webrazzi
   homepage_url: https://webrazzi.com/
   feed_url: https://webrazzi.com/feed/
@@ -384,6 +388,7 @@
   poll_interval_sec: 1800
 
 - slug: shiftdelete
+  lang: tr
   name: ShiftDelete.Net
   homepage_url: https://shiftdelete.net/
   feed_url: https://shiftdelete.net/feed
@@ -393,6 +398,7 @@
   poll_interval_sec: 3600
 
 - slug: techinside
+  lang: tr
   name: TechInside
   homepage_url: https://techinside.com/
   feed_url: https://techinside.com/feed/
@@ -402,6 +408,7 @@
   poll_interval_sec: 3600
 
 - slug: donanimhaber
+  lang: tr
   name: DonanımHaber
   homepage_url: https://www.donanimhaber.com/
   feed_url: https://www.donanimhaber.com/rss/tum/
@@ -411,12 +418,138 @@
   poll_interval_sec: 3600
 
 - slug: log-tr
+  lang: tr
   name: LOG
   homepage_url: https://www.log.com.tr/
   feed_url: https://www.log.com.tr/feed/
   kind: rss
   source_type: major_news
   trust_weight: 0.5
+  poll_interval_sec: 3600
+
+# --- more Türkiye tech/AI feeds (lang: tr) --------------------------------------
+- slug: webtekno
+  lang: tr
+  name: Webtekno
+  homepage_url: https://www.webtekno.com/
+  feed_url: https://www.webtekno.com/rss.xml
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.5
+  poll_interval_sec: 3600
+
+- slug: teknoblog
+  lang: tr
+  name: Teknoblog
+  homepage_url: https://www.teknoblog.com/
+  feed_url: https://www.teknoblog.com/feed/
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.52
+  poll_interval_sec: 3600
+
+- slug: chip-tr
+  lang: tr
+  name: CHIP Online
+  homepage_url: https://www.chip.com.tr/
+  feed_url: https://www.chip.com.tr/rss
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.5
+  poll_interval_sec: 3600
+
+- slug: donanimgunlugu
+  lang: tr
+  name: Donanım Günlüğü
+  homepage_url: https://www.donanimgunlugu.com/
+  feed_url: https://www.donanimgunlugu.com/feed
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.45
+  poll_interval_sec: 3600
+
+- slug: bthaber
+  lang: tr
+  name: BThaber
+  homepage_url: https://www.bthaber.com/
+  feed_url: https://www.bthaber.com/feed/
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.5
+  poll_interval_sec: 3600
+
+- slug: ntv-teknoloji
+  lang: tr
+  name: NTV Teknoloji
+  homepage_url: https://www.ntv.com.tr/teknoloji
+  feed_url: https://www.ntv.com.tr/teknoloji.rss
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.5
+  poll_interval_sec: 3600
+
+# --- more global AI analysis / newsletters -------------------------------------
+- slug: semianalysis
+  name: SemiAnalysis
+  homepage_url: https://semianalysis.com/
+  feed_url: https://semianalysis.com/feed/
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.78
+  poll_interval_sec: 3600
+
+- slug: platformer
+  name: Platformer
+  homepage_url: https://www.platformer.news/
+  feed_url: https://www.platformer.news/rss/
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.72
+  poll_interval_sec: 3600
+
+- slug: interconnects
+  name: Interconnects (Nathan Lambert)
+  homepage_url: https://www.interconnects.ai/
+  feed_url: https://www.interconnects.ai/feed
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.7
+  poll_interval_sec: 7200
+
+- slug: one-useful-thing
+  name: One Useful Thing (Ethan Mollick)
+  homepage_url: https://www.oneusefulthing.org/
+  feed_url: https://www.oneusefulthing.org/feed
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.66
+  poll_interval_sec: 7200
+
+- slug: ai-snake-oil
+  name: AI Snake Oil
+  homepage_url: https://www.aisnakeoil.com/
+  feed_url: https://www.aisnakeoil.com/feed
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.66
+  poll_interval_sec: 7200
+
+- slug: last-week-in-ai
+  name: Last Week in AI
+  homepage_url: https://lastweekin.ai/
+  feed_url: https://lastweekin.ai/feed
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.6
+  poll_interval_sec: 21600
+
+- slug: meta-newsroom
+  name: Meta Newsroom
+  homepage_url: https://about.fb.com/news/
+  feed_url: https://about.fb.com/news/feed/
+  kind: rss
+  source_type: official_announcement
+  trust_weight: 0.82
   poll_interval_sec: 3600
 
 - slug: planetai-youtube
