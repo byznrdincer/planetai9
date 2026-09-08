@@ -21,12 +21,13 @@ const tr = {
   nav: {
     home: "Ana Sayfa",
     news: "Gündem",
+    turkey: "Türkiye",
     analysis: "Analiz",
     robotics: "Robotik",
     coding: "Kodlama",
     safety: "Güvenlik",
     regulation: "Regülasyon",
-    video: "Video",
+    video: "PlanetAI9 Video",
     marketplace: "AI Marketplace",
     authors: "Yazarlar",
     about: "Biz Kimiz",
@@ -59,7 +60,7 @@ const tr = {
   home: {},
   marketplace: {
     title: "AI Marketplace",
-    lead: "Topluluğun geliştirdiği faydalı yapay zekâ uygulamaları — MCP sunucuları, LLM'ler, STT/TTS araçları, ajanlar. Kendi projeni de paylaşabilirsin.",
+    lead: "Geliştiricilerin paylaştığı açık yapay zekâ araçları — MCP sunucuları, modeller, ses ve ajan projeleri. Sen de kendi projeni ekle.",
     suggest: "+ Uygulamanı öner",
     suggestTitle: "Uygulamanı öner",
     suggestBody:
@@ -111,12 +112,13 @@ const en: DictT = {
   nav: {
     home: "Home",
     news: "News",
+    turkey: "Türkiye",
     analysis: "Analysis",
     robotics: "Robotics",
     coding: "Coding",
     safety: "Safety",
     regulation: "Regulation",
-    video: "Video",
+    video: "PlanetAI9 Video",
     marketplace: "AI Marketplace",
     authors: "Columnists",
     about: "About",
@@ -149,7 +151,7 @@ const en: DictT = {
   home: {},
   marketplace: {
     title: "AI Marketplace",
-    lead: "Useful AI apps built by the community — MCP servers, LLMs, STT/TTS tools, agents. Share your own project too.",
+    lead: "Open AI tools shared by builders — MCP servers, models, speech and agent projects. Add your own.",
     suggest: "+ Submit your app",
     suggestTitle: "Submit your app",
     suggestBody:

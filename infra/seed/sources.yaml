@@ -374,6 +374,51 @@
   trust_weight: 0.45
   poll_interval_sec: 3600
 
+- slug: webrazzi
+  name: Webrazzi
+  homepage_url: https://webrazzi.com/
+  feed_url: https://webrazzi.com/feed/
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.68
+  poll_interval_sec: 1800
+
+- slug: shiftdelete
+  name: ShiftDelete.Net
+  homepage_url: https://shiftdelete.net/
+  feed_url: https://shiftdelete.net/feed
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.55
+  poll_interval_sec: 3600
+
+- slug: techinside
+  name: TechInside
+  homepage_url: https://techinside.com/
+  feed_url: https://techinside.com/feed/
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.55
+  poll_interval_sec: 3600
+
+- slug: donanimhaber
+  name: DonanımHaber
+  homepage_url: https://www.donanimhaber.com/
+  feed_url: https://www.donanimhaber.com/rss/tum/
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.5
+  poll_interval_sec: 3600
+
+- slug: log-tr
+  name: LOG
+  homepage_url: https://www.log.com.tr/
+  feed_url: https://www.log.com.tr/feed/
+  kind: rss
+  source_type: major_news
+  trust_weight: 0.5
+  poll_interval_sec: 3600
+
 - slug: planetai-youtube
   name: PlanetAI9 YouTube
   homepage_url: https://www.youtube.com/@planetai9

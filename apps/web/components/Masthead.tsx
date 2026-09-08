@@ -11,14 +11,15 @@ export async function Masthead() {
 
   const nav: { label: string; href: string; external?: boolean }[] = [
     { label: t.nav.news, href: "/news" },
+    { label: t.nav.turkey, href: "/turkiye" },
     { label: locale === "tr" ? "Yapay Zekâ" : "AI", href: "/news?bucket=AI" },
     { label: t.nav.robotics, href: "/news?bucket=Robotics" },
     { label: t.nav.coding, href: "/news?bucket=Coding" },
     { label: t.nav.safety, href: "/news?bucket=Security" },
     { label: t.nav.regulation, href: "/news?bucket=Regulation" },
-    { label: t.nav.video, href: "/videos" },
     { label: t.nav.authors, href: "/yazarlar" },
     { label: t.nav.marketplace, href: "/marketplace" },
+    { label: t.nav.video, href: "/videos" },
     { label: "LLMRadar", href: "https://llmradar.planetai9.com", external: true },
   ];
 
@@ -37,7 +38,7 @@ export async function Masthead() {
           </span>
         </Link>
 
-        <nav className="mx-auto hidden items-center gap-0.5 text-[13.5px] font-medium lg:flex">
+        <nav className="mx-auto hidden min-w-0 items-center gap-0 overflow-x-auto text-[13px] font-medium lg:flex">
           {nav.map((it) =>
             it.external ? (
               <a
@@ -45,7 +46,7 @@ export async function Masthead() {
                 href={it.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="whitespace-nowrap rounded-lg px-3 py-1.5 text-ink-2 transition-colors hover:bg-wash hover:text-ink dark:text-d-ink-2 dark:hover:bg-d-wash dark:hover:text-d-ink"
+                className="whitespace-nowrap rounded-lg px-2.5 py-1.5 text-ink-2 transition-colors hover:bg-wash hover:text-ink dark:text-d-ink-2 dark:hover:bg-d-wash dark:hover:text-d-ink"
               >
                 {it.label}
               </a>
@@ -53,7 +54,7 @@ export async function Masthead() {
               <Link
                 key={it.label}
                 href={it.href}
-                className="whitespace-nowrap rounded-lg px-3 py-1.5 text-ink-2 transition-colors hover:bg-wash hover:text-ink dark:text-d-ink-2 dark:hover:bg-d-wash dark:hover:text-d-ink"
+                className="whitespace-nowrap rounded-lg px-2.5 py-1.5 text-ink-2 transition-colors hover:bg-wash hover:text-ink dark:text-d-ink-2 dark:hover:bg-d-wash dark:hover:text-d-ink"
               >
                 {it.label}
               </Link>
@@ -62,7 +63,7 @@ export async function Masthead() {
         </nav>
 
         <div className="ml-auto flex shrink-0 items-center gap-2.5 lg:ml-0">
-          <div className="hidden w-52 xl:block">
+          <div className="hidden w-48 2xl:block">
             <SearchBox placeholder={t.searchPlaceholder} />
           </div>
           <LangToggle locale={locale} />

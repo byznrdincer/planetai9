@@ -41,6 +41,7 @@ def list_events(
     db: Session = Depends(get_db),
     category: str | None = None,
     bucket: str | None = None,
+    topic: str | None = None,
     entity: str | None = None,
     source: str | None = None,
     importance_min: float | None = None,
@@ -72,6 +73,13 @@ def list_events(
         stmt = stmt.where(
             models.Event.category != "Research", models.Event.id.not_in(arxiv_events)
         )
+    if topic:
+        tp = db.scalar(select(models.Topic).where(models.Topic.slug == topic))
+        if tp is None:
+            raise HTTPException(404, "unknown topic")
+        stmt = stmt.join(
+            models.EventTopic, models.EventTopic.event_id == models.Event.id
+        ).where(models.EventTopic.topic_id == tp.id)
     if importance_min is not None:
         stmt = stmt.where(models.Event.importance >= importance_min)
     if impact:
