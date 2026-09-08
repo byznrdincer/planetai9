@@ -35,3 +35,16 @@ def client() -> TestClient:
     limiter.enabled = False
 
     return TestClient(app)
+
+
+@pytest.fixture
+def author_slug() -> str:
+    """Ensure an author row exists for the studio tests (independent of seed)."""
+    from planetai_shared.db import models
+    from planetai_shared.db.base import session_scope
+
+    slug = "ayhan-demirci"
+    with session_scope() as db:
+        if db.query(models.Author).filter_by(slug=slug).first() is None:
+            db.add(models.Author(slug=slug, name="Ayhan Demirci", role="Kurucu · PlanetAI9"))
+    return slug

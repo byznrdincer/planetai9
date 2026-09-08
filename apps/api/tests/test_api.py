@@ -140,7 +140,7 @@ def test_author_studio_hidden_without_keys(client, monkeypatch):
     )
 
 
-def test_author_studio_write_flow(client, monkeypatch):
+def test_author_studio_write_flow(client, monkeypatch, author_slug):
     from planetai_api.routers import authors
 
     monkeypatch.setitem(authors._settings.author_keys, "ayhan-demirci", "test-key")
@@ -190,7 +190,7 @@ def test_author_studio_write_flow(client, monkeypatch):
             db.query(models.OpinionPost).filter_by(slug=slug).delete()
 
 
-def test_moderator_author_can_work_marketplace_queue(client, monkeypatch):
+def test_moderator_author_can_work_marketplace_queue(client, monkeypatch, author_slug):
     from planetai_api.routers import authors, marketplace
 
     monkeypatch.setitem(authors._settings.author_keys, "ayhan-demirci", "mk")
