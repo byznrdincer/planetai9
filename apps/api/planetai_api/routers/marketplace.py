@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from planetai_shared.db import models
 from planetai_shared.settings import get_settings
 from pydantic import BaseModel, Field, HttpUrl
@@ -15,6 +16,51 @@ from planetai_api.ratelimit import limiter
 
 router = APIRouter()
 _settings = get_settings()
+
+STATUSES = {"pending", "approved", "rejected"}
+
+
+def _valid_moderator_author(x_author_key: str | None) -> bool:
+    """A studio key '<slug>:<secret>' belonging to an author listed in moderator_authors."""
+    if not x_author_key or ":" not in x_author_key:
+        return False
+    slug, secret = x_author_key.split(":", 1)
+    return (
+        bool(secret)
+        and _settings.author_keys.get(slug) == secret
+        and slug in _settings.moderator_authors
+    )
+
+
+def require_admin(
+    x_admin_token: str | None = Header(default=None),
+    x_author_key: str | None = Header(default=None),
+) -> None:
+    """Guard for the moderation queue.
+
+    Accepts either the /yonetim admin token or a moderator author's /yazar studio key.
+    404 when neither channel is configured so the surface stays invisible.
+    """
+    if not _settings.admin_token and not _settings.moderator_authors:
+        raise HTTPException(404, "not found")
+    if _settings.admin_token and x_admin_token and x_admin_token == _settings.admin_token:
+        return
+    if _valid_moderator_author(x_author_key):
+        return
+    raise HTTPException(401, "geçersiz yönetim anahtarı")
+
+
+def _bust_home_cache() -> None:
+    try:
+        import redis
+
+        client = redis.from_url(_settings.redis_url)
+        for pattern in ("home*", "marketplace*"):
+            for key in client.scan_iter(match=pattern):
+                client.delete(key)
+    except Exception:
+        pass
+
 
 CATEGORIES = {"mcp", "llm", "stt", "tts", "agent", "tool", "other"}
 CATEGORY_LABEL = {
@@ -43,6 +89,16 @@ class AppOut(BaseModel):
     author_url: str | None
     upvotes: int
     featured: bool
+
+
+class QueueApp(AppOut):
+    status: str
+    submitter_email: str | None
+    created_at: datetime
+
+
+class StatusChange(BaseModel):
+    status: str
 
 
 class AppSubmission(BaseModel):
@@ -123,3 +179,50 @@ def submit_app(request: Request, payload: AppSubmission, db: Session = Depends(g
     db.add(app)
     db.commit()
     return {"ok": True, "status": "pending", "slug": slug}
+
+
+# --- moderation panel (X-Admin-Token) ---------------------------------------
+
+
+def _queue_out(a: models.MarketplaceApp) -> QueueApp:
+    return QueueApp(
+        **_to_out(a).model_dump(),
+        status=a.status,
+        submitter_email=a.submitter_email,
+        created_at=a.created_at,
+    )
+
+
+@router.get("/marketplace/queue", response_model=list[QueueApp])
+def moderation_queue(
+    _: None = Depends(require_admin),
+    db: Session = Depends(get_db),
+    status: str | None = Query(None),
+) -> list[QueueApp]:
+    stmt = select(models.MarketplaceApp)
+    if status in STATUSES:
+        stmt = stmt.where(models.MarketplaceApp.status == status)
+    rows = sorted(
+        db.scalars(stmt).all(),
+        key=lambda a: (a.status != "pending", -a.created_at.timestamp()),
+    )
+    return [_queue_out(a) for a in rows]
+
+
+@router.post("/marketplace/{slug}/status", response_model=QueueApp)
+def set_status(
+    slug: str,
+    payload: StatusChange,
+    _: None = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> QueueApp:
+    if payload.status not in STATUSES:
+        raise HTTPException(422, f"status must be one of {sorted(STATUSES)}")
+    app = db.scalar(select(models.MarketplaceApp).where(models.MarketplaceApp.slug == slug))
+    if app is None:
+        raise HTTPException(404, "uygulama bulunamadı")
+    app.status = payload.status
+    db.commit()
+    db.refresh(app)
+    _bust_home_cache()
+    return _queue_out(app)
