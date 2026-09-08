@@ -119,6 +119,97 @@ export const TR_ECOSYSTEM: Org[] = [
   },
 ];
 
+// "Türkiye Data" — open-data portals and Turkish dataset resources.
+export type DataSource = {
+  name: string;
+  kind: "portal" | "istatistik" | "nlp" | "akademik" | "yerel";
+  url: string;
+  note: { tr: string; en: string };
+};
+
+export const TR_DATA: DataSource[] = [
+  {
+    name: "data.gov.tr",
+    kind: "portal",
+    url: "https://data.gov.tr",
+    note: {
+      tr: "Cumhurbaşkanlığı Dijital Dönüşüm Ofisi — kamu kurumlarının açık veri portalı.",
+      en: "Türkiye's national open-government data portal.",
+    },
+  },
+  {
+    name: "TÜİK Veri Portalı",
+    kind: "istatistik",
+    url: "https://data.tuik.gov.tr",
+    note: {
+      tr: "Türkiye İstatistik Kurumu'nun resmi istatistik ve mikro veri servisi.",
+      en: "Official statistics and micro-data from the Turkish Statistical Institute.",
+    },
+  },
+  {
+    name: "İBB Açık Veri Portalı",
+    kind: "yerel",
+    url: "https://data.ibb.gov.tr",
+    note: {
+      tr: "İstanbul Büyükşehir Belediyesi — ulaşım, çevre ve şehir verisi.",
+      en: "Istanbul metropolitan municipality — transport, environment and city data.",
+    },
+  },
+  {
+    name: "AperTA (ULAKBİM)",
+    kind: "akademik",
+    url: "https://aperta.ulakbim.gov.tr",
+    note: {
+      tr: "TÜBİTAK ULAKBİM Açık Erişim ve Açık Bilim platformu; araştırma veri setleri.",
+      en: "TÜBİTAK's open-access / open-science platform with research datasets.",
+    },
+  },
+  {
+    name: "TDD — Turkish Data Depository",
+    kind: "nlp",
+    url: "https://tdd.ai",
+    note: {
+      tr: "Türkçe doğal dil işleme için derlenmiş veri setleri ve araçlar.",
+      en: "Curated datasets and tools for Turkish NLP.",
+    },
+  },
+  {
+    name: "Hugging Face — Türkçe veri setleri",
+    kind: "nlp",
+    url: "https://huggingface.co/datasets?language=language:tr",
+    note: {
+      tr: "Topluluk tarafından paylaşılan Türkçe metin, konuşma ve görüntü veri setleri.",
+      en: "Community-shared Turkish text, speech and vision datasets.",
+    },
+  },
+  {
+    name: "Mukayese / TQuAD / BOUN Treebank",
+    kind: "nlp",
+    url: "https://github.com/boun-tabi",
+    note: {
+      tr: "Boğaziçi TABI Lab — Türkçe için karşılaştırma (benchmark) ve etiketli veri.",
+      en: "Boğaziçi TABI Lab — Turkish benchmarks and annotated corpora.",
+    },
+  },
+  {
+    name: "Kaggle — Türkiye toplulukları",
+    kind: "portal",
+    url: "https://www.kaggle.com/datasets?search=turkey",
+    note: {
+      tr: "Türkiye odaklı açık veri setleri ve yarışma verileri.",
+      en: "Türkiye-focused open datasets and competition data.",
+    },
+  },
+];
+
+export const DATA_KIND_LABEL: Record<DataSource["kind"], { tr: string; en: string }> = {
+  portal: { tr: "Portal", en: "Portal" },
+  istatistik: { tr: "İstatistik", en: "Statistics" },
+  nlp: { tr: "Türkçe NLP", en: "Turkish NLP" },
+  akademik: { tr: "Akademik", en: "Academic" },
+  yerel: { tr: "Yerel yönetim", en: "Local government" },
+};
+
 export const TR_FACTS: { label: { tr: string; en: string }; value: { tr: string; en: string } }[] = [
   {
     label: { tr: "Ulusal Strateji", en: "National Strategy" },
@@ -145,6 +236,13 @@ export const TR_FACTS: { label: { tr: string; en: string }; value: { tr: string;
   {
     label: { tr: "Veri koruma", en: "Data protection" },
     value: { tr: "KVKK (6698 sayılı Kanun) çerçevesi", en: "KVKK (Law 6698) framework" },
+  },
+  {
+    label: { tr: "Açık veri", en: "Open data" },
+    value: {
+      tr: "data.gov.tr ve TÜİK veri portalları",
+      en: "data.gov.tr and TÜİK data portals",
+    },
   },
 ];
 
