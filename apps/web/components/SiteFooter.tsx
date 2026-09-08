@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Linkedin, Rss, Youtube } from "lucide-react";
+import { Linkedin, Youtube } from "lucide-react";
 import { LogoMark } from "./Logo";
 import { getDict, getLocale } from "@/lib/i18n";
 
@@ -13,13 +13,11 @@ export async function SiteFooter() {
     { label: tr ? "Gizlilik Politikası" : "Privacy", href: "/gizlilik" },
     { label: tr ? "İletişim" : "Contact", href: "/hakkinda#iletisim" },
     { label: tr ? "Kaynaklar" : "Sources", href: "/sources" },
-    { label: "RSS", href: "/api/rss", external: true },
   ];
 
   const socials = [
     { icon: Youtube, href: "https://www.youtube.com/@planetai9", label: "YouTube" },
     { icon: Linkedin, href: "https://www.linkedin.com/showcase/planetai9media", label: "LinkedIn" },
-    { icon: Rss, href: "/api/rss", label: "RSS" },
   ];
 
   return (
@@ -37,27 +35,15 @@ export async function SiteFooter() {
           </div>
 
           <nav className="flex flex-wrap gap-x-6 gap-y-2 text-[13px]">
-            {links.map((l) =>
-              l.external ? (
-                <a
-                  key={l.label}
-                  href={l.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-ink-2 hover:text-ink dark:text-d-ink-2 dark:hover:text-d-ink"
-                >
-                  {l.label}
-                </a>
-              ) : (
-                <Link
-                  key={l.label}
-                  href={l.href}
-                  className="text-ink-2 hover:text-ink dark:text-d-ink-2 dark:hover:text-d-ink"
-                >
-                  {l.label}
-                </Link>
-              ),
-            )}
+            {links.map((l) => (
+              <Link
+                key={l.label}
+                href={l.href}
+                className="text-ink-2 hover:text-ink dark:text-d-ink-2 dark:hover:text-d-ink"
+              >
+                {l.label}
+              </Link>
+            ))}
           </nav>
 
           <div className="flex gap-2">

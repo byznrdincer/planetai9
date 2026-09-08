@@ -4,6 +4,7 @@ import { CategoryGrid } from "@/components/CategoryGrid";
 import { EventCard, NewsListItem } from "@/components/EventCard";
 import { HeroBlock } from "@/components/HeroBlock";
 import { HomeSidebar } from "@/components/HomeRail";
+import { Segmented } from "@/components/Segmented";
 import { VideoCard } from "@/components/VideoCard";
 import { apiSafe } from "@/lib/api";
 import { getDict, getLocale } from "@/lib/i18n";
@@ -66,6 +67,16 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-16">
+      <div className="-mb-10 flex justify-end">
+        <Segmented
+          options={[
+            { label: locale === "tr" ? "Dünya + Türkiye" : "Global + Türkiye", href: "/", active: true },
+            { label: locale === "tr" ? "Dünya" : "Global", href: "/news?bucket=AI&region=world", active: false },
+            { label: "Türkiye", href: "/news?bucket=AI&region=TR", active: false },
+          ]}
+        />
+      </div>
+
       {lead && (
         <HeroBlock lead={lead} side={side} locale={locale} readMore={locale === "tr" ? "Haberin devamı" : "Read more"} />
       )}

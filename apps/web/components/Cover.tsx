@@ -1,6 +1,7 @@
 import { categoryLabel } from "@/lib/format";
 import type { Locale } from "@/lib/i18n";
 import { catColor } from "@/lib/category";
+import { CoverImg } from "./CoverImg";
 
 export function Cover({
   src,
@@ -18,23 +19,11 @@ export function Cover({
   const hue = catColor(category);
   return (
     <div className={`relative overflow-hidden bg-wash dark:bg-d-wash ${rounded} ${className}`}>
-      {src ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={src}
-          alt=""
-          loading="lazy"
-          referrerPolicy="no-referrer"
-          className={`h-full w-full object-cover transition-transform duration-500 ${
-            zoom ? "group-hover:scale-105" : ""
-          }`}
-        />
-      ) : (
-        <div
-          className="h-full w-full"
-          style={{ background: `linear-gradient(140deg, ${hue}, ${hue}18)` }}
-        />
-      )}
+      <div
+        className="absolute inset-0 h-full w-full"
+        style={{ background: `linear-gradient(140deg, ${hue}, ${hue}18)` }}
+      />
+      {src && <CoverImg src={src} zoom={zoom} />}
     </div>
   );
 }
