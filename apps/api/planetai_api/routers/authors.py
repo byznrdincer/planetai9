@@ -3,12 +3,12 @@ from __future__ import annotations
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from planetai_shared.db import models
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from planetai_api.db import get_db
-from planetai_shared.db import models
 
 router = APIRouter()
 
@@ -71,7 +71,12 @@ def get_author(slug: str, db: Session = Depends(get_db)) -> dict:
     ).all()
     return {
         "author": AuthorDetail(
-            slug=a.slug, name=a.name, role=a.role, avatar_url=a.avatar_url, bio=a.bio, links=a.links or {}
+            slug=a.slug,
+            name=a.name,
+            role=a.role,
+            avatar_url=a.avatar_url,
+            bio=a.bio,
+            links=a.links or {},
         ).model_dump(),
         "columns": [_card(p).model_dump() for p in posts],
     }

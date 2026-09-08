@@ -4,11 +4,10 @@ import os
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
-
-from planetai_shared.db.base import Base
 from planetai_shared.db import models  # noqa: F401  (register tables)
+from planetai_shared.db.base import Base
 from planetai_shared.settings import get_settings
+from sqlalchemy import engine_from_config, pool
 
 config = context.config
 if config.config_file_name is not None:

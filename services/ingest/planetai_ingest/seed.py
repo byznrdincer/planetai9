@@ -5,16 +5,16 @@ Idempotent: safe to run on every ingest start."""
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
+from planetai_shared.db import models
+from planetai_shared.db.base import session_scope
+from planetai_shared.enums import EntityType
 from slugify import slugify
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from planetai_ingest import config
-from planetai_shared.db import models
-from planetai_shared.db.base import session_scope
-from planetai_shared.enums import EntityType
 
 log = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 def _upsert_entity(db: Session, *, slug: str, name: str, type_: str, **extra) -> models.Entity:
     ent = db.scalar(select(models.Entity).where(models.Entity.slug == slug))
     if ent is None:
-        ent = models.Entity(slug=slug, name=name, type=type_, first_seen_at=datetime.now(timezone.utc))
+        ent = models.Entity(slug=slug, name=name, type=type_, first_seen_at=datetime.now(UTC))
         db.add(ent)
     ent.name = name
     ent.type = type_
@@ -146,7 +146,7 @@ def seed_editorial(db: Session) -> None:
         post.body = row["body"].strip()
         post.hero_image_url = row.get("hero_image_url")
         post.status = row.get("status", "published")
-        post.published_at = row.get("published_at") or datetime.now(timezone.utc)
+        post.published_at = row.get("published_at") or datetime.now(UTC)
     db.flush()
 
 

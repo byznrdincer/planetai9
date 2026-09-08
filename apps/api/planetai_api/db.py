@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 
-from sqlalchemy.orm import Session
-
 from planetai_shared.db.base import SessionLocal
+from sqlalchemy.orm import Session
 
 
 def get_db() -> Iterator[Session]:

@@ -9,23 +9,25 @@ from __future__ import annotations
 import json
 import logging
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from dateutil import parser as dtparser
-from sqlalchemy import select
-
-from planetai_ingest.collectors.base import FetchResult, http_client
 from planetai_shared.db import models
 from planetai_shared.db.base import session_scope
 from planetai_shared.settings import get_settings
+from sqlalchemy import select
+
+from planetai_ingest.collectors.base import FetchResult, http_client
 
 log = logging.getLogger(__name__)
 API = "https://www.googleapis.com/youtube/v3"
 _ISO_DUR = re.compile(r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?")
 _CHANNEL_ID = re.compile(r'"(?:channelId|externalId)":"(UC[\w-]{20,})"')
 _HANDLE = re.compile(r"@[\w.-]+")
-_YT_INITIAL = re.compile(r"ytInitialData\s*=\s*({.+?})\s*;\s*</script>", re.S)
-_REL = re.compile(r"(\d+)\s*(second|minute|hour|day|week|month|year|saniye|dakika|saat|gün|hafta|ay|yıl)")
+_YT_INITIAL = re.compile(r"ytInitialData\s*=\s*({.+?})\s*;\s*</script>", re.DOTALL)
+_REL = re.compile(
+    r"(\d+)\s*(second|minute|hour|day|week|month|year|saniye|dakika|saat|gün|hafta|ay|yıl)"
+)
 
 
 def _duration_seconds(iso: str) -> int:
@@ -105,7 +107,10 @@ class YouTubeCollector:
             md = lv.get("metadata", {}).get("lockupMetadataViewModel", {})
             title = (md.get("title") or {}).get("content", "")
             parts = _meta_parts(md)
-            views = next((_views(p) for p in parts if "view" in p.lower() or "görüntülenme" in p.lower()), None)
+            views = next(
+                (_views(p) for p in parts if "view" in p.lower() or "görüntülenme" in p.lower()),
+                None,
+            )
             rel = next((p for p in parts if _REL.search(p.lower())), "")
             rows.append(
                 {
@@ -114,7 +119,9 @@ class YouTubeCollector:
                     "description": "",
                     "thumbnail": f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg",
                     "duration": _hms_to_seconds(_badge_duration(lv)),
-                    "published": _relative_date(rel) if rel else datetime.now(timezone.utc) - timedelta(days=i),
+                    "published": _relative_date(rel)
+                    if rel
+                    else datetime.now(UTC) - timedelta(days=i),
                     "views": views,
                 }
             )
@@ -223,14 +230,25 @@ def _views(s: str) -> int | None:
 
 
 _UNIT_DAYS = {
-    "second": 0, "saniye": 0, "minute": 0, "dakika": 0, "hour": 0, "saat": 0,
-    "day": 1, "gün": 1, "week": 7, "hafta": 7, "month": 30, "ay": 30,
-    "year": 365, "yıl": 365,
+    "second": 0,
+    "saniye": 0,
+    "minute": 0,
+    "dakika": 0,
+    "hour": 0,
+    "saat": 0,
+    "day": 1,
+    "gün": 1,
+    "week": 7,
+    "hafta": 7,
+    "month": 30,
+    "ay": 30,
+    "year": 365,
+    "yıl": 365,
 }
 
 
 def _relative_date(text: str) -> datetime:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     m = _REL.search((text or "").lower())
     if not m:
         return now
@@ -245,7 +263,7 @@ def _upsert_scrape(rows: list[dict]) -> None:
             if video is None:
                 video = models.Video(youtube_id=r["id"])
                 db.add(video)
-                video.published_at = r["published"] or datetime.now(timezone.utc)
+                video.published_at = r["published"] or datetime.now(UTC)
             video.title = r["title"]
             if r["description"]:
                 video.description = r["description"][:5000]
@@ -279,4 +297,4 @@ def _upsert_api(rows: list[dict]) -> None:
 
 
 def _parse_dt(value: str | None) -> datetime:
-    return dtparser.parse(value) if value else datetime.now(timezone.utc)
+    return dtparser.parse(value) if value else datetime.now(UTC)

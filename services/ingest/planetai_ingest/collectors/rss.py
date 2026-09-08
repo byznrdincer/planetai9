@@ -4,31 +4,31 @@ from __future__ import annotations
 
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from time import mktime
 
+import feedparser
+from planetai_shared.settings import get_settings
+
+from planetai_ingest.collectors.base import BaseCollector, FetchResult, RawItem, http_client
+from planetai_ingest.text import clean_url, normalize_ws, strip_html
+
+log = logging.getLogger(__name__)
+
 _ARXIV_PREFIX = re.compile(
-    r"^\s*arXiv:\S+\s*(Announce Type:\s*\S+)?\s*(Abstract:)?\s*", re.I
+    r"^\s*arXiv:\S+\s*(Announce Type:\s*\S+)?\s*(Abstract:)?\s*", re.IGNORECASE
 )
 
 
 def _clean_arxiv_summary(summary: str) -> str:
     return _ARXIV_PREFIX.sub("", summary.replace("\n", " ")).strip()
 
-import feedparser
-
-from planetai_ingest.collectors.base import BaseCollector, FetchResult, RawItem, http_client
-from planetai_ingest.text import clean_url, normalize_ws, strip_html
-from planetai_shared.settings import get_settings
-
-log = logging.getLogger(__name__)
-
 
 def _parsed_datetime(entry) -> datetime | None:
     for key in ("published_parsed", "updated_parsed"):
         value = entry.get(key)
         if value:
-            return datetime.fromtimestamp(mktime(value), tz=timezone.utc)
+            return datetime.fromtimestamp(mktime(value), tz=UTC)
     return None
 
 

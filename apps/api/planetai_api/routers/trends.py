@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from planetai_shared.db import models
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from planetai_api import schemas, serializers
 from planetai_api.db import get_db
-from planetai_shared.db import models
 
 router = APIRouter()
 

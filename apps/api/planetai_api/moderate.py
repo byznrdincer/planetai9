@@ -1,24 +1,22 @@
 """Tiny marketplace moderation CLI.
 
-    uv run python -m planetai_api.moderate list
-    uv run python -m planetai_api.moderate approve <slug>
-    uv run python -m planetai_api.moderate reject <slug>
+uv run python -m planetai_api.moderate list
+uv run python -m planetai_api.moderate approve <slug>
+uv run python -m planetai_api.moderate reject <slug>
 """
 
 from __future__ import annotations
 
 import sys
 
-from sqlalchemy import select
-
 from planetai_shared.db import models
 from planetai_shared.db.base import session_scope
+from sqlalchemy import select
 
 
 def _cache_bust() -> None:
     try:
         import redis
-
         from planetai_shared.settings import get_settings
 
         client = redis.from_url(get_settings().redis_url)

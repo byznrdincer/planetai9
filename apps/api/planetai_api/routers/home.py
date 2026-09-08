@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends
+from planetai_shared.db import models
+from planetai_shared.enums import Category
+from planetai_shared.settings import get_settings
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from planetai_api import cache, schemas, serializers
 from planetai_api.db import get_db
 from planetai_api.routers.trends import build_trends
-from planetai_shared.db import models
-from planetai_shared.enums import Category
-from planetai_shared.settings import get_settings
 
 router = APIRouter()
 _settings = get_settings()
@@ -50,7 +50,7 @@ def home(db: Session = Depends(get_db)) -> schemas.HomePayload:
         select(models.Video).order_by(models.Video.published_at.desc()).limit(8)
     ).all()
 
-    week = datetime.now(timezone.utc) - timedelta(days=7)
+    week = datetime.now(UTC) - timedelta(days=7)
     popular = db.scalars(
         select(models.Event)
         .where(
@@ -90,7 +90,7 @@ def home(db: Session = Depends(get_db)) -> schemas.HomePayload:
         "security": section("AISafety"),
     }
 
-    since = datetime.now(timezone.utc) - timedelta(hours=24)
+    since = datetime.now(UTC) - timedelta(hours=24)
     timeline_events = db.scalars(
         select(models.Event)
         .where(

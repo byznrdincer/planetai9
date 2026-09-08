@@ -6,11 +6,10 @@ import re
 from dataclasses import dataclass
 
 import ahocorasick
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-
 from planetai_shared.db import models
 from planetai_shared.enums import EntityType
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 # most specific type wins when assigning the primary entity
 _TYPE_RANK = {
@@ -47,7 +46,7 @@ class EntityIndex:
         self._auto.make_automaton()
 
     @classmethod
-    def from_db(cls, db: Session) -> "EntityIndex":
+    def from_db(cls, db: Session) -> EntityIndex:
         rows = db.execute(
             select(
                 models.Entity.id,

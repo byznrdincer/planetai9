@@ -6,7 +6,6 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 import httpx
-
 from planetai_shared.db import models
 from planetai_shared.settings import get_settings
 

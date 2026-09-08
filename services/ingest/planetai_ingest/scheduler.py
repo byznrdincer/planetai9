@@ -16,6 +16,7 @@ log = logging.getLogger(__name__)
 def _collect(kinds: set[str]):
     def job():
         run_all(only_kinds=kinds)
+
     return job
 
 

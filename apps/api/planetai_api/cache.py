@@ -7,7 +7,6 @@ import logging
 from typing import Any
 
 import redis
-
 from planetai_shared.settings import get_settings
 
 log = logging.getLogger(__name__)

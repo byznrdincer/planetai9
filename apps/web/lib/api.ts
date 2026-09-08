@@ -9,6 +9,7 @@ export async function api<T>(
   const res = await fetch(`${BASE}/api/v1${path}`, {
     next: { revalidate: opts.revalidate ?? 60, tags: opts.tags },
     headers: { accept: "application/json" },
+    signal: AbortSignal.timeout(10_000),
   });
   if (!res.ok) {
     throw new Error(`API ${path} -> ${res.status}`);
@@ -18,7 +19,7 @@ export async function api<T>(
 
 export function apiSafe<T>(path: string, fallback: T, opts?: Parameters<typeof api>[1]): Promise<T> {
   return api<T>(path, opts).catch((err) => {
-    console.error(err);
+    console.error(`[api] ${path}:`, err instanceof Error ? err.message : err);
     return fallback;
   });
 }

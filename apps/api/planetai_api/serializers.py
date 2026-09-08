@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+from planetai_shared.db import models
+from planetai_shared.enums import PRIMARY_SOURCE_TYPES
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from planetai_api import schemas
-from planetai_shared.db import models
-from planetai_shared.enums import PRIMARY_SOURCE_TYPES
 
 
 def entity_ref(ent: models.Entity | None) -> schemas.EntityRef | None:
@@ -70,11 +70,15 @@ def event_detail(db: Session, event: models.Event) -> schemas.EventDetail:
         .join(models.Entity, models.Entity.id == models.EventEntity.entity_id)
         .where(models.EventEntity.event_id == event.id)
     ).all()
-    topic_rows = db.execute(
-        select(models.Topic)
-        .join(models.EventTopic, models.EventTopic.topic_id == models.Topic.id)
-        .where(models.EventTopic.event_id == event.id)
-    ).scalars().all()
+    topic_rows = (
+        db.execute(
+            select(models.Topic)
+            .join(models.EventTopic, models.EventTopic.topic_id == models.Topic.id)
+            .where(models.EventTopic.event_id == event.id)
+        )
+        .scalars()
+        .all()
+    )
     article_rows = db.execute(
         select(models.Article, models.Source)
         .join(models.Source, models.Source.id == models.Article.source_id)
@@ -128,8 +132,7 @@ def event_detail(db: Session, event: models.Event) -> schemas.EventDetail:
         primary_entity=entity_ref(event.primary_entity),
         topics=[schemas.TopicRef(slug=t.slug, name=t.name) for t in topic_rows],
         entities=[
-            schemas.EventEntityOut(entity=entity_ref(ent), role=ee.role)
-            for ee, ent in entity_rows
+            schemas.EventEntityOut(entity=entity_ref(ent), role=ee.role) for ee, ent in entity_rows
         ],
         sources=sources,
         importance_factors=fout,
@@ -170,7 +173,9 @@ def _related_events(db: Session, event: models.Event, limit: int = 6) -> list[mo
     return out
 
 
-def _related_videos_for_event(db: Session, event: models.Event, limit: int = 4) -> list[models.Video]:
+def _related_videos_for_event(
+    db: Session, event: models.Event, limit: int = 4
+) -> list[models.Video]:
     entity_ids = db.scalars(
         select(models.EventEntity.entity_id).where(models.EventEntity.event_id == event.id)
     ).all()

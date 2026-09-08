@@ -61,7 +61,7 @@ En kolay yol — `infra/seed/editorial.yaml` içindeki `columns:` listesine ekle
 ```yaml
 columns:
   - slug: 2026-yapay-zeka-ajanlari
-    author: beyza-nur-dincer
+    author: ayhan-demirci
     title: "2026: Ajanlar yılı mı, balon mu?"
     dek: "Kısa özet / spot cümle."
     published_at: 2026-09-08

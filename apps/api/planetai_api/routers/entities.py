@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from planetai_shared.db import models
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from fastapi import Query
-
 from planetai_api import schemas, serializers
 from planetai_api.db import get_db
-from planetai_shared.db import models
 
 router = APIRouter()
 
@@ -63,24 +61,32 @@ def get_entity(slug: str, db: Session = Depends(get_db)) -> schemas.EntityDetail
         for r, e in in_rels
     ]
 
-    latest_events = db.scalars(
-        select(models.Event)
-        .join(models.EventEntity, models.EventEntity.event_id == models.Event.id)
-        .where(models.EventEntity.entity_id == ent.id, models.Event.status == "active")
-        .order_by(models.Event.last_activity_at.desc())
-        .limit(15)
-    ).unique().all()
-
-    videos = db.scalars(
-        select(models.Video)
-        .join(models.VideoLink, models.VideoLink.video_id == models.Video.id)
-        .where(
-            models.VideoLink.target_type == "entity",
-            models.VideoLink.target_id == ent.id,
+    latest_events = (
+        db.scalars(
+            select(models.Event)
+            .join(models.EventEntity, models.EventEntity.event_id == models.Event.id)
+            .where(models.EventEntity.entity_id == ent.id, models.Event.status == "active")
+            .order_by(models.Event.last_activity_at.desc())
+            .limit(15)
         )
-        .order_by(models.Video.published_at.desc())
-        .limit(8)
-    ).unique().all()
+        .unique()
+        .all()
+    )
+
+    videos = (
+        db.scalars(
+            select(models.Video)
+            .join(models.VideoLink, models.VideoLink.video_id == models.Video.id)
+            .where(
+                models.VideoLink.target_type == "entity",
+                models.VideoLink.target_id == ent.id,
+            )
+            .order_by(models.Video.published_at.desc())
+            .limit(8)
+        )
+        .unique()
+        .all()
+    )
 
     return schemas.EntityDetail(
         slug=ent.slug,

@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from planetai_shared.db import models
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from planetai_api import schemas, serializers
 from planetai_api.db import get_db
-from planetai_shared.db import models
 
 router = APIRouter()
 
@@ -25,9 +25,7 @@ def list_videos(
         t = db.scalar(select(models.Topic).where(models.Topic.slug == topic))
         if t is None:
             raise HTTPException(404, "unknown topic")
-        stmt = stmt.join(
-            models.VideoLink, models.VideoLink.video_id == models.Video.id
-        ).where(
+        stmt = stmt.join(models.VideoLink, models.VideoLink.video_id == models.Video.id).where(
             models.VideoLink.target_type == "topic", models.VideoLink.target_id == t.id
         )
     stmt = stmt.order_by(models.Video.published_at.desc()).limit(limit)
@@ -40,27 +38,27 @@ def get_video(youtube_id: str, db: Session = Depends(get_db)) -> schemas.VideoDe
     if video is None:
         raise HTTPException(404, "video not found")
 
-    links = db.scalars(
-        select(models.VideoLink).where(models.VideoLink.video_id == video.id)
-    ).all()
+    links = db.scalars(select(models.VideoLink).where(models.VideoLink.video_id == video.id)).all()
     entity_ids = [ln.target_id for ln in links if ln.target_type == "entity"]
     topic_ids = [ln.target_id for ln in links if ln.target_type == "topic"]
 
-    entities = db.scalars(
-        select(models.Entity).where(models.Entity.id.in_(entity_ids))
-    ).all()
+    entities = db.scalars(select(models.Entity).where(models.Entity.id.in_(entity_ids))).all()
     topics = db.scalars(select(models.Topic).where(models.Topic.id.in_(topic_ids))).all()
 
-    related_events = db.scalars(
-        select(models.Event)
-        .join(models.EventEntity, models.EventEntity.event_id == models.Event.id)
-        .where(
-            models.EventEntity.entity_id.in_(entity_ids),
-            models.Event.status == "active",
+    related_events = (
+        db.scalars(
+            select(models.Event)
+            .join(models.EventEntity, models.EventEntity.event_id == models.Event.id)
+            .where(
+                models.EventEntity.entity_id.in_(entity_ids),
+                models.Event.status == "active",
+            )
+            .order_by(models.Event.last_activity_at.desc())
+            .limit(6)
         )
-        .order_by(models.Event.last_activity_at.desc())
-        .limit(6)
-    ).unique().all()
+        .unique()
+        .all()
+    )
 
     base = serializers.video_card(video).model_dump()
     return schemas.VideoDetail(

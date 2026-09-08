@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import re
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta, timezone
-
-from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from datetime import UTC, datetime, timedelta
 
 from planetai_shared.db import models
 from planetai_shared.enums import importance_band
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
 
 WEIGHTS = {
     "source_reliability": 0.15,
@@ -25,7 +24,7 @@ _MARKET_KW = re.compile(
     r"\b(launch|launches|release|releases|released|announc\w+|unveil\w+|raises|"
     r"funding|valuation|acquir\w+|general availability|now available|ga\b|benchmark|"
     r"state[- ]of[- ]the[- ]art|sota|price|pricing|open[- ]weights?)\b",
-    re.I,
+    re.IGNORECASE,
 )
 
 
@@ -44,13 +43,9 @@ class Factors:
 
 
 def score_event(db: Session, event: models.Event) -> tuple[float, str, Factors]:
-    articles = db.scalars(
-        select(models.Article).where(models.Article.event_id == event.id)
-    ).all()
+    articles = db.scalars(select(models.Article).where(models.Article.event_id == event.id)).all()
     sources = db.scalars(
-        select(models.Source).where(
-            models.Source.id.in_({a.source_id for a in articles})
-        )
+        select(models.Source).where(models.Source.id.in_({a.source_id for a in articles}))
     ).all()
 
     f = Factors()
@@ -68,7 +63,7 @@ def score_event(db: Session, event: models.Event) -> tuple[float, str, Factors]:
 
     # novelty: how rare is (primary_entity, category) over the last 30 days
     if event.primary_entity_id:
-        since = datetime.now(timezone.utc) - timedelta(days=30)
+        since = datetime.now(UTC) - timedelta(days=30)
         prior = db.scalar(
             select(func.count())
             .select_from(models.Event)
@@ -107,4 +102,4 @@ def persist_factors(db: Session, event: models.Event, factors: Factors, total: f
     for key, value in asdict(factors).items():
         setattr(row, key, round(value, 3))
     row.total = total
-    row.computed_at = datetime.now(timezone.utc)
+    row.computed_at = datetime.now(UTC)

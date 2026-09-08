@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
+from planetai_shared.db import models
+from planetai_shared.enums import Category
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from planetai_api import schemas, serializers
 from planetai_api.db import get_db
-from planetai_shared.db import models
-from planetai_shared.enums import Category
 
 router = APIRouter()
 

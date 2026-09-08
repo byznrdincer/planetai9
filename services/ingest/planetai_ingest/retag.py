@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import logging
 
+from planetai_shared.db import models
+from planetai_shared.db.base import session_scope
 from sqlalchemy import select
 
 from planetai_ingest.pipeline import classify
-from planetai_shared.db import models
-from planetai_shared.db.base import session_scope
 
 log = logging.getLogger(__name__)
 
@@ -20,25 +20,18 @@ def run() -> int:
             {"id": t.id, "keywords": t.keywords or []}
             for t in db.scalars(select(models.Topic)).all()
         ]
-        events = db.scalars(
-            select(models.Event).where(models.Event.status == "active")
-        ).all()
+        events = db.scalars(select(models.Event).where(models.Event.status == "active")).all()
         for ev in events:
-            have = {
-                r
-                for r in db.scalars(
-                    select(models.EventTopic.topic_id).where(
-                        models.EventTopic.event_id == ev.id
-                    )
+            have = set(
+                db.scalars(
+                    select(models.EventTopic.topic_id).where(models.EventTopic.event_id == ev.id)
                 ).all()
-            }
+            )
             for topic_id, weight in classify.match_topics(
                 title=ev.title, summary=ev.summary or "", topics=topics
             ):
                 if topic_id not in have:
-                    db.add(
-                        models.EventTopic(event_id=ev.id, topic_id=topic_id, weight=weight)
-                    )
+                    db.add(models.EventTopic(event_id=ev.id, topic_id=topic_id, weight=weight))
                     added += 1
     log.info("retag: %d new event-topic links", added)
     return added

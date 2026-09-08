@@ -2,16 +2,19 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from planetai_shared.db import models
+from planetai_shared.settings import get_settings
 from pydantic import BaseModel, Field, HttpUrl
 from slugify import slugify
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from planetai_api.db import get_db
-from planetai_shared.db import models
+from planetai_api.ratelimit import limiter
 
 router = APIRouter()
+_settings = get_settings()
 
 CATEGORIES = {"mcp", "llm", "stt", "tts", "agent", "tool", "other"}
 CATEGORY_LABEL = {
@@ -91,7 +94,8 @@ def list_apps(
 
 
 @router.post("/marketplace", status_code=201)
-def submit_app(payload: AppSubmission, db: Session = Depends(get_db)) -> dict:
+@limiter.limit(_settings.rate_limit_submit)
+def submit_app(request: Request, payload: AppSubmission, db: Session = Depends(get_db)) -> dict:
     if payload.category not in CATEGORIES:
         raise HTTPException(422, f"category must be one of {sorted(CATEGORIES)}")
     if payload.pricing not in {"free", "freemium", "paid"}:

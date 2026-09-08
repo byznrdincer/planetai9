@@ -5,9 +5,10 @@ from __future__ import annotations
 import re
 from functools import lru_cache
 
+from planetai_shared.enums import Category
+
 from planetai_ingest import config
 from planetai_ingest.pipeline.entities import EntityHit
-from planetai_shared.enums import Category
 
 
 @lru_cache

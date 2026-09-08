@@ -1,9 +1,9 @@
 """PlanetAI ingest CLI.
 
-    uv run planetai-ingest seed
-    uv run planetai-ingest collect [--kinds rss,arxiv]
-    uv run planetai-ingest trends
-    uv run planetai-ingest scheduler
+uv run planetai-ingest seed
+uv run planetai-ingest collect [--kinds rss,arxiv]
+uv run planetai-ingest trends
+uv run planetai-ingest scheduler
 """
 
 from __future__ import annotations
@@ -17,7 +17,6 @@ def _bust_api_cache() -> None:
     """Drop the API's cached list payloads after a data refresh."""
     try:
         import redis
-
         from planetai_shared.settings import get_settings
 
         client = redis.from_url(get_settings().redis_url)
@@ -53,8 +52,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.cmd == "collect":
-        from planetai_ingest.seed import run as seed_run
         from planetai_ingest.pipeline.ingest import run_all
+        from planetai_ingest.seed import run as seed_run
 
         seed_run()
         kinds = set(args.kinds.split(",")) if args.kinds else None

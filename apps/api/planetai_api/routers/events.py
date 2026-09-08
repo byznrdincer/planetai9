@@ -4,12 +4,12 @@ import base64
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from planetai_shared.db import models
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from planetai_api import schemas, serializers
 from planetai_api.db import get_db
-from planetai_shared.db import models
 
 router = APIRouter()
 
@@ -25,7 +25,16 @@ def _decode_cursor(cursor: str) -> tuple[datetime, str]:
 
 
 CATEGORY_BUCKET = {
-    "AI": ["Models", "Companies", "Agents", "GenerativeAI", "VoiceAI", "ComputerVision", "HealthcareAI", "FinanceAI"],
+    "AI": [
+        "Models",
+        "Companies",
+        "Agents",
+        "GenerativeAI",
+        "VoiceAI",
+        "ComputerVision",
+        "HealthcareAI",
+        "FinanceAI",
+    ],
     "Robotics": ["Robotics"],
     "Coding": ["AICoding"],
     "Security": ["AISafety"],
@@ -74,16 +83,14 @@ def list_events(
             .join(models.Source, models.Source.id == models.Article.source_id)
             .where(models.Source.kind == "arxiv", models.Article.event_id.isnot(None))
         )
-        stmt = stmt.where(
-            models.Event.category != "Research", models.Event.id.not_in(arxiv_events)
-        )
+        stmt = stmt.where(models.Event.category != "Research", models.Event.id.not_in(arxiv_events))
     if topic:
         tp = db.scalar(select(models.Topic).where(models.Topic.slug == topic))
         if tp is None:
             raise HTTPException(404, "unknown topic")
-        stmt = stmt.join(
-            models.EventTopic, models.EventTopic.event_id == models.Event.id
-        ).where(models.EventTopic.topic_id == tp.id)
+        stmt = stmt.join(models.EventTopic, models.EventTopic.event_id == models.Event.id).where(
+            models.EventTopic.topic_id == tp.id
+        )
     if region and region.upper() == "TR":
         tr_source_events = (
             select(models.Article.event_id)
@@ -95,9 +102,7 @@ def list_events(
             .join(models.Topic, models.Topic.id == models.EventTopic.topic_id)
             .where(models.Topic.slug == "turkiye")
         )
-        stmt = stmt.where(
-            models.Event.id.in_(tr_source_events.union(tr_topic_events))
-        )
+        stmt = stmt.where(models.Event.id.in_(tr_source_events.union(tr_topic_events)))
     if importance_min is not None:
         stmt = stmt.where(models.Event.importance >= importance_min)
     if impact:
@@ -106,16 +111,16 @@ def list_events(
         ent = db.scalar(select(models.Entity).where(models.Entity.slug == entity))
         if ent is None:
             raise HTTPException(404, "unknown entity")
-        stmt = stmt.join(
-            models.EventEntity, models.EventEntity.event_id == models.Event.id
-        ).where(models.EventEntity.entity_id == ent.id)
+        stmt = stmt.join(models.EventEntity, models.EventEntity.event_id == models.Event.id).where(
+            models.EventEntity.entity_id == ent.id
+        )
     if source:
         src = db.scalar(select(models.Source).where(models.Source.slug == source))
         if src is None:
             raise HTTPException(404, "unknown source")
-        stmt = stmt.join(
-            models.Article, models.Article.event_id == models.Event.id
-        ).where(models.Article.source_id == src.id)
+        stmt = stmt.join(models.Article, models.Article.event_id == models.Event.id).where(
+            models.Article.source_id == src.id
+        )
 
     if sort == "importance":
         stmt = stmt.order_by(models.Event.importance.desc(), models.Event.id.desc())

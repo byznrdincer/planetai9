@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends
+from planetai_shared.db import models
+from planetai_shared.enums import Category
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from planetai_api import schemas, serializers
 from planetai_api.db import get_db
-from planetai_shared.db import models
-from planetai_shared.enums import Category
 
 router = APIRouter()
 
@@ -26,7 +26,7 @@ def sources(db: Session = Depends(get_db)) -> list[schemas.SourceRef]:
 
 @router.get("/categories", response_model=list[schemas.CategoryCount])
 def categories(db: Session = Depends(get_db)) -> list[schemas.CategoryCount]:
-    since = datetime.now(timezone.utc) - timedelta(hours=24)
+    since = datetime.now(UTC) - timedelta(hours=24)
     recent = dict(
         db.execute(
             select(models.Event.category, func.count())

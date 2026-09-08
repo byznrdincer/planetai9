@@ -6,19 +6,20 @@ import logging
 import re
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
+import httpx
+from planetai_shared.db import models
+from planetai_shared.db.base import session_scope
+from planetai_shared.enums import PRIMARY_SOURCE_TYPES
+from planetai_shared.settings import get_settings
 from slugify import slugify
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from planetai_ingest import config
-import httpx
-
 from planetai_ingest.collectors import RawItem, collector_for
-from planetai_ingest.collectors.base import http_client
 from planetai_ingest.pipeline import classify, dedup
-from planetai_ingest.pipeline.entities import EntityIndex, EntityHit, choose_primary
+from planetai_ingest.pipeline.entities import EntityHit, EntityIndex, choose_primary
 from planetai_ingest.pipeline.score import persist_factors, score_event
 from planetai_ingest.text import (
     clean_url,
@@ -29,10 +30,6 @@ from planetai_ingest.text import (
     strip_html,
     summarize_excerpt,
 )
-from planetai_shared.db import models
-from planetai_shared.db.base import session_scope
-from planetai_shared.enums import PRIMARY_SOURCE_TYPES
-from planetai_shared.settings import get_settings
 
 log = logging.getLogger(__name__)
 _settings = get_settings()
@@ -45,7 +42,7 @@ _AI_TERMS = re.compile(
     r"language model|foundation model|frontier model|reasoning model|open model|robot|"
     r"yapay zek[aâ]|makine öğren|derin öğren|büyük dil model|üretken yapay|sohbet bot|"
     r"dil model|yapay sinir|otonom sürüş|otonom araç)\b",
-    re.I,
+    re.IGNORECASE,
 )
 # entity names that are ordinary words / big conglomerates — a bare match here
 # does not by itself make a story "about AI".
@@ -63,7 +60,7 @@ def collect_source(source_id: uuid.UUID) -> dict:
         if source.kind == "youtube":
             collector_for(source).fetch()
             link_videos(db)
-            source.last_fetched_at = datetime.now(timezone.utc)
+            source.last_fetched_at = datetime.now(UTC)
             return stats
         if not source.feed_url:
             return stats
@@ -74,7 +71,7 @@ def collect_source(source_id: uuid.UUID) -> dict:
             log.warning("collect %s failed: %s", source.slug, exc)
             return stats
 
-        source.last_fetched_at = datetime.now(timezone.utc)
+        source.last_fetched_at = datetime.now(UTC)
         if result.not_modified:
             return stats
         if result.etag:
@@ -86,18 +83,17 @@ def collect_source(source_id: uuid.UUID) -> dict:
         topics = _topics_payload(db)
 
         # pre-fetch article pages concurrently for items we haven't seen
-        cutoff = datetime.now(timezone.utc) - timedelta(days=_settings.max_article_age_days)
-        known = {
-            r
-            for r in db.scalars(
+        cutoff = datetime.now(UTC) - timedelta(days=_settings.max_article_age_days)
+        known = set(
+            db.scalars(
                 select(models.Article.external_id).where(models.Article.source_id == source.id)
             ).all()
-        }
+        )
         to_fetch = [
             it
             for it in result.items
             if it.external_id not in known
-            and (it.published_at or datetime.now(timezone.utc)) >= cutoff
+            and (it.published_at or datetime.now(UTC)) >= cutoff
             and source.kind != "arxiv"
             and len(extract_article_paragraphs(it.extra.get("content_html", ""))) < _BODY_MIN
         ]
@@ -117,8 +113,7 @@ def collect_source(source_id: uuid.UUID) -> dict:
 
 def _topics_payload(db: Session) -> list[dict]:
     return [
-        {"id": t.id, "keywords": t.keywords or []}
-        for t in db.scalars(select(models.Topic)).all()
+        {"id": t.id, "keywords": t.keywords or []} for t in db.scalars(select(models.Topic)).all()
     ]
 
 
@@ -139,8 +134,8 @@ def _ingest_item(
     if existing is not None:
         return False
 
-    published = item.published_at or datetime.now(timezone.utc)
-    cutoff = datetime.now(timezone.utc) - timedelta(days=_settings.max_article_age_days)
+    published = item.published_at or datetime.now(UTC)
+    cutoff = datetime.now(UTC) - timedelta(days=_settings.max_article_age_days)
     if published < cutoff:
         return False
 
@@ -156,9 +151,12 @@ def _ingest_item(
     # names a *specific* AI entity or reads as AI. Common-word company names
     # (Amazon, Apple...) alone are not enough — they need an AI term too.
     strong_hit = any(h.name.lower() not in _AMBIGUOUS_ENTITIES for h in hits)
-    if source.kind != "arxiv" and not strong_hit:
-        if not _AI_TERMS.search(f"{item.title}\n{summary_src}"):
-            return False
+    if (
+        source.kind != "arxiv"
+        and not strong_hit
+        and not _AI_TERMS.search(f"{item.title}\n{summary_src}")
+    ):
+        return False
 
     sh = simhash64(f"{item.title} {clean_summary or ''}")
 
@@ -190,7 +188,7 @@ def _ingest_item(
         body_text=body_text,
         lang=item.lang,
         published_at=published,
-        fetched_at=datetime.now(timezone.utc),
+        fetched_at=datetime.now(UTC),
         image_url=image_url,
         content_hash=content_hash(item.title, url),
         dedup_simhash=sh,
@@ -384,9 +382,7 @@ def link_videos(db: Session) -> int:
                 key = ("topic", str(topic.id))
                 if key not in existing:
                     db.add(
-                        models.VideoLink(
-                            video_id=video.id, target_type="topic", target_id=topic.id
-                        )
+                        models.VideoLink(video_id=video.id, target_type="topic", target_id=topic.id)
                     )
                     made += 1
     return made
@@ -396,18 +392,13 @@ def link_videos(db: Session) -> int:
 
 
 def run_all(only_kinds: set[str] | None = None) -> dict:
-    started = datetime.now(timezone.utc)
+    started = datetime.now(UTC)
     totals = {"seen": 0, "written": 0, "sources": 0}
     with session_scope() as db:
         source_ids = db.scalars(
             select(models.Source.id).where(models.Source.enabled.is_(True))
         ).all()
-        kinds = {
-            sid: kind
-            for sid, kind in db.execute(
-                select(models.Source.id, models.Source.kind)
-            ).all()
-        }
+        kinds = dict(db.execute(select(models.Source.id, models.Source.kind)).all())
 
     for sid in source_ids:
         if only_kinds and kinds.get(sid) not in only_kinds:
@@ -422,7 +413,7 @@ def run_all(only_kinds: set[str] | None = None) -> dict:
             models.IngestRun(
                 job="collect:" + (",".join(sorted(only_kinds)) if only_kinds else "all"),
                 started_at=started,
-                finished_at=datetime.now(timezone.utc),
+                finished_at=datetime.now(UTC),
                 ok=True,
                 items_seen=totals["seen"],
                 items_written=totals["written"],

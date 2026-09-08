@@ -11,10 +11,28 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+const SITE = process.env.PLANETAI_SITE_URL ?? "https://planetai9.com";
+
 export const metadata: Metadata = {
-  title: "PlanetAI9 — Yapay Zekâ Haberleri",
+  metadataBase: new URL(SITE),
+  title: {
+    default: "PlanetAI9 — Yapay Zekâ Haberleri",
+    template: "%s · PlanetAI9",
+  },
   description:
     "Yapay zekâ dünyasındaki gelişmeleri, model duyurularını, araçları ve regülasyonları Türkçe takip et.",
+  applicationName: "PlanetAI9",
+  openGraph: {
+    type: "website",
+    siteName: "PlanetAI9",
+    locale: "tr_TR",
+    url: SITE,
+    title: "PlanetAI9 — Yapay Zekâ Haberleri",
+    description: "Türkiye'nin yapay zekâ medya platformu.",
+  },
+  twitter: { card: "summary_large_image", site: "@planetai9" },
+  robots: { index: true, follow: true },
+  alternates: { types: { "application/rss+xml": `${SITE}/api/rss` } },
 };
 
 const THEME_INIT = `try{if(localStorage.getItem('planetai_theme')==='dark'){document.documentElement.classList.add('dark')}}catch(e){}`;

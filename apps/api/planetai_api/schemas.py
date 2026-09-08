@@ -82,7 +82,7 @@ class EventDetail(BaseModel):
     sources: list[EventSourceOut]
     importance_factors: ImportanceFactorsOut | None
     related_events: list[EventCard]
-    related_videos: list["VideoCard"]
+    related_videos: list[VideoCard]
 
 
 class TimelineItem(BaseModel):
@@ -162,7 +162,7 @@ class EntityDetail(BaseModel):
     description: str | None
     logo_url: str | None
     website_url: str | None
-    relations: list["EntityRelationOut"]
+    relations: list[EntityRelationOut]
     latest_events: list[EventCard]
     videos: list[VideoCard]
 

@@ -1,0 +1,91 @@
+name: planetai9
+
+# Self-hosted production stack. Provide secrets via infra/.env.prod
+# (see .env.prod.example). Bring up with:
+#   docker compose -f infra/docker-compose.prod.yml --env-file infra/.env.prod up -d --build
+
+x-common-env: &common-env
+  PLANETAI_ENV: production
+  PLANETAI_DATABASE_URL: postgresql+psycopg://planetai:${POSTGRES_PASSWORD}@postgres:5432/planetai
+  PLANETAI_REDIS_URL: redis://redis:6379/0
+  PLANETAI_SITE_URL: ${SITE_URL}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: planetai
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: planetai
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U planetai"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      PLANETAI_CORS_ORIGINS: ${SITE_URL}
+      PLANETAI_DOCS_ENABLED: "false"
+      PORT: "8000"
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/api/v1/healthz').status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  ingest:
+    build:
+      context: ..
+      dockerfile: services/ingest/Dockerfile
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      PLANETAI_YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      api: { condition: service_started }
+
+  web:
+    build:
+      context: ../apps/web
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PLANETAI_API_URL: http://api:8000
+      PLANETAI_SITE_URL: ${SITE_URL}
+      PORT: "3000"
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      api: { condition: service_started }
+
+volumes:
+  pgdata:
+  redisdata:

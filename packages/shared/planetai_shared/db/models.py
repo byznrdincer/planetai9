@@ -37,7 +37,9 @@ class Source(Base, TimestampMixin):
     kind: Mapped[str] = mapped_column(String(20))
     source_type: Mapped[str] = mapped_column(String(30))
     trust_weight: Mapped[float] = mapped_column(Numeric(3, 2), default=0.5)
-    entity_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("entities.id", ondelete="SET NULL"))
+    entity_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("entities.id", ondelete="SET NULL")
+    )
     poll_interval_sec: Mapped[int] = mapped_column(Integer, default=900)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     last_fetched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -45,7 +47,7 @@ class Source(Base, TimestampMixin):
     last_modified: Mapped[str | None] = mapped_column(Text)
     config: Mapped[dict] = mapped_column(JSONB, default=dict)
 
-    articles: Mapped[list["Article"]] = relationship(back_populates="source")
+    articles: Mapped[list[Article]] = relationship(back_populates="source")
 
 
 class Entity(Base, TimestampMixin):
@@ -56,7 +58,9 @@ class Entity(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(200))
     slug: Mapped[str] = mapped_column(String(160), unique=True)
     aliases: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
-    parent_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("entities.id", ondelete="SET NULL"))
+    parent_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("entities.id", ondelete="SET NULL")
+    )
     description: Mapped[str | None] = mapped_column(Text)
     entity_metadata: Mapped[dict] = mapped_column("metadata", JSONB, default=dict)
     logo_url: Mapped[str | None] = mapped_column(Text)
@@ -78,7 +82,9 @@ class EntityRelation(Base, TimestampMixin):
     source_note: Mapped[str | None] = mapped_column(Text)
 
     __table_args__ = (
-        UniqueConstraint("from_entity_id", "to_entity_id", "relation", name="entity_relations_edge"),
+        UniqueConstraint(
+            "from_entity_id", "to_entity_id", "relation", name="entity_relations_edge"
+        ),
     )
 
 
@@ -108,7 +114,7 @@ class Event(Base, TimestampMixin):
     image_url: Mapped[str | None] = mapped_column(Text)
 
     primary_entity: Mapped[Entity | None] = relationship(foreign_keys=[primary_entity_id])
-    articles: Mapped[list["Article"]] = relationship(back_populates="event")
+    articles: Mapped[list[Article]] = relationship(back_populates="event")
 
     __table_args__ = (
         Index("ix_events_last_activity", "last_activity_at"),
@@ -201,9 +207,7 @@ class TopicTrendSnapshot(Base):
 
     topic: Mapped[Topic] = relationship()
 
-    __table_args__ = (
-        Index("ix_trend_lookup", "window", "captured_at", "rank"),
-    )
+    __table_args__ = (Index("ix_trend_lookup", "window", "captured_at", "rank"),)
 
 
 class ImportanceFactors(Base):
@@ -264,13 +268,17 @@ class MarketplaceApp(Base, TimestampMixin):
     description: Mapped[str | None] = mapped_column(Text)
     url: Mapped[str] = mapped_column(Text)
     repo_url: Mapped[str | None] = mapped_column(Text)
-    category: Mapped[str] = mapped_column(String(20))  # mcp | llm | stt | tts | agent | tool | other
+    category: Mapped[str] = mapped_column(
+        String(20)
+    )  # mcp | llm | stt | tts | agent | tool | other
     pricing: Mapped[str] = mapped_column(String(20), default="free")  # free | freemium | paid
     logo_url: Mapped[str | None] = mapped_column(Text)
     author_name: Mapped[str] = mapped_column(String(120))
     author_url: Mapped[str | None] = mapped_column(Text)
     submitter_email: Mapped[str | None] = mapped_column(String(200))
-    status: Mapped[str] = mapped_column(String(12), default="pending")  # pending | approved | rejected
+    status: Mapped[str] = mapped_column(
+        String(12), default="pending"
+    )  # pending | approved | rejected
     upvotes: Mapped[int] = mapped_column(Integer, default=0)
     featured: Mapped[bool] = mapped_column(Boolean, default=False)
 
@@ -288,7 +296,7 @@ class Author(Base, TimestampMixin):
     avatar_url: Mapped[str | None] = mapped_column(Text)
     links: Mapped[dict] = mapped_column(JSONB, default=dict)
 
-    posts: Mapped[list["OpinionPost"]] = relationship(back_populates="author")
+    posts: Mapped[list[OpinionPost]] = relationship(back_populates="author")
 
 
 class OpinionPost(Base, TimestampMixin):

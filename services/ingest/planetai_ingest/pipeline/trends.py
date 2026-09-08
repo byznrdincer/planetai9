@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
-
-from sqlalchemy import func, select
+from datetime import UTC, datetime, timedelta
 
 from planetai_shared.db import models
 from planetai_shared.db.base import session_scope
 from planetai_shared.enums import TrendWindow
+from sqlalchemy import func, select
 
 log = logging.getLogger(__name__)
 _WINDOW_HOURS = {TrendWindow.H24: 24, TrendWindow.D7: 24 * 7}
@@ -17,7 +16,7 @@ EPS = 1e-6
 
 
 def compute_snapshots() -> int:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     written = 0
     with session_scope() as db:
         topics = db.scalars(select(models.Topic)).all()
@@ -49,7 +48,11 @@ def compute_snapshots() -> int:
                     .limit(1)
                 )
                 prev = float(prev) if prev is not None else 0.0
-                delta = (weighted - prev) / max(prev, EPS) * 100 if prev else (100.0 if weighted else 0.0)
+                delta = (
+                    (weighted - prev) / max(prev, EPS) * 100
+                    if prev
+                    else (100.0 if weighted else 0.0)
+                )
                 rows.append((topic.id, event_count, weighted, round(delta, 1)))
 
             rows.sort(key=lambda r: (r[2], r[1]), reverse=True)
@@ -72,7 +75,7 @@ def compute_snapshots() -> int:
 
 def refresh_top_signals() -> int:
     """Mark the ~5 highest-importance recent events as top signals (max 2 per category)."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     since = now - timedelta(hours=48)
     with session_scope() as db:
         db.query(models.Event).filter(models.Event.is_top_signal.is_(True)).update(

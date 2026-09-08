@@ -1,20 +1,30 @@
-"""Environment-driven settings shared by the API and ingest services."""
+"""Environment-driven settings shared by the API and ingest services.
+
+Every value can be overridden with an env var prefixed ``PLANETAI_`` (e.g.
+``PLANETAI_DATABASE_URL``). In production set these via the platform's secret
+store — never commit a populated ``.env``."""
 
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import Literal
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="PLANETAI_", env_file=".env", extra="ignore")
 
+    env: Literal["dev", "staging", "production"] = "dev"
+
     database_url: str = "postgresql+psycopg://planetai:planetai@localhost:5442/planetai"
     redis_url: str = "redis://localhost:6379/0"
 
+    site_url: str = "http://localhost:3010"
+
     # ingest
-    user_agent: str = "PlanetAIBot/0.1 (+https://planetai.example/bot)"
+    user_agent: str = "PlanetAI9Bot/1.0 (+https://planetai9.com/bot)"
     http_timeout_sec: float = 20.0
     youtube_api_key: str | None = None
     youtube_channel_id: str | None = None
@@ -25,12 +35,26 @@ class Settings(BaseSettings):
     dedup_simhash_max_distance: int = 4
 
     # api
-    cors_origins: list[str] = ["http://localhost:3000"]
+    cors_origins: list[str] = ["http://localhost:3010"]
     cache_ttl_home_sec: int = 60
     cache_ttl_list_sec: int = 90
+    rate_limit_default: str = "120/minute"
+    rate_limit_submit: str = "8/hour"
+    docs_enabled: bool = True
 
     # feature flags
     ai_enrich_enabled: bool = False
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _split_origins(cls, v: object) -> object:
+        if isinstance(v, str):
+            return [o.strip() for o in v.split(",") if o.strip()]
+        return v
+
+    @property
+    def is_prod(self) -> bool:
+        return self.env == "production"
 
 
 @lru_cache

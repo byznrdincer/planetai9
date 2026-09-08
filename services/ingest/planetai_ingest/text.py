@@ -11,7 +11,7 @@ from selectolax.parser import HTMLParser
 
 _WS = re.compile(r"\s+")
 _SENT_SPLIT = re.compile(r"(?<=[.!?])\s+")
-_TRACKING = re.compile(r"[?&](utm_[^=]+|ref|fbclid|gclid|mc_cid|mc_eid)=[^&]*", re.I)
+_TRACKING = re.compile(r"[?&](utm_[^=]+|ref|fbclid|gclid|mc_cid|mc_eid)=[^&]*", re.IGNORECASE)
 
 
 def extract_og_image(html: str, base_url: str = "") -> str | None:
@@ -39,7 +39,7 @@ _BOILER = re.compile(
     r"^(sign up|subscribe|read more|advertisement|share this|related:|image:|photo:|"
     r"getty images|reuters|associated press|©|all rights reserved|follow us|"
     r"this article|you might also|recommended|newsletter|cookie)",
-    re.I,
+    re.IGNORECASE,
 )
 _DROP_SELECTORS = "figure,figcaption,aside,nav,footer,header,form,script,style,.ad,.advertisement,.newsletter,.related,.share,.social,.promo"
 
@@ -137,9 +137,9 @@ def simhash64(text: str) -> int:
     tokens = _tokens(text)
     if not tokens:
         return 0
-    shingles = tokens if len(tokens) < 3 else [
-        " ".join(tokens[i : i + 2]) for i in range(len(tokens) - 1)
-    ]
+    shingles = (
+        tokens if len(tokens) < 3 else [" ".join(tokens[i : i + 2]) for i in range(len(tokens) - 1)]
+    )
     v = [0] * 64
     for sh in shingles:
         h = int.from_bytes(hashlib.blake2b(sh.encode(), digest_size=8).digest(), "big")
