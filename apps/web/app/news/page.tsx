@@ -8,7 +8,6 @@ import type { Page as PageT } from "@/lib/types";
 
 export const revalidate = 60;
 
-const BUCKETS = ["", "AI", "Robotics", "Coding", "Security", "Regulation", "Research", "Infra", "OpenSource"];
 const WINDOWS = ["", "24h", "7d"] as const;
 const REGIONS = ["", "world", "TR"] as const;
 
@@ -70,15 +69,15 @@ export default async function NewsPage({
 
   const filters = (
     <div className="space-y-6">
-      <Group label={tr ? "Kategori" : "Category"}>
-        {BUCKETS.map((b) => (
-          <li key={b || "all"}>
-            <Item href={linkWith({ bucket: b })} on={bucket === b}>
-              {b ? bucketLabel(b, locale) : t.common.all}
+      {bucket && (
+        <Group label={tr ? "Kategori" : "Category"}>
+          <li>
+            <Item href={linkWith({ bucket: "" })} on={false}>
+              ← {bucketLabel(bucket, locale)} · {t.common.all}
             </Item>
           </li>
-        ))}
-      </Group>
+        </Group>
+      )}
       <Group label={tr ? "Bölge" : "Region"}>
         {(
           [
