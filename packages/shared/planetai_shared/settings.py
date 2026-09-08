@@ -56,6 +56,10 @@ class Settings(BaseSettings):
     # author slugs allowed to moderate the AI Marketplace queue from their studio: "slug,slug2"
     moderator_authors: list[str] = []
 
+    # observability — error monitoring; unset ⇒ Sentry disabled
+    sentry_dsn: str | None = None
+    sentry_traces_sample_rate: float = 0.0
+
     # feature flags
     ai_enrich_enabled: bool = False
 

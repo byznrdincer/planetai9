@@ -1,0 +1,21 @@
+# Bundled TLS reverse proxy (compose `caddy` profile).
+# SITE_DOMAIN comes from infra/.env.prod, e.g. planetai9.com
+{$SITE_DOMAIN} {
+	encode zstd gzip
+
+	# static assets — long cache
+	@assets path /_next/static/* /icon.svg /favicon.ico
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+
+	reverse_proxy web:3000
+
+	log {
+		output stdout
+		format console
+	}
+}
+
+# redirect the apex/www variant if you serve www — adjust as needed:
+# www.{$SITE_DOMAIN} {
+# 	redir https://{$SITE_DOMAIN}{uri} permanent
+# }

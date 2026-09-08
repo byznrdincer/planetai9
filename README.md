@@ -91,25 +91,30 @@ make prod-up      # docker compose -f infra/docker-compose.prod.yml --env-file i
 make prod-down    # durdur
 ```
 
-- `api` konteyneri açılışta `alembic upgrade head` çalıştırır → migration'lar otomatik uygulanır.
-- `ingest` konteyneri `planetai-ingest scheduler` çalıştırır → açılışta seed + ilk toplama, sonra
-  döngü: **haberler 10 dk**, arXiv/YouTube 60 dk, çeviri 20 dk, trendler 30 dk, seed senkron 24 sa.
-- `web` konteyneri `${WEB_PORT}` (varsayılan 3000) portunu açar. **Önüne TLS sonlandıran bir
-  reverse proxy koy** (Caddy / Nginx / Traefik). CORS ve canonical URL'ler `SITE_URL`'den gelir.
-- Postgres verisi `pgdata`, Redis `redisdata` adlı named volume'lerde. Bunları düzenli yedekle.
+Bundled Caddy ile TLS de isteğe bağlı:
+```bash
+make prod-up-caddy    # SITE_DOMAIN + DNS gerekir; Let's Encrypt sertifikayı otomatik alır
+```
+
+- `api` — açılışta `alembic upgrade head` → migration'lar otomatik. Healthcheck: `/api/v1/healthz`.
+- `ingest` — `planetai-ingest scheduler`: açılışta seed + ilk toplama, sonra döngü (**haberler 10 dk**,
+  arXiv/YouTube 60 dk, çeviri 20 dk, trendler 30 dk). Healthcheck: `planetai-ingest healthz`.
+- `web` — **yalnızca `127.0.0.1:${WEB_PORT}`** dinler (dışa kapalı). Önüne reverse proxy koy: `make prod-up-caddy` veya kendi Nginx/Traefik.
+- `backup` — **günlük otomatik `pg_dump`** (`pgbackups` volume, gzip + retention). Anlık: `make prod-backup`.
+- Volume'ler: `pgdata`, `pgbackups`, `redisdata`, `caddy_data`. Sunucuyu/volume'leri ayrıca yedekle.
 
 ### Deploy öncesi kontrol listesi
 
-- [ ] `SITE_URL` gerçek domain (https://).
-- [ ] `POSTGRES_PASSWORD` güçlü ve rastgele.
-- [ ] `ADMIN_TOKEN` ve `AUTHOR_KEYS` uzun rastgele değerler; ayrı bir kanaldan paylaşıldı.
-- [ ] `MODERATOR_AUTHORS` = marketplace onaylayacak yazar slug'ları (opsiyonel).
-- [ ] `GOOGLE_TRANSLATE_API_KEY` — çeviri isteniyorsa ([kurulum](docs/07-translation.md)); ilk kez
-      `docker compose … run --rm ingest planetai-ingest translate --limit 500` ile backfill.
-- [ ] `YOUTUBE_API_KEY` — video meta verisi için (opsiyonel; scraping key'siz de çalışır).
-- [ ] `PLANETAI_DOCS_ENABLED` prod'da `false` (compose'da zaten ayarlı).
-- [ ] Reverse proxy + TLS ayakta; `WEB_PORT` yalnızca proxy'ye açık.
-- [ ] `make check` yeşil.
+- [ ] `make check` yeşil (ruff · format · pytest · `alembic check` · web tsc · web build)
+- [ ] `SITE_URL` https:// domain; `SITE_DOMAIN` sadece host; DNS sunucuya işaret ediyor
+- [ ] `POSTGRES_PASSWORD`, `ADMIN_TOKEN`, `AUTHOR_KEYS` güçlü rastgele; ayrı kanaldan paylaşıldı
+- [ ] `MODERATOR_AUTHORS` = marketplace onaylayacak yazar slug'ları (opsiyonel)
+- [ ] `GOOGLE_TRANSLATE_API_KEY` — çeviri isteniyorsa ([kurulum](docs/07-translation.md)) + ilk kez
+      `docker compose … run --rm ingest planetai-ingest translate --limit 500`
+- [ ] `SENTRY_DSN` (önerilir) — bir test hatası tetikle, Sentry'ye düştüğünü doğrula
+- [ ] `docker compose … ps` → `api`, `ingest`, `web` **healthy**
+- [ ] İlk `make prod-backup` başarılı; `pgbackups` volume'ünde dump var
+- [ ] `robots.txt` / `sitemap.xml` doğru host ile çözülüyor; `/yonetim` ve `/yazar` girişi çalışıyor
 
 ## Ortam değişkenleri
 
@@ -126,6 +131,10 @@ Gerçek `.env` dosyalarını **asla commit etme**.
 | `PLANETAI_AUTHOR_KEYS` | `AUTHOR_KEYS` | hayır | `/yazar` stüdyosu — `slug:secret,slug2:secret2`; boşsa 404 |
 | `PLANETAI_MODERATOR_AUTHORS` | `MODERATOR_AUTHORS` | hayır | Marketplace onaylayabilen yazar slug'ları — `slug,slug2` |
 | `PLANETAI_GOOGLE_TRANSLATE_API_KEY` | `GOOGLE_TRANSLATE_API_KEY` | hayır | Google Cloud Translation v2; boşsa çeviri no-op |
+| `PLANETAI_SENTRY_DSN` | `SENTRY_DSN` | hayır | Hata izleme (api + ingest); boşsa kapalı |
+| — | `NEXT_PUBLIC_SENTRY_DSN` | hayır | Web istemci hata izleme |
+| — | `SITE_DOMAIN` | `caddy` profili için | Sadece host (şemasız), örn. `planetai9.com` |
+| — | `BACKUP_SCHEDULE` / `BACKUP_KEEP_*` | hayır | `backup` servisi cron + saklama (vars. `@daily` / 7·4·6) |
 | `PLANETAI_YOUTUBE_API_KEY` | `YOUTUBE_API_KEY` | hayır | YouTube Data API v3 (video meta) |
 | `PLANETAI_YOUTUBE_CHANNEL_ID` | — | hayır | Kanal id'si (handle scrape varsayılan) |
 | `PLANETAI_CORS_ORIGINS` | *(compose = `SITE_URL`)* | hayır | Virgüllü liste |

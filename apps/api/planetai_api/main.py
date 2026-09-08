@@ -5,6 +5,7 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from planetai_shared.observability import init_sentry
 from planetai_shared.settings import get_settings
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -28,6 +29,7 @@ logging.basicConfig(
 )
 
 _settings = get_settings()
+init_sentry("api")
 
 app = FastAPI(
     title="PlanetAI9 API",

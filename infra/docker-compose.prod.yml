@@ -3,12 +3,18 @@ name: planetai9
 # Self-hosted production stack. Provide secrets via infra/.env.prod
 # (see .env.prod.example). Bring up with:
 #   docker compose -f infra/docker-compose.prod.yml --env-file infra/.env.prod up -d --build
+#
+# TLS: put a reverse proxy in front of `web` (which only binds to localhost).
+#   - bring your own (Nginx/Traefik/…), or
+#   - use the bundled Caddy:  … --profile caddy up -d   (needs SITE_DOMAIN in .env.prod)
 
 x-common-env: &common-env
   PLANETAI_ENV: production
   PLANETAI_DATABASE_URL: postgresql+psycopg://planetai:${POSTGRES_PASSWORD}@postgres:5432/planetai
   PLANETAI_REDIS_URL: redis://redis:6379/0
   PLANETAI_SITE_URL: ${SITE_URL}
+  PLANETAI_SENTRY_DSN: ${SENTRY_DSN:-}
+  PLANETAI_SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-0}
 
 services:
   postgres:
@@ -25,6 +31,24 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+
+  # Daily pg_dump → pgbackups volume, gzip'd, with retention.
+  backup:
+    image: prodrigestivill/postgres-backup-local:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: planetai
+      POSTGRES_USER: planetai
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      SCHEDULE: ${BACKUP_SCHEDULE:-@daily}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-7}
+      BACKUP_KEEP_WEEKS: ${BACKUP_KEEP_WEEKS:-4}
+      BACKUP_KEEP_MONTHS: ${BACKUP_KEEP_MONTHS:-6}
+    volumes:
+      - pgbackups:/backups
+    depends_on:
+      postgres: { condition: service_healthy }
 
   redis:
     image: redis:7-alpine
@@ -74,6 +98,12 @@ services:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
       api: { condition: service_started }
+    healthcheck:
+      test: ["CMD", "planetai-ingest", "healthz"]
+      interval: 120s
+      timeout: 20s
+      retries: 3
+      start_period: 600s
 
   web:
     build:
@@ -82,14 +112,46 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
+      PLANETAI_ENV: production
+      HOSTNAME: "0.0.0.0"
       PLANETAI_API_URL: http://api:8000
       PLANETAI_SITE_URL: ${SITE_URL}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+      SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-0}
       PORT: "3000"
+    # localhost-only — a reverse proxy (Caddy / your own) terminates TLS and forwards here
     ports:
-      - "${WEB_PORT:-3000}:3000"
+      - "127.0.0.1:${WEB_PORT:-3000}:3000"
     depends_on:
       api: { condition: service_started }
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Optional bundled TLS proxy — enable with `--profile caddy`. Needs SITE_DOMAIN.
+  caddy:
+    image: caddy:2-alpine
+    profiles: ["caddy"]
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:?set SITE_DOMAIN (host only, no scheme) to use the caddy profile}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web: { condition: service_started }
 
 volumes:
   pgdata:
+  pgbackups:
   redisdata:
+  caddy_data:
+  caddy_config:
