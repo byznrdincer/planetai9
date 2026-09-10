@@ -48,7 +48,7 @@ then `uv run planetai-ingest collect --kinds youtube`.
 ## CLI reference
 | command | purpose |
 |---|---|
-| `planetai-ingest seed` | upsert seed YAML into DB (idempotent) — sources, entities, topics, authors, marketplace apps |
+| `planetai-ingest seed` | upsert seed YAML into DB (idempotent) — sources, entities, topics, authors, marketplace apps, Türkiye link cards |
 | `planetai-ingest collect [--kinds rss,arxiv,youtube]` | one collection pass (fetches OG images, busts API cache) |
 | `planetai-ingest trends` | recompute trend snapshots + refresh top signals |
 | `planetai-ingest scheduler` | APScheduler loop (10m news / 60m arxiv+yt / 30m trends) |
@@ -67,6 +67,11 @@ Anahtar tanımlı değilse `/yazar` 404 döner.
 (prod: `MODERATOR_AUTHORS`) listesindeki yazarlar `/yazar` içinde "Marketplace Başvuruları"
 sekmesini görür; topluluk başvurularını oradan onaylar/reddeder. Aynı işi `/yonetim` + admin
 token da yapar. İkisinden biri tanımlıysa `/marketplace/queue` erişilebilir olur.
+
+**Türkiye sayfası kartları** — moderatör yazarlar `/yazar` → "Türkiye" sekmesinden
+"Açık Veri Kaynakları" ve "Ekosistem" kartlarını ekler/düzenler/siler/sıralar (DB tablosu
+`curated_links`). İlk içerik `infra/seed/turkiye.yaml`'dan **yalnızca boş bir koleksiyona**
+yüklenir; sonrasında panel tek doğru kaynaktır (seed dokunmaz).
 
 **Alternatif — seed** — `infra/seed/editorial.yaml` içindeki `columns:` listesine ekle, sonra `uv run planetai-ingest seed`:
 ```yaml

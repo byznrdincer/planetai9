@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { ArrowLeft, Check, ExternalLink, FileText, LogOut, PenLine, Plus, RotateCcw, X } from "lucide-react";
 import type { Studio, StudioColumn } from "@/lib/author";
 import type { QueueApp } from "@/lib/types";
@@ -422,6 +422,286 @@ function MarketplaceQueue({ queue }: { queue: QueueApp[] }) {
   );
 }
 
+/* ------------------------------------------------------ Türkiye link cards --- */
+
+type Curated = {
+  id: string;
+  name: string;
+  url: string;
+  kind: string;
+  note_tr: string | null;
+  note_en: string | null;
+  sort_order: number;
+  enabled: boolean;
+};
+
+const CURATED_KINDS: Record<string, string[]> = {
+  tr_data: ["portal", "istatistik", "nlp", "akademik", "yerel"],
+  tr_ecosystem: ["kurum", "lab", "şirket", "model", "girişim", "topluluk"],
+};
+
+function TurkiyeLinks() {
+  const [collection, setCollection] = useState<"tr_data" | "tr_ecosystem">("tr_data");
+  const [items, setItems] = useState<Curated[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<Partial<Curated> | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const load = async (c: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/yazar/curated?collection=${c}`);
+      setItems(res.ok ? await res.json() : []);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    void load(collection);
+  }, [collection]);
+
+  async function save(form: Partial<Curated>) {
+    setBusy(true);
+    setErr("");
+    try {
+      const editingRow = Boolean(form.id);
+      const res = await fetch(`/api/yazar/curated?collection=${collection}`, {
+        method: editingRow ? "PATCH" : "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => ({}));
+        throw new Error(typeof b.detail === "string" ? b.detail : "Kaydedilemedi");
+      }
+      setEditing(null);
+      await load(collection);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Kaydedilemedi");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove(id: string) {
+    if (!confirm("Bu kartı silmek istediğine emin misin?")) return;
+    await fetch(`/api/yazar/curated?collection=${collection}&id=${id}`, { method: "DELETE" });
+    await load(collection);
+  }
+
+  if (editing) {
+    return (
+      <CuratedEditor
+        collection={collection}
+        initial={editing}
+        busy={busy}
+        err={err}
+        onCancel={() => {
+          setEditing(null);
+          setErr("");
+        }}
+        onSave={save}
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="inline-flex rounded-lg border border-line bg-wash p-0.5 dark:border-d-line dark:bg-d-wash">
+          {(
+            [
+              ["tr_data", "Açık Veri Kaynakları"],
+              ["tr_ecosystem", "Ekosistem"],
+            ] as const
+          ).map(([c, label]) => (
+            <button
+              key={c}
+              onClick={() => setCollection(c)}
+              className={`rounded-md px-2.5 py-1 text-[12.5px] font-medium ${
+                collection === c
+                  ? "bg-paper text-ink shadow-soft dark:bg-d-paper dark:text-d-ink"
+                  : "text-ink-2 dark:text-d-ink-2"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <button onClick={() => setEditing({})} className="btn-dark">
+          <Plus className="h-4 w-4" /> Yeni kart
+        </button>
+      </div>
+      <p className="text-[12px] text-muted">
+        Bu kartlar Türkiye sayfasında “{collection === "tr_data" ? "Açık Veri Kaynakları" : "Ekosistem"}”
+        bölümünde görünür. Sıra numarası küçük olan önce gelir.
+      </p>
+
+      {loading ? (
+        <p className="text-[13px] text-muted">Yükleniyor…</p>
+      ) : items.length === 0 ? (
+        <p className="text-[13px] text-muted">Bu listede kart yok.</p>
+      ) : (
+        <ul className="space-y-2">
+          {items.map((it) => (
+            <li
+              key={it.id}
+              className="card flex flex-wrap items-start justify-between gap-3 p-3.5"
+            >
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] tabular-nums text-muted">#{it.sort_order}</span>
+                  {it.kind && <span className="badge">{it.kind}</span>}
+                  {!it.enabled && (
+                    <span className="rounded bg-wash px-1.5 py-0.5 text-[10px] font-bold uppercase text-ink-2 dark:bg-d-wash dark:text-d-ink-2">
+                      gizli
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1 text-[14px] font-bold text-ink dark:text-d-ink">{it.name}</p>
+                <p className="truncate text-[11.5px] text-muted">{it.url}</p>
+                {it.note_tr && (
+                  <p className="mt-0.5 line-clamp-2 text-[12px] text-ink-2 dark:text-d-ink-2">
+                    {it.note_tr}
+                  </p>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setEditing(it)}
+                  className="rounded-lg border border-line px-3 py-1.5 text-[12px] font-semibold text-ink-2 hover:text-ink dark:border-d-line dark:text-d-ink-2"
+                >
+                  Düzenle
+                </button>
+                <button
+                  onClick={() => remove(it.id)}
+                  className="rounded-lg border border-line px-2.5 py-1.5 text-[12px] font-semibold text-ink-2 hover:border-live hover:text-live dark:border-d-line dark:text-d-ink-2"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function CuratedEditor({
+  collection,
+  initial,
+  busy,
+  err,
+  onCancel,
+  onSave,
+}: {
+  collection: "tr_data" | "tr_ecosystem";
+  initial: Partial<Curated>;
+  busy: boolean;
+  err: string;
+  onCancel: () => void;
+  onSave: (f: Partial<Curated>) => void;
+}) {
+  const [f, setF] = useState({
+    id: initial.id,
+    name: initial.name ?? "",
+    url: initial.url ?? "",
+    kind: initial.kind ?? "",
+    note_tr: initial.note_tr ?? "",
+    note_en: initial.note_en ?? "",
+    sort_order: initial.sort_order ?? 0,
+    enabled: initial.enabled ?? true,
+  });
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setF((s) => ({
+      ...s,
+      [k]: k === "sort_order" ? Number(e.target.value) || 0 : e.target.value,
+    }));
+
+  return (
+    <div className="space-y-4">
+      <button
+        onClick={onCancel}
+        className="inline-flex items-center gap-1.5 text-[12px] text-ink-2 hover:text-ink dark:text-d-ink-2"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" /> Listeye dön
+      </button>
+      <div className="card space-y-3 p-5">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1 block text-[12px] font-semibold text-ink-2 dark:text-d-ink-2">İsim</span>
+            <input value={f.name} onChange={set("name")} className="field" />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-[12px] font-semibold text-ink-2 dark:text-d-ink-2">Tür</span>
+            <input
+              value={f.kind}
+              onChange={set("kind")}
+              list="curated-kinds"
+              placeholder={CURATED_KINDS[collection].join(" / ")}
+              className="field"
+            />
+            <datalist id="curated-kinds">
+              {CURATED_KINDS[collection].map((k) => (
+                <option key={k} value={k} />
+              ))}
+            </datalist>
+          </label>
+        </div>
+        <label className="block">
+          <span className="mb-1 block text-[12px] font-semibold text-ink-2 dark:text-d-ink-2">URL</span>
+          <input value={f.url} onChange={set("url")} placeholder="https://…" className="field" />
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-[12px] font-semibold text-ink-2 dark:text-d-ink-2">Açıklama (TR)</span>
+          <textarea value={f.note_tr} onChange={set("note_tr")} rows={2} className="field" />
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-[12px] font-semibold text-ink-2 dark:text-d-ink-2">Açıklama (EN)</span>
+          <textarea value={f.note_en} onChange={set("note_en")} rows={2} className="field" />
+        </label>
+        <div className="flex flex-wrap items-center gap-4">
+          <label className="block">
+            <span className="mb-1 block text-[12px] font-semibold text-ink-2 dark:text-d-ink-2">Sıra</span>
+            <input
+              type="number"
+              value={f.sort_order}
+              onChange={set("sort_order")}
+              className="field w-24"
+            />
+          </label>
+          <label className="mt-5 flex items-center gap-2 text-[13px] text-ink dark:text-d-ink">
+            <input
+              type="checkbox"
+              checked={f.enabled}
+              onChange={(e) => setF((s) => ({ ...s, enabled: e.target.checked }))}
+            />
+            Sitede göster
+          </label>
+        </div>
+        {err && <p className="text-[12px] text-live">{err}</p>}
+        <div className="flex gap-2">
+          <button
+            onClick={() => onSave(f)}
+            disabled={busy || !f.name || !f.url}
+            className="rounded-lg bg-accent px-3.5 py-2 text-[12.5px] font-semibold text-white hover:bg-accent-ink disabled:opacity-40"
+          >
+            {busy ? "Kaydediliyor…" : "Kaydet"}
+          </button>
+          <button
+            onClick={onCancel}
+            className="rounded-lg border border-line px-3.5 py-2 text-[12.5px] font-semibold text-ink-2 dark:border-d-line dark:text-d-ink-2"
+          >
+            Vazgeç
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ---------------------------------------------------------------- studio --- */
 
 export function AuthorStudio({
@@ -435,7 +715,7 @@ export function AuthorStudio({
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState<Partial<StudioColumn> | null>(null);
-  const [tab, setTab] = useState<"columns" | "marketplace">("columns");
+  const [tab, setTab] = useState<"columns" | "marketplace" | "turkiye">("columns");
 
   if (!authed || !studio) return <LoginForm />;
 
@@ -490,6 +770,7 @@ export function AuthorStudio({
             [
               ["columns", "Köşe Yazıları", null],
               ["marketplace", "Marketplace Başvuruları", pendingApps || null],
+              ["turkiye", "Türkiye", null],
             ] as const
           ).map(([id, label, badge]) => (
             <button
@@ -514,6 +795,8 @@ export function AuthorStudio({
 
       {is_moderator && tab === "marketplace" ? (
         <MarketplaceQueue queue={queue} />
+      ) : is_moderator && tab === "turkiye" ? (
+        <TurkiyeLinks />
       ) : (
         <>
           <button onClick={() => setEditing(EMPTY)} className="btn-dark">

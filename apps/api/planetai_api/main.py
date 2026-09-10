@@ -13,6 +13,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from planetai_api.ratelimit import limiter
 from planetai_api.routers import (
     authors,
+    curated,
     entities,
     events,
     home,
@@ -75,6 +76,7 @@ app.include_router(search.router, prefix=API_V1, tags=["search"])
 app.include_router(entities.router, prefix=API_V1, tags=["entities"])
 app.include_router(marketplace.router, prefix=API_V1, tags=["marketplace"])
 app.include_router(authors.router, prefix=API_V1, tags=["authors"])
+app.include_router(curated.router, prefix=API_V1, tags=["curated"])
 app.include_router(meta.router, prefix=API_V1, tags=["meta"])
 
 

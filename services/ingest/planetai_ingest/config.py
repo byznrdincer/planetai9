@@ -63,3 +63,8 @@ def editorial() -> dict:
 @lru_cache
 def marketplace() -> dict:
     return _load("marketplace.yaml")
+
+
+@lru_cache
+def turkiye() -> dict:
+    return _load("turkiye.yaml")

@@ -174,6 +174,37 @@ def seed_marketplace(db: Session) -> None:
     db.flush()
 
 
+def seed_curated_links(db: Session) -> None:
+    """Bootstrap only — fill an empty collection; never touch rows once they exist
+    (the /yazar studio owns them after that)."""
+    from sqlalchemy import func
+
+    data = config.turkiye()
+    for collection in ("tr_data", "tr_ecosystem"):
+        rows = data.get(collection) or []
+        existing = db.scalar(
+            select(func.count())
+            .select_from(models.CuratedLink)
+            .where(models.CuratedLink.collection == collection)
+        )
+        if existing:
+            continue
+        for i, row in enumerate(rows):
+            db.add(
+                models.CuratedLink(
+                    collection=collection,
+                    name=row["name"],
+                    url=row["url"],
+                    kind=row.get("kind", ""),
+                    note_tr=row.get("note_tr"),
+                    note_en=row.get("note_en"),
+                    sort_order=i,
+                    enabled=True,
+                )
+            )
+    db.flush()
+
+
 def run() -> None:
     with session_scope() as db:
         seed_entities(db)
@@ -182,6 +213,7 @@ def run() -> None:
         seed_sources(db)
         seed_editorial(db)
         seed_marketplace(db)
+        seed_curated_links(db)
     log.info("seed complete")
 
 

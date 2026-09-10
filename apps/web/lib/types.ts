@@ -231,3 +231,15 @@ export interface Stats {
   events: number;
   topics: number;
 }
+
+export interface CuratedLink {
+  id: string;
+  collection: "tr_data" | "tr_ecosystem";
+  name: string;
+  url: string;
+  kind: string;
+  note_tr: string | null;
+  note_en: string | null;
+  sort_order: number;
+  enabled: boolean;
+}

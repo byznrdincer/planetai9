@@ -238,6 +238,57 @@ def test_moderator_author_can_work_marketplace_queue(client, monkeypatch, author
             db.query(models.MarketplaceApp).filter_by(slug=slug).delete()
 
 
+def test_curated_links_public_and_moderation(client, monkeypatch, author_slug):
+    from planetai_api.routers import authors, marketplace
+
+    monkeypatch.setitem(authors._settings.author_keys, author_slug, "ck")
+    monkeypatch.setattr(
+        marketplace._settings, "author_keys", authors._settings.author_keys, raising=False
+    )
+    monkeypatch.setattr(marketplace._settings, "moderator_authors", [author_slug], raising=False)
+    hdr = {"X-Author-Key": f"{author_slug}:ck"}
+
+    assert client.get("/api/v1/curated/nope").status_code == 404
+    assert client.get("/api/v1/curated/tr_data").status_code == 200
+    assert client.get("/api/v1/curated/tr_data/manage").status_code == 401
+
+    created = client.post(
+        "/api/v1/curated/tr_data",
+        headers=hdr,
+        json={
+            "name": "PyTest Kaynak",
+            "url": "https://example.com/x",
+            "kind": "portal",
+            "note_tr": "tr",
+            "note_en": "en",
+            "enabled": True,
+        },
+    )
+    assert created.status_code == 201
+    lid = created.json()["id"]
+    try:
+        assert any(x["id"] == lid for x in client.get("/api/v1/curated/tr_data").json())
+
+        # hide it → drops out of the public list, still in /manage
+        upd = client.patch(
+            f"/api/v1/curated/tr_data/{lid}",
+            headers=hdr,
+            json={
+                "name": "PyTest Kaynak",
+                "url": "https://example.com/x",
+                "kind": "portal",
+                "enabled": False,
+            },
+        )
+        assert upd.status_code == 200
+        assert all(x["id"] != lid for x in client.get("/api/v1/curated/tr_data").json())
+        assert any(
+            x["id"] == lid for x in client.get("/api/v1/curated/tr_data/manage", headers=hdr).json()
+        )
+    finally:
+        assert client.delete(f"/api/v1/curated/tr_data/{lid}", headers=hdr).status_code == 204
+
+
 def test_events_window_and_region_world(client):
     assert client.get("/api/v1/events?window=24h&limit=5").status_code == 200
     assert client.get("/api/v1/events?window=bogus&limit=5").status_code == 200  # ignored

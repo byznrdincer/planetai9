@@ -27,7 +27,8 @@ filtreleyen, kategorize eden ve ilişkilendiren AI haber/intelligence platformu.
 - **Haber toplama** — ~50 RSS/Atom kaynağı (dünya + Türkiye) + arXiv + PlanetAI9 YouTube.
   Kural tabanlı sınıflandırma, deduplication, olay (event) kümeleme ve önem skorlaması. **LLM yok.**
 - **Türkiye odağı** — Türkçe kaynaklar ayrı işaretli (`sources.lang = tr`); `/turkiye` sayfası
-  ekosistem raporu + "Türkiye Data" (açık veri kaynakları).
+  ekosistem raporu + "Türkiye Data" (açık veri kaynakları). Kart listeleri `/yazar` → "Türkiye"
+  sekmesinden düzenlenir.
 - **TR/EN dil altyapısı** — her haber origin dilinde saklanır; `event_translations` tablosu +
   API `?lang=` servis yolu hazır. Şu an bir çeviri sağlayıcısı bağlı **değil** — çeviri satırları
   eklendiğinde (elle ya da ileride bir sağlayıcıyla) okuyucunun diline göre servis edilir.
@@ -51,7 +52,7 @@ filtreleyen, kategorize eden ve ilişkilendiren AI haber/intelligence platformu.
 | `/videos`, `/videos/[id]` | PlanetAI9 YouTube içerikleri | herkes |
 | `/trends`, `/entities/…`, `/search` | Trend konular, entity sayfaları, arama | herkes |
 | `/rss.xml` | RSS akışı (tarayıcıda okunabilir XSL'li) | herkes |
-| **`/yazar`** | **Yazar stüdyosu** — köşe yazısı editörü + (yetkiliyse) marketplace moderasyonu | `PLANETAI_AUTHOR_KEYS` |
+| **`/yazar`** | **Yazar stüdyosu** — köşe yazısı editörü + (yetkiliyse) marketplace moderasyonu + Türkiye kartları | `PLANETAI_AUTHOR_KEYS` |
 | **`/yonetim`** | **Marketplace moderasyon paneli** | `PLANETAI_ADMIN_TOKEN` |
 
 `/yazar` ve `/yonetim` ilgili secret tanımlı değilse **404** döner (gizli kalır) ve `robots.txt`'de disallow'dur.
