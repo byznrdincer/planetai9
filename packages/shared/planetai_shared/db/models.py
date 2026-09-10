@@ -294,6 +294,31 @@ class VideoLink(Base):
     )
 
 
+class CuratedLink(Base, TimestampMixin):
+    """Editorial link cards for the Türkiye page (open-data resources, ecosystem).
+
+    Bootstrapped from infra/seed/turkiye.yaml into an empty collection; after that
+    the /yazar studio (moderator authors) is the source of truth.
+    """
+
+    __tablename__ = "curated_links"
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    collection: Mapped[str] = mapped_column(String(30))  # tr_data | tr_ecosystem
+    name: Mapped[str] = mapped_column(String(200))
+    url: Mapped[str] = mapped_column(Text)
+    kind: Mapped[str] = mapped_column(String(30))  # sub-label: portal / nlp / şirket / lab …
+    note_tr: Mapped[str | None] = mapped_column(Text)
+    note_en: Mapped[str | None] = mapped_column(Text)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    __table_args__ = (
+        UniqueConstraint("collection", "name", name="curated_links_collection_name"),
+        Index("ix_curated_links_collection", "collection", "sort_order"),
+    )
+
+
 class MarketplaceApp(Base, TimestampMixin):
     """Community-submitted AI apps/tools. New rows land as `pending`."""
 

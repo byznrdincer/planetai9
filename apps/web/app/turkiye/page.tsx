@@ -4,8 +4,8 @@ import { EventCard, NewsListItem } from "@/components/EventCard";
 import { SectionHeader } from "@/components/SectionHeader";
 import { apiSafe } from "@/lib/api";
 import { getLocale } from "@/lib/i18n";
-import { DATA_KIND_LABEL, KIND_LABEL, TR_DATA, TR_ECOSYSTEM, TR_FACTS } from "@/lib/turkey";
-import type { Page as PageT, VideoCard } from "@/lib/types";
+import { DATA_KIND_LABEL, KIND_LABEL, TR_FACTS, kindLabel } from "@/lib/turkey";
+import type { CuratedLink, Page as PageT, VideoCard } from "@/lib/types";
 
 export const revalidate = 300;
 
@@ -13,7 +13,7 @@ export default async function TurkiyePage() {
   const locale = await getLocale();
   const tr = locale === "tr";
 
-  const [news, videos, dataNews] = await Promise.all([
+  const [news, videos, dataNews, trData, trEcosystem] = await Promise.all([
     apiSafe<PageT>("/events?region=TR&limit=24&sort=recent", {
       data: [],
       next_cursor: null,
@@ -25,7 +25,11 @@ export default async function TurkiyePage() {
       next_cursor: null,
       count: 0,
     }),
+    apiSafe<CuratedLink[]>("/curated/tr_data", []),
+    apiSafe<CuratedLink[]>("/curated/tr_ecosystem", []),
   ]);
+
+  const note = (l: CuratedLink) => (tr ? l.note_tr : l.note_en) ?? "";
 
   const trVideos = videos.filter((v) => /t[üu]rk|t[üu]rkiye/i.test(v.title)).slice(0, 4);
   const [lead, ...rest] = news.data;
@@ -156,29 +160,33 @@ export default async function TurkiyePage() {
           </div>
         )}
 
-        <p className="eyebrow mb-4">{tr ? "Açık Veri Kaynakları" : "Open Data Resources"}</p>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {TR_DATA.map((d) => (
-            <a
-              key={d.name}
-              href={d.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="card card-hover group bg-paper p-5 dark:bg-d-paper"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <span className="badge">{DATA_KIND_LABEL[d.kind][locale]}</span>
-                <ArrowUpRight className="h-4 w-4 shrink-0 text-muted transition-colors group-hover:text-accent" />
-              </div>
-              <h4 className="mt-2 text-[15px] font-bold tracking-tight2 text-ink group-hover:text-accent dark:text-d-ink">
-                {d.name}
-              </h4>
-              <p className="mt-2 text-[13px] leading-relaxed text-ink-2 dark:text-d-ink-2">
-                {d.note[locale]}
-              </p>
-            </a>
-          ))}
-        </div>
+        {trData.length > 0 && (
+          <>
+            <p className="eyebrow mb-4">{tr ? "Açık Veri Kaynakları" : "Open Data Resources"}</p>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {trData.map((d) => (
+                <a
+                  key={d.id}
+                  href={d.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="card card-hover group bg-paper p-5 dark:bg-d-paper"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="badge">{kindLabel(DATA_KIND_LABEL, d.kind, locale)}</span>
+                    <ArrowUpRight className="h-4 w-4 shrink-0 text-muted transition-colors group-hover:text-accent" />
+                  </div>
+                  <h4 className="mt-2 text-[15px] font-bold tracking-tight2 text-ink group-hover:text-accent dark:text-d-ink">
+                    {d.name}
+                  </h4>
+                  <p className="mt-2 text-[13px] leading-relaxed text-ink-2 dark:text-d-ink-2">
+                    {note(d)}
+                  </p>
+                </a>
+              ))}
+            </div>
+          </>
+        )}
         <p className="mt-4 text-[12px] text-muted">
           {tr
             ? "Kaynak önerisi veya düzeltme için Biz Kimiz sayfasından ulaşabilirsiniz."
@@ -194,23 +202,23 @@ export default async function TurkiyePage() {
           title={tr ? "Ekosistem" : "The Ecosystem"}
         />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {TR_ECOSYSTEM.map((o) => (
+          {trEcosystem.map((o) => (
             <a
-              key={o.name}
+              key={o.id}
               href={o.url}
               target="_blank"
               rel="noopener noreferrer"
               className="card card-hover group p-5"
             >
               <div className="flex items-start justify-between gap-2">
-                <span className="badge">{KIND_LABEL[o.kind][locale]}</span>
+                <span className="badge">{kindLabel(KIND_LABEL, o.kind, locale)}</span>
                 <ArrowUpRight className="h-4 w-4 shrink-0 text-muted transition-colors group-hover:text-accent" />
               </div>
               <h3 className="mt-2 text-[15px] font-bold tracking-tight2 text-ink group-hover:text-accent dark:text-d-ink">
                 {o.name}
               </h3>
               <p className="mt-2 text-[13px] leading-relaxed text-ink-2 dark:text-d-ink-2">
-                {o.note[locale]}
+                {note(o)}
               </p>
             </a>
           ))}
