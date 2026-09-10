@@ -3,11 +3,11 @@
 # edit them from the /yazar studio (Türkiye tab) — the DB is then the source of truth.
 
 tr_data:
-  - name: data.gov.tr
-    kind: portal
-    url: https://data.gov.tr
-    note_tr: "Cumhurbaşkanlığı Dijital Dönüşüm Ofisi — kamu kurumlarının açık veri portalı."
-    note_en: "Türkiye's national open-government data portal."
+  - name: TCMB EVDS
+    kind: istatistik
+    url: https://evds2.tcmb.gov.tr
+    note_tr: "Merkez Bankası Elektronik Veri Dağıtım Sistemi — makroekonomik ve finansal seriler, API."
+    note_en: "Central Bank's Electronic Data Delivery System — macro & financial time series, with an API."
   - name: TÜİK Veri Portalı
     kind: istatistik
     url: https://data.tuik.gov.tr
@@ -45,16 +45,16 @@ tr_data:
     note_en: "Türkiye-focused open datasets and competition data."
 
 tr_ecosystem:
-  - name: T3 Yapay Zeka (T3 AI)
+  - name: T3 Vakfı — Yapay Zeka (T3 AI)
     kind: kurum
-    url: https://t3ai.org.tr
-    note_tr: "T3 Vakfı çatısında Türkçe büyük dil modeli geliştiren yapı."
-    note_en: "Develops a Turkish large language model under the T3 Foundation."
-  - name: TÜBİTAK YZE
+    url: https://www.t3vakfi.org
+    note_tr: "T3 Vakfı çatısında Türkçe büyük dil modeli (T3 AI) geliştiren yapı."
+    note_en: "Develops a Turkish large language model (T3 AI) under the T3 Foundation."
+  - name: TÜBİTAK
     kind: kurum
-    url: https://yze.tubitak.gov.tr
-    note_tr: "TÜBİTAK Yapay Zekâ Enstitüsü — ulusal araştırma ve model çalışmaları."
-    note_en: "TÜBİTAK's AI Institute — national research and model work."
+    url: https://www.tubitak.gov.tr
+    note_tr: "Ulusal araştırma kurumu — Yapay Zekâ Enstitüsü ve BİLGEM'de model/AR-GE çalışmaları."
+    note_en: "National research council — AI institute and BİLGEM run model / R&D work."
   - name: KUIS AI Lab (Koç Üniversitesi)
     kind: lab
     url: https://ai.ku.edu.tr
