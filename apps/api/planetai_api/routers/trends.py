@@ -6,12 +6,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from planetai_api import schemas, serializers
-from planetai_api.db import get_db
+from planetai_api.db import get_db, get_lang
 
 router = APIRouter()
 
 
-def build_trends(db: Session, *, window: str, limit: int) -> list[schemas.TopicTrend]:
+def build_trends(
+    db: Session, *, window: str, limit: int, lang: str | None = None
+) -> list[schemas.TopicTrend]:
     latest_ts = db.scalar(
         select(models.TopicTrendSnapshot.captured_at)
         .where(models.TopicTrendSnapshot.window == window)
@@ -48,7 +50,7 @@ def build_trends(db: Session, *, window: str, limit: int) -> list[schemas.TopicT
                 event_count=snap.event_count,
                 weighted_score=float(snap.weighted_score),
                 delta_pct=float(snap.delta_pct),
-                sample_events=[serializers.event_card(db, e) for e in samples],
+                sample_events=[serializers.event_card(db, e, lang) for e in samples],
             )
         )
     return out
@@ -59,16 +61,22 @@ def trends(
     db: Session = Depends(get_db),
     window: str = Query("24h", pattern="^(24h|7d)$"),
     limit: int = Query(12, ge=1, le=30),
+    lang: str | None = Depends(get_lang),
 ) -> list[schemas.TopicTrend]:
-    return build_trends(db, window=window, limit=limit)
+    return build_trends(db, window=window, limit=limit, lang=lang)
 
 
 @router.get("/trends/{slug}", response_model=schemas.TopicTrend)
-def trend_detail(slug: str, window: str = "24h", db: Session = Depends(get_db)):
+def trend_detail(
+    slug: str,
+    window: str = "24h",
+    db: Session = Depends(get_db),
+    lang: str | None = Depends(get_lang),
+):
     topic = db.scalar(select(models.Topic).where(models.Topic.slug == slug))
     if topic is None:
         raise HTTPException(404, "topic not found")
-    for t in build_trends(db, window=window, limit=100):
+    for t in build_trends(db, window=window, limit=100, lang=lang):
         if t.topic.slug == slug:
             return t
     raise HTTPException(404, "no trend snapshot for topic")

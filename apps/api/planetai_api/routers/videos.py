@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from planetai_api import schemas, serializers
-from planetai_api.db import get_db
+from planetai_api.db import get_db, get_lang
 
 router = APIRouter()
 
@@ -33,7 +33,11 @@ def list_videos(
 
 
 @router.get("/videos/{youtube_id}", response_model=schemas.VideoDetail)
-def get_video(youtube_id: str, db: Session = Depends(get_db)) -> schemas.VideoDetail:
+def get_video(
+    youtube_id: str,
+    db: Session = Depends(get_db),
+    lang: str | None = Depends(get_lang),
+) -> schemas.VideoDetail:
     video = db.scalar(select(models.Video).where(models.Video.youtube_id == youtube_id))
     if video is None:
         raise HTTPException(404, "video not found")
@@ -63,7 +67,7 @@ def get_video(youtube_id: str, db: Session = Depends(get_db)) -> schemas.VideoDe
     base = serializers.video_card(video).model_dump()
     return schemas.VideoDetail(
         **base,
-        related_events=[serializers.event_card(db, e) for e in related_events],
+        related_events=[serializers.event_card(db, e, lang) for e in related_events],
         related_entities=[serializers.entity_ref(e) for e in entities],
         related_topics=[schemas.TopicRef(slug=t.slug, name=t.name) for t in topics],
     )

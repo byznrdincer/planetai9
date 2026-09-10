@@ -3,6 +3,8 @@ const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
   poweredByHeader: false,
+  // hide the Next.js dev-mode badge (the little "N" button); dev-only, never in prod
+  devIndicators: false,
   images: {
     // news thumbnails + favicons come from arbitrary publisher domains
     remotePatterns: [

@@ -146,6 +146,12 @@ export interface MarketplaceApp {
   featured: boolean;
 }
 
+export interface QueueApp extends MarketplaceApp {
+  status: "pending" | "approved" | "rejected";
+  submitter_email: string | null;
+  created_at: string;
+}
+
 export interface AuthorRef {
   slug: string;
   name: string;

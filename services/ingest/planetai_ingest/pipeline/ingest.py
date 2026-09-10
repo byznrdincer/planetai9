@@ -245,6 +245,7 @@ def _create_event(
         first_seen_at=published,
         last_activity_at=published,
         image_url=image_url or item.image_url,
+        lang=item.lang or "en",
         source_count=1,
         status="active",
     )
@@ -298,6 +299,7 @@ def _attach_to_event(
         if newest and newest.source_id == source.id:
             event.title = newest.title
             event.summary = newest.clean_summary or event.summary
+            event.lang = source.lang or event.lang
 
 
 def _recompute_event(db: Session, event: models.Event) -> None:

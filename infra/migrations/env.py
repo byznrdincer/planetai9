@@ -20,6 +20,19 @@ config.set_main_option(
 
 target_metadata = Base.metadata
 
+# expression FTS / trgm indexes created with raw SQL in d2561a68b9bc — autogen
+# can't model them, so keep them out of the diff (see `alembic check`).
+_EXTERNAL_INDEXES = {
+    "ix_articles_fts",
+    "ix_articles_title_trgm",
+    "ix_events_fts",
+    "ix_entities_name_trgm",
+}
+
+
+def _include_object(obj, name, type_, reflected, compare_to):
+    return not (type_ == "index" and name in _EXTERNAL_INDEXES)
+
 
 def run_migrations_offline() -> None:
     context.configure(
@@ -27,6 +40,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         compare_type=True,
+        include_object=_include_object,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -40,7 +54,10 @@ def run_migrations_online() -> None:
     )
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata, compare_type=True
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,
+            include_object=_include_object,
         )
         with context.begin_transaction():
             context.run_migrations()

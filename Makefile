@@ -1,4 +1,4 @@
-.PHONY: help install lint fmt test check api ingest scheduler web migrate seed collect trends up down prod-up prod-down
+.PHONY: help install lint fmt test check api ingest scheduler web migrate seed collect trends up down prod-up prod-up-caddy prod-up-full prod-down prod-backup
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -49,8 +49,17 @@ scheduler: ## run the ingest scheduler loop
 web: ## run the web dev server
 	cd apps/web && npm run dev
 
-prod-up: ## build + start the self-host production stack
+prod-up: ## build + start the self-host production stack (bring your own TLS proxy)
 	docker compose -f infra/docker-compose.prod.yml --env-file infra/.env.prod up -d --build
 
+prod-up-caddy: ## prod stack + bundled Caddy TLS proxy (needs SITE_DOMAIN)
+	docker compose -f infra/docker-compose.prod.yml --env-file infra/.env.prod --profile caddy up -d --build
+
+prod-up-full: ## prod stack + Caddy TLS + off-site S3 backups
+	docker compose -f infra/docker-compose.prod.yml --env-file infra/.env.prod --profile caddy --profile offsite up -d --build
+
 prod-down: ## stop the production stack
-	docker compose -f infra/docker-compose.prod.yml --env-file infra/.env.prod down
+	docker compose -f infra/docker-compose.prod.yml --env-file infra/.env.prod --profile caddy --profile offsite down
+
+prod-backup: ## run an on-demand database backup now
+	docker compose -f infra/docker-compose.prod.yml --env-file infra/.env.prod exec backup /backup.sh

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import base64
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from planetai_shared.db import models
@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from planetai_api import schemas, serializers
-from planetai_api.db import get_db
+from planetai_api.db import get_db, get_lang
 
 router = APIRouter()
 
@@ -45,7 +45,8 @@ CATEGORY_BUCKET = {
 }
 
 
-TR_SOURCE_SLUGS = ("webrazzi", "shiftdelete", "techinside", "donanimhaber", "log-tr")
+# time-window filter for the news surfaces ("Son 24 saat", "Bu hafta"…)
+WINDOW_HOURS = {"24h": 24, "7d": 24 * 7, "30d": 24 * 30}
 
 
 @router.get("/events", response_model=schemas.Page)
@@ -55,6 +56,7 @@ def list_events(
     bucket: str | None = None,
     topic: str | None = None,
     region: str | None = None,
+    window: str | None = None,
     entity: str | None = None,
     source: str | None = None,
     importance_min: float | None = None,
@@ -62,6 +64,7 @@ def list_events(
     sort: str = Query("recent", pattern="^(recent|importance)$"),
     cursor: str | None = None,
     limit: int = Query(20, ge=1, le=50),
+    lang: str | None = Depends(get_lang),
 ) -> schemas.Page:
     stmt = select(models.Event).where(models.Event.status == "active")
 
@@ -91,18 +94,25 @@ def list_events(
         stmt = stmt.join(models.EventTopic, models.EventTopic.event_id == models.Event.id).where(
             models.EventTopic.topic_id == tp.id
         )
-    if region and region.upper() == "TR":
+    if region and region.upper() in {"TR", "WORLD"}:
         tr_source_events = (
             select(models.Article.event_id)
             .join(models.Source, models.Source.id == models.Article.source_id)
-            .where(models.Source.slug.in_(TR_SOURCE_SLUGS), models.Article.event_id.isnot(None))
+            .where(models.Source.lang == "tr", models.Article.event_id.isnot(None))
         )
         tr_topic_events = (
             select(models.EventTopic.event_id)
             .join(models.Topic, models.Topic.id == models.EventTopic.topic_id)
             .where(models.Topic.slug == "turkiye")
         )
-        stmt = stmt.where(models.Event.id.in_(tr_source_events.union(tr_topic_events)))
+        tr_ids = select(tr_source_events.union(tr_topic_events).subquery().c.event_id)
+        if region.upper() == "TR":
+            stmt = stmt.where(models.Event.id.in_(tr_ids))
+        else:  # WORLD — AI news that isn't Türkiye-sourced
+            stmt = stmt.where(models.Event.id.not_in(tr_ids))
+    if window in WINDOW_HOURS:
+        cutoff = datetime.now(UTC) - timedelta(hours=WINDOW_HOURS[window])
+        stmt = stmt.where(models.Event.last_activity_at >= cutoff)
     if importance_min is not None:
         stmt = stmt.where(models.Event.importance >= importance_min)
     if impact:
@@ -140,15 +150,19 @@ def list_events(
         else None
     )
     return schemas.Page(
-        data=[serializers.event_card(db, e) for e in rows],
+        data=[serializers.event_card(db, e, lang) for e in rows],
         next_cursor=next_cursor,
         count=len(rows),
     )
 
 
 @router.get("/events/{slug}", response_model=schemas.EventDetail)
-def get_event(slug: str, db: Session = Depends(get_db)) -> schemas.EventDetail:
+def get_event(
+    slug: str,
+    db: Session = Depends(get_db),
+    lang: str | None = Depends(get_lang),
+) -> schemas.EventDetail:
     event = db.scalar(select(models.Event).where(models.Event.slug == slug))
     if event is None or event.status != "active":
         raise HTTPException(404, "event not found")
-    return serializers.event_detail(db, event)
+    return serializers.event_detail(db, event, lang)

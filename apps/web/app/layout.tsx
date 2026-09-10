@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   },
   twitter: { card: "summary_large_image", site: "@planetai9" },
   robots: { index: true, follow: true },
-  alternates: { types: { "application/rss+xml": `${SITE}/api/rss` } },
+  alternates: { types: { "application/rss+xml": `${SITE}/rss.xml` } },
 };
 
 const THEME_INIT = `try{if(localStorage.getItem('planetai_theme')==='dark'){document.documentElement.classList.add('dark')}}catch(e){}`;

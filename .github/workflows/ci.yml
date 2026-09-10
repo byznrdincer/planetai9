@@ -58,6 +58,12 @@ jobs:
       - name: Run migrations
         run: uv run alembic upgrade head
 
+      - name: Check migrations match models
+        run: uv run alembic check
+
+      - name: Seed reference data
+        run: uv run planetai-ingest seed
+
       - name: Pytest
         run: uv run pytest -q
 

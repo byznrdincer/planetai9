@@ -14,3 +14,4 @@
 - { slug: image-gen,      name: Görsel Üretimi,        kind: theme,   keywords: ["image generation", "text-to-image", "diffusion model", "image model"] }
 - { slug: video-gen,      name: Video Üretimi,         kind: theme,   keywords: ["video generation", "text-to-video", "video model"] }
 - { slug: turkiye,        name: Türkiye,               kind: theme,   keywords: ["türkiye", "turkey", "turkish", "istanbul", "ankara", "türk ", "tübitak", "teknofest", "aselsan", "trendyol", "getir", "t3 ai", "kuis ai", "boğaziçi", "koç üniversite", "orta doğu teknik", "bilkent", "havelsan", "insider.com", "peak games", "codeway"] }
+- { slug: data-veri,      name: Veri & Veri Setleri,   kind: theme,   keywords: ["open data", "açık veri", "veri seti", "open dataset", "dataset release", "releases a dataset", "released a dataset", "new dataset", "data commons", "veri portalı", "data portal", "open-source dataset", "training dataset", "public dataset"] }

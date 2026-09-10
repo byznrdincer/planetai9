@@ -36,6 +36,7 @@ class Source(Base, TimestampMixin):
     feed_url: Mapped[str | None] = mapped_column(Text)
     kind: Mapped[str] = mapped_column(String(20))
     source_type: Mapped[str] = mapped_column(String(30))
+    lang: Mapped[str] = mapped_column(String(8), default="en")  # feed's publishing language
     trust_weight: Mapped[float] = mapped_column(Numeric(3, 2), default=0.5)
     entity_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("entities.id", ondelete="SET NULL")
@@ -112,15 +113,51 @@ class Event(Base, TimestampMixin):
         ForeignKey("events.id", ondelete="SET NULL")
     )
     image_url: Mapped[str | None] = mapped_column(Text)
+    lang: Mapped[str] = mapped_column(
+        String(8), default="en"
+    )  # language of title/summary/body_text
 
     primary_entity: Mapped[Entity | None] = relationship(foreign_keys=[primary_entity_id])
     articles: Mapped[list[Article]] = relationship(back_populates="event")
+    translations: Mapped[list[EventTranslation]] = relationship(
+        back_populates="event", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         Index("ix_events_last_activity", "last_activity_at"),
         Index("ix_events_category_importance", "category", "importance"),
         Index("ix_events_top_signal", "is_top_signal", "importance"),
     )
+
+
+class EventTranslation(Base):
+    """Machine translation of an event's title/summary/body into one target language.
+
+    Filled by the ingest ``translate`` pass (Google Cloud Translation). The original
+    text always stays on the Event row, so a failed or missing translation never
+    hides a story — it just serves the original and is retried later.
+    """
+
+    __tablename__ = "event_translations"
+
+    event_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("events.id", ondelete="CASCADE"), primary_key=True
+    )
+    target_lang: Mapped[str] = mapped_column(String(8), primary_key=True)  # 'tr' | 'en'
+    title: Mapped[str | None] = mapped_column(Text)
+    summary: Mapped[str | None] = mapped_column(Text)
+    body_text: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(12), default="pending")  # pending | done | failed
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    error: Mapped[str | None] = mapped_column(Text)
+    source_hash: Mapped[str | None] = mapped_column(String(64))  # detect stale translations
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    event: Mapped[Event] = relationship(back_populates="translations")
+
+    __table_args__ = (Index("ix_event_translations_status", "status", "target_lang"),)
 
 
 class Article(Base, TimestampMixin):
@@ -317,19 +354,6 @@ class OpinionPost(Base, TimestampMixin):
     author: Mapped[Author] = relationship(back_populates="posts")
 
     __table_args__ = (Index("ix_opinion_published", "status", "published_at"),)
-
-
-class NewsletterSubscriber(Base):
-    __tablename__ = "newsletter_subscribers"
-
-    id: Mapped[uuid.UUID] = uuid_pk()
-    email: Mapped[str] = mapped_column(String(320), unique=True)
-    locale: Mapped[str] = mapped_column(String(4), default="tr")
-    confirmed: Mapped[bool] = mapped_column(Boolean, default=False)
-    source: Mapped[str | None] = mapped_column(String(40))
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
 
 
 class IngestRun(Base):

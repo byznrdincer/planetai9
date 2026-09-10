@@ -7,7 +7,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from planetai_api import schemas, serializers
-from planetai_api.db import get_db
+from planetai_api.db import get_db, get_lang
 
 router = APIRouter()
 
@@ -17,6 +17,7 @@ def search(
     q: str = Query(..., min_length=2),
     db: Session = Depends(get_db),
     limit: int = Query(10, ge=1, le=30),
+    lang: str | None = Depends(get_lang),
 ) -> schemas.SearchResult:
     like = f"%{q.lower()}%"
     ts_query = func.plainto_tsquery("english", q)
@@ -63,13 +64,13 @@ def search(
         query=q,
         entities=[serializers.entity_ref(e) for e in entities],
         events=schemas.Page(
-            data=[serializers.event_card(db, e) for e in events],
+            data=[serializers.event_card(db, e, lang) for e in events],
             next_cursor=None,
             count=len(events),
         ),
         videos=[serializers.video_card(v) for v in videos],
         research=schemas.Page(
-            data=[serializers.event_card(db, e) for e in research],
+            data=[serializers.event_card(db, e, lang) for e in research],
             next_cursor=None,
             count=len(research),
         ),

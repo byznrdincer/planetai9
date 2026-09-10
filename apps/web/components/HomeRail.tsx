@@ -40,19 +40,31 @@ export function TrendsCard({ trends, t }: { trends: TopicTrend[]; t: DictT }) {
   );
 }
 
-function VideosCard({ videos, locale, t }: { videos: VideoCard[]; locale: Locale; t: DictT }) {
+export function VideosCard({
+  videos,
+  locale,
+  t,
+  title,
+  limit = 3,
+}: {
+  videos: VideoCard[];
+  locale: Locale;
+  t: DictT;
+  title?: string;
+  limit?: number;
+}) {
   return (
     <div className="card overflow-hidden">
       <div className="flex items-center justify-between border-b border-line px-5 py-3 dark:border-d-line">
         <h3 className="flex items-center gap-2 text-[15px] font-extrabold tracking-tight3 text-ink dark:text-d-ink">
-          <Play className="h-3.5 w-3.5 fill-current" /> {t.section.video}
+          <Play className="h-3.5 w-3.5 fill-current" /> {title ?? t.section.video}
         </h3>
         <Link href="/videos" className="text-[11px] font-semibold text-accent hover:text-accent-ink">
           {t.common.seeAll}
         </Link>
       </div>
       <ul className="divide-y divide-line dark:divide-d-line">
-        {videos.slice(0, 3).map((v) => (
+        {videos.slice(0, limit).map((v) => (
           <li key={v.youtube_id}>
             <Link href={`/videos/${v.youtube_id}`} className="group flex gap-3 p-4">
               <span className="relative h-12 w-20 shrink-0 overflow-hidden rounded-md bg-wash dark:bg-d-wash">

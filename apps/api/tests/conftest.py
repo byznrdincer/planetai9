@@ -28,5 +28,23 @@ def pytest_collection_modifyitems(config, items):
 @pytest.fixture(scope="session")
 def client() -> TestClient:
     from planetai_api.main import app
+    from planetai_api.ratelimit import limiter
+
+    # tests exercise rate-limited endpoints repeatedly (and the limiter's
+    # fixed-window state lives in Redis across runs) — turn it off here.
+    limiter.enabled = False
 
     return TestClient(app)
+
+
+@pytest.fixture
+def author_slug() -> str:
+    """Ensure an author row exists for the studio tests (independent of seed)."""
+    from planetai_shared.db import models
+    from planetai_shared.db.base import session_scope
+
+    slug = "ayhan-demirci"
+    with session_scope() as db:
+        if db.query(models.Author).filter_by(slug=slug).first() is None:
+            db.add(models.Author(slug=slug, name="Ayhan Demirci", role="Kurucu · PlanetAI9"))
+    return slug

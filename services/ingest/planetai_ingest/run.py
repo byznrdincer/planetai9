@@ -31,15 +31,22 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
     )
+    from planetai_shared.observability import init_sentry
+
+    init_sentry("ingest")
+
     parser = argparse.ArgumentParser(prog="planetai-ingest")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("seed", help="upsert seed data into the database")
+    sub.add_parser("healthz", help="exit 0 if the scheduler ran a job recently (container health)")
 
     p_collect = sub.add_parser("collect", help="run collectors once")
     p_collect.add_argument("--kinds", help="comma list: rss,arxiv,youtube,html_blog")
 
     sub.add_parser("trends", help="compute trend snapshots + refresh top signals")
+    p_tr = sub.add_parser("translate", help="translate pending events between TR and EN")
+    p_tr.add_argument("--limit", type=int, default=60, help="max events per pass")
     sub.add_parser("retag", help="re-run topic matching over existing events")
     sub.add_parser("scheduler", help="run the long-lived scheduler")
 
@@ -50,6 +57,24 @@ def main(argv: list[str] | None = None) -> int:
 
         run()
         return 0
+
+    if args.cmd == "healthz":
+        from datetime import UTC, datetime, timedelta
+
+        from planetai_shared.db import models
+        from planetai_shared.db.base import session_scope
+        from sqlalchemy import select
+
+        with session_scope() as db:
+            last = db.scalar(
+                select(models.IngestRun.finished_at)
+                .where(models.IngestRun.finished_at.isnot(None))
+                .order_by(models.IngestRun.finished_at.desc())
+                .limit(1)
+            )
+        fresh = last is not None and last >= datetime.now(UTC) - timedelta(minutes=30)
+        print(f"last ingest run: {last} — {'ok' if fresh else 'STALE'}")
+        return 0 if fresh else 1
 
     if args.cmd == "collect":
         from planetai_ingest.pipeline.ingest import run_all
@@ -68,6 +93,13 @@ def main(argv: list[str] | None = None) -> int:
         compute_snapshots()
         n = refresh_top_signals()
         print(f"top signals: {n}")
+        _bust_api_cache()
+        return 0
+
+    if args.cmd == "translate":
+        from planetai_ingest.pipeline.translate import run as translate_run
+
+        print(translate_run(limit=args.limit))
         _bust_api_cache()
         return 0
 

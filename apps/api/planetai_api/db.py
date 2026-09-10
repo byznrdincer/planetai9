@@ -12,3 +12,8 @@ def get_db() -> Iterator[Session]:
         yield db
     finally:
         db.close()
+
+
+def get_lang(lang: str | None = None) -> str | None:
+    """Normalize the ?lang= query param to a supported locale or None."""
+    return lang if lang in ("tr", "en") else None
