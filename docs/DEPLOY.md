@@ -27,7 +27,6 @@ cp infra/.env.prod.example infra/.env.prod
 #   ADMIN_TOKEN=<long random>               # /yonetim panel
 #   AUTHOR_KEYS=ayhan-demirci:<long random> # /yazar studio (optional)
 #   MODERATOR_AUTHORS=ayhan-demirci         # authors who may moderate marketplace
-#   GOOGLE_TRANSLATE_API_KEY=<optional>     # TR<->EN translation, docs/07-translation.md
 #   SENTRY_DSN=<optional>                   # error monitoring
 #   YOUTUBE_API_KEY=<optional>
 
@@ -137,7 +136,6 @@ DB user needs `CREATE EXTENSION` rights (managed Postgres usually allows this fo
 | `PLANETAI_ADMIN_TOKEN` | — | `/yonetim` marketplace panel; unset ⇒ 404 |
 | `PLANETAI_AUTHOR_KEYS` | — | `/yazar` studio: `slug:secret,slug2:secret2`; unset ⇒ 404 |
 | `PLANETAI_MODERATOR_AUTHORS` | — | author slugs allowed to moderate marketplace |
-| `PLANETAI_GOOGLE_TRANSLATE_API_KEY` | — | TR↔EN translation (ingest); unset ⇒ no-op. docs/07-translation.md |
 | `PLANETAI_SENTRY_DSN` | — | error monitoring (api + ingest); unset ⇒ off |
 | `PLANETAI_YOUTUBE_API_KEY` | — | optional; scraping works without it |
 | `PLANETAI_API_URL` (web) | `http://localhost:8077` | where the web server fetches data |
@@ -159,6 +157,5 @@ DB user needs `CREATE EXTENSION` rights (managed Postgres usually allows this fo
 - [ ] `docker compose … ps` shows `api`, `ingest`, `web` **healthy**
 - [ ] a collection pass produced events; home page renders in TR and EN
 - [ ] `robots.txt` and `sitemap.xml` resolve with the right host; `/yonetim` and `/yazar` login work
-- [ ] `GOOGLE_TRANSLATE_API_KEY` set → one-time backfill: `docker compose … run --rm ingest planetai-ingest translate --limit 500`
 - [ ] `SENTRY_DSN` set (recommended) — trigger a test error, confirm it lands
 - [ ] first `make prod-backup` succeeds; `pgbackups` volume has a dump

@@ -28,9 +28,9 @@ filtreleyen, kategorize eden ve ilişkilendiren AI haber/intelligence platformu.
   Kural tabanlı sınıflandırma, deduplication, olay (event) kümeleme ve önem skorlaması. **LLM yok.**
 - **Türkiye odağı** — Türkçe kaynaklar ayrı işaretli (`sources.lang = tr`); `/turkiye` sayfası
   ekosistem raporu + "Türkiye Data" (açık veri kaynakları).
-- **TR↔EN çeviri** — Türkçe haberler İngilizceye, İngilizce haberler Türkçeye otomatik çevrilir
-  (Google Cloud Translation v2). Çeviri veritabanında saklanır, sayfa açılışında tekrar yapılmaz;
-  başarısız olursa orijinal kaybolmaz, sonra tekrar denenir. Ayrıntı: [docs/07-translation.md](docs/07-translation.md).
+- **TR/EN dil altyapısı** — her haber origin dilinde saklanır; `event_translations` tablosu +
+  API `?lang=` servis yolu hazır. Şu an bir çeviri sağlayıcısı bağlı **değil** — çeviri satırları
+  eklendiğinde (elle ya da ileride bir sağlayıcıyla) okuyucunun diline göre servis edilir.
 - **AI Marketplace** — topluluğun paylaştığı açık AI araçları. Başvurular `pending` düşer, yalnızca
   onaylananlar yayında.
 - **Köşe yazıları** — yazarlar `/yazar` stüdyosundan kendi köşe yazılarını yazar, taslak tutar, yayınlar.
@@ -72,7 +72,6 @@ make install                    # uv sync + npm ci
 # İlk haber verisi için:
 uv run planetai-ingest collect          # bir toplama turu
 uv run planetai-ingest trends           # trend + top-signal hesapla
-uv run planetai-ingest translate        # (çeviri anahtarı varsa) TR↔EN çevir
 
 ./dev.sh stop                   # durdur
 ```
@@ -98,7 +97,7 @@ make prod-up-caddy    # SITE_DOMAIN + DNS gerekir; Let's Encrypt sertifikayı ot
 
 - `api` — açılışta `alembic upgrade head` → migration'lar otomatik. Healthcheck: `/api/v1/healthz`.
 - `ingest` — `planetai-ingest scheduler`: açılışta seed + ilk toplama, sonra döngü (**haberler 10 dk**,
-  arXiv/YouTube 60 dk, çeviri 20 dk, trendler 30 dk). Healthcheck: `planetai-ingest healthz`.
+  arXiv/YouTube 60 dk, trendler 30 dk). Healthcheck: `planetai-ingest healthz`.
 - `web` — **yalnızca `127.0.0.1:${WEB_PORT}`** dinler (dışa kapalı). Önüne reverse proxy koy: `make prod-up-caddy` veya kendi Nginx/Traefik.
 - `backup` — **günlük otomatik `pg_dump`** (`pgbackups` volume, gzip + retention). Anlık: `make prod-backup`.
 - `backup-offsite` *(profil `offsite`)* — `pgbackups` volume'ünü **S3 / B2 / R2 / MinIO**'ya kopyalar (`OFFSITE_S3_*` gerekir). Hepsi birden: `make prod-up-full`.
@@ -110,8 +109,6 @@ make prod-up-caddy    # SITE_DOMAIN + DNS gerekir; Let's Encrypt sertifikayı ot
 - [ ] `SITE_URL` https:// domain; `SITE_DOMAIN` sadece host; DNS sunucuya işaret ediyor
 - [ ] `POSTGRES_PASSWORD`, `ADMIN_TOKEN`, `AUTHOR_KEYS` güçlü rastgele; ayrı kanaldan paylaşıldı
 - [ ] `MODERATOR_AUTHORS` = marketplace onaylayacak yazar slug'ları (opsiyonel)
-- [ ] `GOOGLE_TRANSLATE_API_KEY` — çeviri isteniyorsa ([kurulum](docs/07-translation.md)) + ilk kez
-      `docker compose … run --rm ingest planetai-ingest translate --limit 500`
 - [ ] `SENTRY_DSN` (önerilir) — bir test hatası tetikle, Sentry'ye düştüğünü doğrula
 - [ ] `docker compose … ps` → `api`, `ingest`, `web` **healthy**
 - [ ] İlk `make prod-backup` başarılı; `pgbackups` volume'ünde dump var
@@ -125,13 +122,12 @@ Gerçek `.env` dosyalarını **asla commit etme**.
 | Local (`.env`) | Prod (`infra/.env.prod`) | Zorunlu? | Açıklama |
 |---|---|---|---|
 | `PLANETAI_DATABASE_URL` | *(compose kurar)* | evet | Postgres bağlantısı |
-| `PLANETAI_REDIS_URL` | *(compose kurar)* | evet | Redis (cache + rate limit + çeviri kilitleri) |
+| `PLANETAI_REDIS_URL` | *(compose kurar)* | evet | Redis (cache + rate limit) |
 | `PLANETAI_SITE_URL` | `SITE_URL` | evet (prod) | Public URL — CORS, canonical, sitemap, RSS |
 | — | `POSTGRES_PASSWORD` | evet (prod) | Postgres parolası |
 | `PLANETAI_ADMIN_TOKEN` | `ADMIN_TOKEN` | hayır | `/yonetim` paneli; boşsa panel 404 |
 | `PLANETAI_AUTHOR_KEYS` | `AUTHOR_KEYS` | hayır | `/yazar` stüdyosu — `slug:secret,slug2:secret2`; boşsa 404 |
 | `PLANETAI_MODERATOR_AUTHORS` | `MODERATOR_AUTHORS` | hayır | Marketplace onaylayabilen yazar slug'ları — `slug,slug2` |
-| `PLANETAI_GOOGLE_TRANSLATE_API_KEY` | `GOOGLE_TRANSLATE_API_KEY` | hayır | Google Cloud Translation v2; boşsa çeviri no-op |
 | `PLANETAI_SENTRY_DSN` | `SENTRY_DSN` | hayır | Hata izleme (api + ingest); boşsa kapalı |
 | — | `NEXT_PUBLIC_SENTRY_DSN` | hayır | Web istemci hata izleme |
 | — | `SITE_DOMAIN` | `caddy` profili için | Sadece host (şemasız), örn. `planetai9.com` |
@@ -140,8 +136,6 @@ Gerçek `.env` dosyalarını **asla commit etme**.
 | `PLANETAI_YOUTUBE_CHANNEL_ID` | — | hayır | Kanal id'si (handle scrape varsayılan) |
 | `PLANETAI_CORS_ORIGINS` | *(compose = `SITE_URL`)* | hayır | Virgüllü liste |
 | `PLANETAI_DOCS_ENABLED` | *(compose = `false`)* | hayır | `/docs` Swagger UI |
-| `PLANETAI_TRANSLATE_MAX_AGE_DAYS` | aynı | hayır | Sadece bu kadar günden yeni haberleri çevir (vars. 21) |
-| `PLANETAI_TRANSLATE_MAX_ATTEMPTS` | aynı | hayır | Başarısız çeviriyi kaç kez dene (vars. 4) |
 | `PLANETAI_RATE_LIMIT_DEFAULT` / `_SUBMIT` | aynı | hayır | API rate limitleri |
 
 Ayarlanabilir tüm değerler: [`packages/shared/planetai_shared/settings.py`](packages/shared/planetai_shared/settings.py).
@@ -158,7 +152,6 @@ Prod'da `ingest` konteyneri sürekli çalışır; haberler ~10 dk'da bir güncel
 | `seed` | Seed YAML'ları DB'ye yaz (idempotent) — kaynaklar, entity'ler, konular, yazarlar |
 | `collect [--kinds rss,arxiv,youtube]` | Bir toplama turu |
 | `trends` | Trend snapshot + top-signal yenile |
-| `translate [--limit N]` | Bekleyen haberleri TR↔EN çevir |
 | `retag` | Mevcut olaylara konu eşleştirmesini yeniden çalıştır |
 | `scheduler` | Uzun ömürlü zamanlayıcı döngüsü |
 
@@ -187,7 +180,6 @@ make check     # ruff check + format --check + pytest + web tsc + web build
 - **Ingest:** Python worker'ları, APScheduler; feedparser + httpx + selectolax
 - **Veritabanı:** PostgreSQL 16 (`pg_trgm`, `tsvector` FTS), Alembic migration'ları
 - **Cache:** Redis 7
-- **Çeviri:** Google Cloud Translation API v2 (LLM değil; opsiyonel)
 - **LLM:** İçerik pipeline'ında **yok** — sınıflandırma/skorlama kural tabanlı
 
 ## Monorepo yapısı
@@ -216,6 +208,5 @@ planetai/
 | [docs/04-api.md](docs/04-api.md) | Backend REST API sözleşmesi |
 | [docs/05-frontend.md](docs/05-frontend.md) | Next.js sayfa yapısı, route'lar, bileşenler |
 | [docs/06-roadmap.md](docs/06-roadmap.md) | Yol haritası |
-| [docs/07-translation.md](docs/07-translation.md) | TR↔EN çeviri: Google Cloud kurulumu + maliyet |
 | [docs/RUNBOOK.md](docs/RUNBOOK.md) | Local kurulum, CLI, portlar, editoryal işlemler |
 | [docs/DEPLOY.md](docs/DEPLOY.md) | Self-host production stack detayları |

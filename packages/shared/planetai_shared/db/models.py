@@ -131,11 +131,12 @@ class Event(Base, TimestampMixin):
 
 
 class EventTranslation(Base):
-    """Machine translation of an event's title/summary/body into one target language.
+    """An event's title/summary/body in a second language (``target_lang``).
 
-    Filled by the ingest ``translate`` pass (Google Cloud Translation). The original
-    text always stays on the Event row, so a failed or missing translation never
-    hides a story — it just serves the original and is retried later.
+    No translation provider is wired in right now — rows are added out of band.
+    The API serves a row here when the reader's locale differs from the event's
+    ``lang`` (``?lang=``); the original always stays on the Event row, so a
+    missing translation just falls back to the original.
     """
 
     __tablename__ = "event_translations"
