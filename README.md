@@ -101,7 +101,8 @@ make prod-up-caddy    # SITE_DOMAIN + DNS gerekir; Let's Encrypt sertifikayı ot
   arXiv/YouTube 60 dk, çeviri 20 dk, trendler 30 dk). Healthcheck: `planetai-ingest healthz`.
 - `web` — **yalnızca `127.0.0.1:${WEB_PORT}`** dinler (dışa kapalı). Önüne reverse proxy koy: `make prod-up-caddy` veya kendi Nginx/Traefik.
 - `backup` — **günlük otomatik `pg_dump`** (`pgbackups` volume, gzip + retention). Anlık: `make prod-backup`.
-- Volume'ler: `pgdata`, `pgbackups`, `redisdata`, `caddy_data`. Sunucuyu/volume'leri ayrıca yedekle.
+- `backup-offsite` *(profil `offsite`)* — `pgbackups` volume'ünü **S3 / B2 / R2 / MinIO**'ya kopyalar (`OFFSITE_S3_*` gerekir). Hepsi birden: `make prod-up-full`.
+- Volume'ler: `pgdata`, `pgbackups`, `redisdata`, `caddy_data`.
 
 ### Deploy öncesi kontrol listesi
 

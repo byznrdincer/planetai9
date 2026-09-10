@@ -41,6 +41,7 @@ What comes up:
 
 - `postgres` / `redis` — named volumes `pgdata`, `redisdata`
 - `backup` — daily `pg_dump` into the `pgbackups` volume (gzip + retention). On-demand: `make prod-backup`.
+- `backup-offsite` *(profile `offsite`)* — ships the `pgbackups` volume to S3/B2/R2/MinIO on a cron. Set `OFFSITE_S3_*` and run `make prod-up-full` (Caddy + offsite) or add `--profile offsite`.
 - `api` — `alembic upgrade head` on start, then uvicorn on `:8000` (internal only). Docs disabled, CORS locked to `SITE_URL`. Healthcheck: `/api/v1/healthz`.
 - `ingest` — seeds on start, warm-collects, then the scheduler loop. Healthcheck: `planetai-ingest healthz` (fails if no ingest run finished in the last 30 min).
 - `web` — binds **`127.0.0.1:${WEB_PORT}`** only (never public). Healthcheck: `GET /`.
@@ -144,6 +145,7 @@ DB user needs `CREATE EXTENSION` rights (managed Postgres usually allows this fo
 | `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` (web) | — | server / client error monitoring |
 | `SITE_DOMAIN` (compose) | — | host only (no scheme); required for the `caddy` profile |
 | `BACKUP_SCHEDULE` / `BACKUP_KEEP_*` | `@daily` / 7·4·6 | `backup` service cron + retention |
+| `OFFSITE_S3_*` / `OFFSITE_CRON` | — | off-site backup target (S3/B2/R2/MinIO); needs `--profile offsite` |
 
 ---
 
