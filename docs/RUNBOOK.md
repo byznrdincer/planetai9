@@ -51,8 +51,7 @@ then `uv run planetai-ingest collect --kinds youtube`.
 | `planetai-ingest seed` | upsert seed YAML into DB (idempotent) — sources, entities, topics, authors, marketplace apps |
 | `planetai-ingest collect [--kinds rss,arxiv,youtube]` | one collection pass (fetches OG images, busts API cache) |
 | `planetai-ingest trends` | recompute trend snapshots + refresh top signals |
-| `planetai-ingest translate [--limit N]` | translate pending events TR↔EN (Google Cloud Translation; see docs/07-translation.md) |
-| `planetai-ingest scheduler` | APScheduler loop (10m news / 60m arxiv+yt / 20m translate / 30m trends) |
+| `planetai-ingest scheduler` | APScheduler loop (10m news / 60m arxiv+yt / 30m trends) |
 | `python -m planetai_api.moderate list` | list AI Marketplace submissions with status |
 | `python -m planetai_api.moderate approve <slug>` | publish a pending marketplace app |
 | `python -m planetai_api.moderate reject <slug>` | reject a submission |

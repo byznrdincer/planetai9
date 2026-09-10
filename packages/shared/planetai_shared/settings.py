@@ -32,10 +32,6 @@ class Settings(BaseSettings):
     http_timeout_sec: float = 20.0
     youtube_api_key: str | None = None
     youtube_channel_id: str | None = None
-    # Google Cloud Translation API v2 key; unset ⇒ translation pipeline is a no-op
-    google_translate_api_key: str | None = None
-    translate_max_attempts: int = 4  # retry a failed event translation up to this many times
-    translate_max_age_days: int = 21  # only translate events fresher than this
     max_article_age_days: int = 75
     max_items_per_fetch: int = 120
     dedup_lookback_hours: int = 72

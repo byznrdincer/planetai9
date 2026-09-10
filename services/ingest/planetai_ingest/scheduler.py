@@ -7,7 +7,6 @@ import logging
 from apscheduler.schedulers.blocking import BlockingScheduler
 
 from planetai_ingest.pipeline.ingest import run_all
-from planetai_ingest.pipeline.translate import run as translate_run
 from planetai_ingest.pipeline.trends import compute_snapshots, refresh_top_signals
 from planetai_ingest.seed import run as seed_run
 
@@ -19,10 +18,6 @@ def _collect(kinds: set[str]):
         run_all(only_kinds=kinds)
 
     return job
-
-
-def _translate_job():
-    translate_run()
 
 
 def _trends_job():
@@ -41,7 +36,6 @@ def run_scheduler() -> None:
     sched.add_job(_collect({"rss", "html_blog"}), "interval", minutes=10, id="collect-news")
     sched.add_job(_collect({"arxiv"}), "interval", minutes=60, id="collect-arxiv")
     sched.add_job(_collect({"youtube"}), "interval", minutes=60, id="collect-youtube")
-    sched.add_job(_translate_job, "interval", minutes=20, id="translate")
     sched.add_job(_trends_job, "interval", minutes=30, id="trends")
     sched.add_job(_top_signals_job, "interval", minutes=15, id="top-signals")
     sched.add_job(seed_run, "interval", hours=24, id="seed-sync")

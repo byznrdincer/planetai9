@@ -72,30 +72,3 @@ def test_entity_index_matches_aliases_and_boundaries():
 
     # word-boundary: "openair" must not match "OpenAI"
     assert idx.match("the openair festival", "") == []
-
-
-def test_translate_event_reassembles_segments(monkeypatch):
-    from planetai_ingest.pipeline import translate
-
-    class _Ev:
-        lang = "tr"
-        title = "Başlık"
-        summary = "Özet"
-        body_text = "Birinci paragraf.\n\nİkinci paragraf."
-
-    seen = {}
-
-    def fake_batch(texts, source, target, api_key):
-        seen["texts"] = texts
-        seen["source"] = source
-        seen["target"] = target
-        return [f"<{t}>" for t in texts]
-
-    monkeypatch.setattr(translate, "_translate_batch", fake_batch)
-    out = translate._translate_event(_Ev(), "en", "key")
-
-    assert seen["source"] == "tr" and seen["target"] == "en"
-    assert seen["texts"] == ["Başlık", "Özet", "Birinci paragraf.", "İkinci paragraf."]
-    assert out["title"] == "<Başlık>"
-    assert out["summary"] == "<Özet>"
-    assert out["body_text"] == "<Birinci paragraf.>\n\n<İkinci paragraf.>"
