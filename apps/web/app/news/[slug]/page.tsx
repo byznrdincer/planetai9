@@ -4,6 +4,7 @@ import { ArrowUpRight, ExternalLink } from "lucide-react";
 import { EventRow } from "@/components/EventCard";
 import { VideoCard } from "@/components/VideoCard";
 import { Cover } from "@/components/Cover";
+import { isLlmRadarStory, LlmRadarArticle } from "@/components/LlmRadarArticle";
 import { Meta } from "@/components/Meta";
 import { api, apiSafe } from "@/lib/api";
 import { relativeTime } from "@/lib/format";
@@ -18,7 +19,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const t = await getDict();
   let event: EventDetail;
   try {
-    event = await api<EventDetail>(`/events/${slug}`, { revalidate: 120 });
+    event = await api<EventDetail>(`/events/${slug}`, { revalidate: 60 });
   } catch {
     notFound();
   }
@@ -26,15 +27,16 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const primary = event.sources.find((s) => s.is_primary) ?? event.sources[0];
   const factorKeys = Object.keys(t.event.factors) as (keyof Omit<ImportanceFactors, "total">)[];
 
-  // Stories published through the "Haber Gönder" pipeline (PlanetAI9's own
-  // announcements as well as approved reader tips) — kept as its own rail so
-  // this page never looks empty even when the ingest-side "related" list is.
   const submitted = await apiSafe<PageT>("/events?origin=submitted&limit=6&sort=recent", {
     data: [],
     next_cursor: null,
     count: 0,
   });
   const ownNews = submitted.data.filter((e) => e.slug !== event.slug).slice(0, 5);
+
+  if (isLlmRadarStory(slug, event.body)) {
+    return <LlmRadarArticle event={event} locale={locale} ownNews={ownNews} />;
+  }
 
   return (
     <div className="mx-auto grid max-w-content gap-10 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-16">
@@ -68,7 +70,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         {event.body.length > 0 && (
           <div className="mt-8 space-y-5">
             {event.body.map((p, i) =>
-              /^\/news\/.*\.(svg|png|jpe?g|webp)$/.test(p.trim()) ? (
+              /^\/news\/.*\.(svg|png|jpe?g|webp)$/i.test(p.trim()) ? (
                 <Cover
                   key={i}
                   src={p.trim()}

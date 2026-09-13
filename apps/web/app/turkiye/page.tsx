@@ -5,7 +5,7 @@ import { getLocale } from "@/lib/i18n";
 import { DATA_KIND_LABEL, KIND_LABEL, TR_FACTS, kindLabel } from "@/lib/turkey";
 import type { CuratedLink } from "@/lib/types";
 
-export const revalidate = 300;
+export const revalidate = 60;
 
 export default async function TurkiyePage() {
   const locale = await getLocale();
@@ -67,8 +67,8 @@ export default async function TurkiyePage() {
         />
         <p className="-mt-3 mb-7 max-w-2xl text-[14px] leading-relaxed text-ink-2 dark:text-d-ink-2">
           {tr
-            ? "Türkiye'den açık veri kaynakları — kamu portalları, istatistik servisleri ve Türkçe veri setleri."
-            : "Open-data resources from Türkiye — public portals, statistics services and Turkish datasets."}
+            ? "Türkiye'den açık veri kaynakları — kamu portalları, istatistik servisleri ve Türkçe pre-training veri setleri."
+            : "Open-data resources from Türkiye — public portals, statistics services and Turkish pre-training datasets."}
         </p>
 
         {trData.length > 0 && (
