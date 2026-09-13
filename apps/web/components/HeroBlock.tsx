@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { HeroSideItem } from "@/components/EventCard";
 import { Meta } from "@/components/Meta";
-import { CatBadge, Cover } from "@/components/Cover";
+import { Cover } from "@/components/Cover";
 import type { Locale } from "@/lib/i18n";
 import type { EventCard } from "@/lib/types";
 
@@ -21,12 +21,7 @@ export function HeroBlock({
     <section className="grid gap-6 lg:grid-cols-[1.55fr_1fr] lg:items-start lg:gap-10">
       <article className="group">
         <Link href={`/news/${lead.slug}`} className="block">
-          <div className="relative">
-            <Cover src={lead.image_url} category={lead.category} className="aspect-[16/9]" rounded="rounded-card" zoom />
-            <span className="absolute left-4 top-4">
-              <CatBadge category={lead.category} locale={locale} className="bg-white/95 shadow-soft" />
-            </span>
-          </div>
+          <Cover src={lead.image_url} category={lead.category} className="aspect-[16/9]" rounded="rounded-card" zoom />
           <Meta
             summary={lead.summary}
             date={lead.published_at}

@@ -151,7 +151,24 @@ def seed_editorial(db: Session) -> None:
     db.flush()
 
 
+# Retired 2026-09-13 when the Marketplace was scoped to Turkish developers'
+# open-source projects only (these were global tools with no Turkish origin).
+# Upserting never deletes rows dropped from the YAML, so retire them explicitly
+# here — this runs on every ingest start, so it also cleans up prod on deploy.
+_RETIRED_MARKETPLACE_SLUGS = {
+    "whisper",
+    "piper-tts",
+    "ollama",
+    "filesystem-mcp",
+    "llamaindex",
+    "open-webui",
+}
+
+
 def seed_marketplace(db: Session) -> None:
+    db.query(models.MarketplaceApp).filter(
+        models.MarketplaceApp.slug.in_(_RETIRED_MARKETPLACE_SLUGS)
+    ).delete(synchronize_session=False)
     for row in config.marketplace().get("apps", []):
         app = db.scalar(
             select(models.MarketplaceApp).where(models.MarketplaceApp.slug == row["slug"])
@@ -169,6 +186,7 @@ def seed_marketplace(db: Session) -> None:
         app.logo_url = row.get("logo_url")
         app.author_name = row["author_name"]
         app.author_url = row.get("author_url")
+        app.is_turkish_dev = row.get("is_turkish_dev", False)
         app.status = row.get("status", "approved")
         app.featured = row.get("featured", False)
     db.flush()

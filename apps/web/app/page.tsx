@@ -1,14 +1,12 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { CategoryGrid } from "@/components/CategoryGrid";
 import { EventCard, NewsListItem } from "@/components/EventCard";
 import { HeroBlock } from "@/components/HeroBlock";
 import { HomeSidebar } from "@/components/HomeRail";
-import { Segmented } from "@/components/Segmented";
 import { VideoCard } from "@/components/VideoCard";
 import { apiSafe } from "@/lib/api";
 import { getDict, getLocale } from "@/lib/i18n";
-import type { CategoryCount, HomePayload } from "@/lib/types";
+import type { HomePayload } from "@/lib/types";
 
 export const revalidate = 60;
 
@@ -42,10 +40,13 @@ function SectionHead({ title, href, seeAll }: { title: string; href?: string; se
 export default async function HomePage() {
   const locale = await getLocale();
   const t = await getDict();
-  const [raw, counts] = await Promise.all([
-    apiSafe<HomePayload>("/home", EMPTY, { revalidate: 60, tags: ["home"] }),
-    apiSafe<CategoryCount[]>("/categories", []),
-  ]);
+  // Home is Türkiye-only: clicking the PlanetAI9 logo always lands on
+  // Türkiye news ("Gündem" in the navbar points here too). World news lives
+  // under its own nav item ("Dünya" -> /news?region=world).
+  const raw = await apiSafe<HomePayload>("/home?region=TR", EMPTY, {
+    revalidate: 60,
+    tags: ["home"],
+  });
   const home: HomePayload = { ...EMPTY, ...raw };
 
   const pool = [
@@ -53,7 +54,9 @@ export default async function HomePage() {
     ...home.latest_news.filter((e) => !home.top_signals.some((s) => s.slug === e.slug)),
   ];
   const score = (e: (typeof pool)[number]) =>
-    (e.top_source?.source_type === "major_news" ? 4 : 0) +
+    (e.top_source?.source_type === "major_news" || e.top_source?.source_type === "official_announcement"
+      ? 4
+      : 0) +
     (e.image_url ? 3 : 0) +
     Math.min(e.source_count, 3) +
     e.importance / 10;
@@ -67,16 +70,6 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-16">
-      <div className="-mb-10 flex justify-end">
-        <Segmented
-          options={[
-            { label: locale === "tr" ? "Dünya + Türkiye" : "Global + Türkiye", href: "/", active: true },
-            { label: locale === "tr" ? "Dünya" : "Global", href: "/news?bucket=AI&region=world", active: false },
-            { label: "Türkiye", href: "/news?bucket=AI&region=TR", active: false },
-          ]}
-        />
-      </div>
-
       {lead && (
         <HeroBlock lead={lead} side={side} locale={locale} readMore={locale === "tr" ? "Haberin devamı" : "Read more"} />
       )}
@@ -85,7 +78,7 @@ export default async function HomePage() {
         <section>
           <SectionHead
             title={locale === "tr" ? "Öne Çıkanlar" : "Featured"}
-            href="/news?sort=importance"
+            href="/news?region=TR&sort=importance"
             seeAll={locale === "tr" ? "Tümünü gör" : "See all"}
           />
           <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -100,7 +93,7 @@ export default async function HomePage() {
         <div>
           <SectionHead
             title={t.section.latest}
-            href="/news"
+            href="/news?region=TR"
             seeAll={locale === "tr" ? "Tümünü gör" : "See all"}
           />
           <div>
@@ -127,8 +120,6 @@ export default async function HomePage() {
           </div>
         </section>
       )}
-
-      <CategoryGrid counts={counts} locale={locale} seeAll={locale === "tr" ? "Tümünü gör" : "See all"} />
     </div>
   );
 }

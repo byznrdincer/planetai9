@@ -1,0 +1,36 @@
+<svg width="1200" height="675" viewBox="0 0 1200 675" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="675" fill="#F3F1EA"/>
+
+  <!-- kicker -->
+  <text x="90" y="150" fill="#8B8A7F" font-family="Arial, sans-serif" font-size="15" letter-spacing="3">LLM INTELLIGENCE PLATFORM</text>
+
+  <!-- headline -->
+  <text x="86" y="260" fill="#15150F" font-family="'Helvetica Neue', Arial, sans-serif" font-size="76" font-weight="800">Yapay zekâ</text>
+  <text x="86" y="345" fill="#15150F" font-family="'Helvetica Neue', Arial, sans-serif" font-size="76" font-weight="800">dünyasının</text>
+  <text x="86" y="430" fill="#5B6B44" font-family="'Helvetica Neue', Arial, sans-serif" font-size="76" font-weight="800">nabzını tut.</text>
+
+  <!-- subtitle -->
+  <text x="90" y="495" fill="#6B6A5E" font-family="Arial, sans-serif" font-size="21">Modelleri, fiyatları ve teknoloji değişimlerini tek merkezden,</text>
+  <text x="90" y="524" fill="#6B6A5E" font-family="Arial, sans-serif" font-size="21">kaynaklarıyla birlikte takip et.</text>
+
+  <!-- radar graphic, right side -->
+  <g transform="translate(945,330)">
+    <circle r="230" fill="none" stroke="#C9C6B8" stroke-width="1.5"/>
+    <circle r="150" fill="none" stroke="#C9C6B8" stroke-width="1.5"/>
+    <circle r="75" fill="none" stroke="#C9C6B8" stroke-width="1.5"/>
+    <line x1="-230" y1="0" x2="230" y2="0" stroke="#C9C6B8" stroke-width="1.5"/>
+    <line x1="0" y1="-230" x2="0" y2="230" stroke="#C9C6B8" stroke-width="1.5"/>
+    <path d="M 0 0 L 0 -230 A 230 230 0 0 1 199 -115 Z" fill="#D8E29A" opacity="0.55"/>
+    <circle cx="-130" cy="-70" r="6" fill="#8B9468"/>
+    <circle cx="150" cy="-90" r="6" fill="#8B9468"/>
+    <circle cx="-90" cy="140" r="6" fill="#8B9468"/>
+    <circle r="9" fill="#3ddc72"/>
+    <text x="0" y="-8" text-anchor="middle" fill="#15150F" font-family="Arial, sans-serif" font-size="40" font-weight="800">2590</text>
+    <text x="0" y="24" text-anchor="middle" fill="#8B8A7F" font-family="Arial, sans-serif" font-size="14" letter-spacing="2">İZLENEN MODEL</text>
+  </g>
+
+  <g transform="translate(90,590)">
+    <circle cx="6" cy="-5" r="5" fill="#3ddc72"/>
+    <text x="20" y="0" fill="#6B6A5E" font-family="Arial, sans-serif" font-size="15" letter-spacing="1">CANLI · llmradar.planetai9.com</text>
+  </g>
+</svg>
