@@ -11,7 +11,7 @@ from planetai_shared.db import models
 from planetai_shared.db.base import session_scope
 from planetai_shared.enums import EntityType
 from slugify import slugify
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from planetai_ingest import config
@@ -193,33 +193,68 @@ def seed_marketplace(db: Session) -> None:
 
 
 def seed_curated_links(db: Session) -> None:
-    """Bootstrap only — fill an empty collection; never touch rows once they exist
-    (the /yazar studio owns them after that)."""
-    from sqlalchemy import func
-
+    """Ensure YAML rows exist. Never overwrite cards the /yazar studio already owns —
+    only insert names that are still missing (so prod picks up new FineWeb/Kumru cards)."""
     data = config.turkiye()
     for collection in ("tr_data", "tr_ecosystem"):
         rows = data.get(collection) or []
-        existing = db.scalar(
-            select(func.count())
-            .select_from(models.CuratedLink)
-            .where(models.CuratedLink.collection == collection)
+        existing_names = set(
+            db.scalars(
+                select(models.CuratedLink.name).where(models.CuratedLink.collection == collection)
+            ).all()
         )
-        if existing:
-            continue
+        max_order = db.scalar(
+            select(func.max(models.CuratedLink.sort_order)).where(
+                models.CuratedLink.collection == collection
+            )
+        )
+        next_order = (max_order + 1) if max_order is not None else 0
         for i, row in enumerate(rows):
+            name = row["name"]
+            if name in existing_names:
+                continue
             db.add(
                 models.CuratedLink(
                     collection=collection,
-                    name=row["name"],
+                    name=name,
                     url=row["url"],
                     kind=row.get("kind", ""),
                     note_tr=row.get("note_tr"),
                     note_en=row.get("note_en"),
-                    sort_order=i,
+                    sort_order=next_order if existing_names else i,
                     enabled=True,
                 )
             )
+            if existing_names:
+                next_order += 1
+            existing_names.add(name)
+    db.flush()
+
+
+def fix_llmradar_asset_paths(db: Session) -> None:
+    """Replace deleted placeholder SVGs with the JPG screenshots in article bodies."""
+    pairs = (
+        ("/news/llmradar-benchmarks.svg", "/news/llmradar-benchmarks.jpg"),
+        ("/news/llmradar-intel.svg", "/news/llmradar-intel.jpg"),
+        ("/news/llmradar-launch.svg", "/news/llmradar-launch.jpg"),
+        ("/news/llmradar-market.svg", "/news/llmradar-market.jpg"),
+    )
+    for model in (models.Event, models.Article):
+        rows = db.scalars(
+            select(model).where(model.body_text.isnot(None) | model.image_url.isnot(None))
+        ).all()
+        for row in rows:
+            body = row.body_text or ""
+            img = row.image_url or ""
+            if "llmradar" not in body and "llmradar" not in img:
+                continue
+            for old, new in pairs:
+                body = body.replace(old, new)
+                img = img.replace(old, new)
+            if row.body_text is not None:
+                row.body_text = body
+            if row.image_url is not None:
+                row.image_url = img or None
     db.flush()
 
 
@@ -232,6 +267,7 @@ def run() -> None:
         seed_editorial(db)
         seed_marketplace(db)
         seed_curated_links(db)
+        fix_llmradar_asset_paths(db)
     log.info("seed complete")
 
 
