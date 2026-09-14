@@ -11,7 +11,7 @@ from planetai_shared.db import models
 from planetai_shared.db.base import session_scope
 from planetai_shared.enums import EntityType
 from slugify import slugify
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from planetai_ingest import config
@@ -194,24 +194,41 @@ def seed_marketplace(db: Session) -> None:
 
 def seed_curated_links(db: Session) -> None:
     """Ensure YAML rows exist. Never overwrite cards the /yazar studio already owns —
-    only insert names that are still missing (so prod picks up new FineWeb/Kumru cards)."""
+    only insert names that are still missing (so prod picks up new FineWeb/Kumru cards).
+
+    Exception: a small set of research corpora we manage in YAML — refresh url/notes
+    so prod stays correct after deploy without wiping editor-added cards.
+    """
+    managed = {
+        "FineWeb2-HQ (Türkçe)",
+        "HPLT 3.0",
+        "CulturaX",
+        "Cosmos Turkish",
+        "Türkçe Vikipedi",
+        "vngrs-web-corpus",
+        "Kumru (VNGRS)",
+    }
     data = config.turkiye()
     for collection in ("tr_data", "tr_ecosystem"):
         rows = data.get(collection) or []
-        existing_names = set(
-            db.scalars(
-                select(models.CuratedLink.name).where(models.CuratedLink.collection == collection)
+        existing = {
+            r.name: r
+            for r in db.scalars(
+                select(models.CuratedLink).where(models.CuratedLink.collection == collection)
             ).all()
-        )
-        max_order = db.scalar(
-            select(func.max(models.CuratedLink.sort_order)).where(
-                models.CuratedLink.collection == collection
-            )
-        )
-        next_order = (max_order + 1) if max_order is not None else 0
+        }
+        max_order = max((r.sort_order for r in existing.values()), default=-1)
+        next_order = max_order + 1
         for i, row in enumerate(rows):
             name = row["name"]
-            if name in existing_names:
+            if name in existing:
+                if name in managed:
+                    link = existing[name]
+                    link.url = row["url"]
+                    link.kind = row.get("kind", link.kind)
+                    link.note_tr = row.get("note_tr")
+                    link.note_en = row.get("note_en")
+                    link.enabled = True
                 continue
             db.add(
                 models.CuratedLink(
@@ -221,13 +238,38 @@ def seed_curated_links(db: Session) -> None:
                     kind=row.get("kind", ""),
                     note_tr=row.get("note_tr"),
                     note_en=row.get("note_en"),
-                    sort_order=next_order if existing_names else i,
+                    sort_order=next_order if existing else i,
                     enabled=True,
                 )
             )
-            if existing_names:
+            if existing:
                 next_order += 1
-            existing_names.add(name)
+            existing[name] = None  # mark present for subsequent loops
+    db.flush()
+
+
+def seed_stories(db: Session) -> None:
+    """Upsert canonical PlanetAI9 story bodies (image paths + copy) from stories.yaml."""
+    for row in config.stories().get("stories") or []:
+        slug = row["slug"]
+        body = (row.get("body") or "").strip() or None
+        image_url = row.get("image_url")
+        event = db.scalar(select(models.Event).where(models.Event.slug == slug))
+        if event is None:
+            log.warning("seed story skipped — event missing: %s", slug)
+            continue
+        if body:
+            event.body_text = body
+        if image_url:
+            event.image_url = image_url
+        for article in db.scalars(
+            select(models.Article).where(models.Article.event_id == event.id)
+        ).all():
+            if body:
+                article.body_text = body
+            if image_url:
+                article.image_url = image_url
+        log.info("seed story updated: %s", slug)
     db.flush()
 
 
@@ -267,6 +309,7 @@ def run() -> None:
         seed_editorial(db)
         seed_marketplace(db)
         seed_curated_links(db)
+        seed_stories(db)
         fix_llmradar_asset_paths(db)
     log.info("seed complete")
 
