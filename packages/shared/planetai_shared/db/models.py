@@ -113,6 +113,7 @@ class Event(Base, TimestampMixin):
         ForeignKey("events.id", ondelete="SET NULL")
     )
     image_url: Mapped[str | None] = mapped_column(Text)
+    image_urls: Mapped[list] = mapped_column(JSONB, default=list)  # gallery paths/URLs
     lang: Mapped[str] = mapped_column(
         String(8), default="en"
     )  # language of title/summary/body_text
@@ -364,9 +365,11 @@ class NewsSubmission(Base, TimestampMixin):
     description: Mapped[str | None] = mapped_column(Text)
     summary: Mapped[str | None] = mapped_column(Text)
     image_url: Mapped[str | None] = mapped_column(Text)
+    image_urls: Mapped[list] = mapped_column(JSONB, default=list)
     category: Mapped[str] = mapped_column(String(20))
     submitter_name: Mapped[str | None] = mapped_column(String(120))
     submitter_email: Mapped[str | None] = mapped_column(String(200))
+    submitter_phone: Mapped[str | None] = mapped_column(String(40))
     status: Mapped[str] = mapped_column(
         String(12), default="pending"
     )  # pending | approved | rejected

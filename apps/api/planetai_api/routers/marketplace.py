@@ -171,11 +171,11 @@ def submit_app(request: Request, payload: AppSubmission, db: Session = Depends(g
         url=str(payload.url),
         repo_url=str(payload.repo_url),
         category=payload.category,
-        pricing=payload.pricing,
+        pricing="free",
         author_name=payload.author_name.strip(),
         author_url=str(payload.author_url) if payload.author_url else None,
         submitter_email=(payload.submitter_email or "").strip() or None,
-        is_turkish_dev=payload.is_turkish_dev,
+        is_turkish_dev=False,
         status="pending",
     )
     db.add(app)

@@ -11,7 +11,7 @@ export async function SiteFooter() {
   const explore = [
     { label: tr ? "Gündem" : "News", href: "/" },
     { label: tr ? "Dünya" : "World", href: "/news?region=world" },
-    { label: "Türkiye Data", href: "/turkiye" },
+    { label: "Veri Vatanı", href: "/turkiye" },
     { label: "AI Marketplace", href: "/marketplace" },
     { label: tr ? "Yazarlar" : "Authors", href: "/yazarlar" },
   ];

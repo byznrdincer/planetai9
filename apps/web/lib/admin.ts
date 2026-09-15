@@ -1,6 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
-import type { QueueApp } from "@/lib/types";
+import type { QueueApp, QueueSubmission } from "@/lib/types";
 
 export const ADMIN_COOKIE = "planetai_admin";
 const BASE = process.env.PLANETAI_API_URL ?? "http://localhost:8077";
@@ -37,5 +37,16 @@ export async function loadQueue(
     return { authed: true, apps: (await res.json()) as QueueApp[] };
   } catch {
     return { authed: true, apps: [] };
+  }
+}
+
+export async function loadNewsQueue(token: string | null): Promise<QueueSubmission[]> {
+  if (!token) return [];
+  try {
+    const res = await adminFetch("/news-submissions/queue", token);
+    if (!res.ok) return [];
+    return (await res.json()) as QueueSubmission[];
+  } catch {
+    return [];
   }
 }

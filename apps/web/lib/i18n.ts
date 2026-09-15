@@ -15,14 +15,14 @@ export async function getLocale(): Promise<Locale> {
 }
 
 const tr = {
-  tagline: "Türkiye Medya Platformu",
+  tagline: "Türkiye Yapay Zeka Medya Platformu",
   live: "Canlı Yayın",
   searchPlaceholder: "Haberlerde ara…",
   nav: {
     home: "Ana Sayfa",
     news: "Gündem",
     world: "Dünya",
-    turkey: "Türkiye Data",
+    turkey: "Veri Vatanı",
     analysis: "Analiz",
     robotics: "Robotik",
     coding: "Kodlama",
@@ -115,14 +115,14 @@ const tr = {
 export type DictT = typeof tr;
 
 const en: DictT = {
-  tagline: "Türkiye Media Platform",
+  tagline: "Türkiye AI Media Platform",
   live: "Live",
   searchPlaceholder: "Search the news…",
   nav: {
     home: "Home",
     news: "News",
     world: "World",
-    turkey: "Türkiye Data",
+    turkey: "Veri Vatanı",
     analysis: "Analysis",
     robotics: "Robotics",
     coding: "Coding",

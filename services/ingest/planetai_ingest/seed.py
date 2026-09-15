@@ -220,28 +220,39 @@ def seed_curated_links(db: Session) -> None:
         "Türkçe Vikipedi",
         "vngrs-web-corpus",
         "Kumru (VNGRS)",
+        "VNGRS",
+        "Hugging Face",
+        "Turkish Data Depository (TDD)",
+        "Peak / Hazelcast",
     }
     data = config.turkiye()
     for collection in ("tr_data", "tr_ecosystem"):
         rows = data.get(collection) or []
+        yaml_names = {row["name"] for row in rows}
         existing = {
             r.name: r
             for r in db.scalars(
                 select(models.CuratedLink).where(models.CuratedLink.collection == collection)
             ).all()
         }
+        # Veri Vatanı şirket listesini YAML ile hizala — eski ekosistem kartlarını kapat
+        if collection == "tr_ecosystem":
+            for name, link in existing.items():
+                if name not in yaml_names:
+                    link.enabled = False
         max_order = max((r.sort_order for r in existing.values()), default=-1)
         next_order = max_order + 1
         for i, row in enumerate(rows):
             name = row["name"]
             if name in existing:
-                if name in managed:
+                if name in managed or collection == "tr_ecosystem":
                     link = existing[name]
                     link.url = row["url"]
                     link.kind = row.get("kind", link.kind)
                     link.note_tr = row.get("note_tr")
                     link.note_en = row.get("note_en")
                     link.enabled = True
+                    link.sort_order = i
                 continue
             db.add(
                 models.CuratedLink(

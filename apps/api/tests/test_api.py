@@ -445,29 +445,34 @@ def test_news_submission_approval_creates_event_in_tr_region(client, monkeypatch
 
     assert client.get("/api/v1/news-submissions/queue", headers=hdr).status_code == 200
 
-    # a submission needs a url or a description
+    # body + name required
     bad = client.post(
         "/api/v1/news-submissions",
-        json={"title": "Eksik gönderi başlığı burada", "category": "AI"},
+        json={"category": "AI", "submitter_name": "X"},
     )
     assert bad.status_code == 422
 
-    title = "PyTest okuyucu haberi — LLM Radar yayında"
+    body = (
+        "PyTest okuyucu haberi — LLM Radar yayında. "
+        "Bu metin kırk karakterden uzun olacak şekilde yazıldı."
+    )
     sub = client.post(
         "/api/v1/news-submissions",
         json={
-            "title": title,
-            "url": "https://example.com/llm-radar",
-            "summary": "Kısa özet.",
+            "description": body,
             "category": "AI",
             "submitter_name": "Test Suite",
+            "submitter_phone": "05551234567",
+            "image_urls": ["/uploads/news/demo/1.jpg"],
         },
     )
     assert sub.status_code == 201
 
     queue = client.get("/api/v1/news-submissions/queue", headers=hdr).json()
-    row = next(s for s in queue if s["title"] == title)
-    assert row["status"] == "pending" and row["event_slug"] is None
+    row = next(s for s in queue if s["submitter_name"] == "Test Suite" and s["status"] == "pending")
+    assert row["event_slug"] is None
+    assert row["image_urls"] == ["/uploads/news/demo/1.jpg"]
+    title = row["title"]
 
     approved = client.post(
         f"/api/v1/news-submissions/{row['id']}/status", headers=hdr, json={"status": "approved"}
@@ -478,7 +483,9 @@ def test_news_submission_approval_creates_event_in_tr_region(client, monkeypatch
 
     try:
         detail = client.get(f"/api/v1/events/{event_slug}")
-        assert detail.status_code == 200 and detail.json()["title"] == title
+        assert detail.status_code == 200
+        assert detail.json()["title"] == title
+        assert detail.json()["image_urls"] == ["/uploads/news/demo/1.jpg"]
 
         tr_slugs = {
             e["slug"] for e in client.get("/api/v1/events?region=TR&limit=50").json()["data"]
