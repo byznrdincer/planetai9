@@ -3,30 +3,23 @@
 import { useRef, useState } from "react";
 import {
   AlignLeft,
+  Briefcase,
+  Building2,
   CheckCircle2,
   Image as ImageIcon,
   Mail,
   Phone,
   Send,
-  Tag,
+  Type,
   User,
   X,
 } from "lucide-react";
 import type { Locale } from "@/lib/i18n";
 
-const BUCKETS: Record<string, { tr: string; en: string }> = {
-  AI: { tr: "Yapay Zekâ", en: "AI" },
-  Robotics: { tr: "Robotik", en: "Robotics" },
-  Coding: { tr: "Kodlama", en: "Coding" },
-  Security: { tr: "Güvenlik", en: "Security" },
-  Regulation: { tr: "Regülasyon", en: "Regulation" },
-  Research: { tr: "Araştırma", en: "Research" },
-  Infra: { tr: "Altyapı", en: "Infrastructure" },
-  OpenSource: { tr: "Açık Kaynak", en: "Open Source" },
-};
-
 const MAX_PHOTOS = 5;
 const MAX_BYTES = 4 * 1024 * 1024;
+const ACCEPT =
+  "image/jpeg,image/jpg,image/png,image/webp,image/gif,image/avif,image/bmp,image/tiff,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.gif,.avif,.bmp,.tif,.tiff,.heic,.heif";
 
 function Field({
   label,
@@ -75,7 +68,10 @@ export function NewsSubmissionForm({
     const next = [...photos];
     for (const file of Array.from(files)) {
       if (next.length >= MAX_PHOTOS) break;
-      if (!file.type.startsWith("image/")) continue;
+      const looksImage =
+        file.type.startsWith("image/") ||
+        /\.(jpe?g|png|webp|gif|avif|bmp|tiff?|heic|heif)$/i.test(file.name);
+      if (!looksImage) continue;
       if (file.size > MAX_BYTES) {
         setState("error");
         setMsg(L("Her fotoğraf en fazla 4 MB olabilir.", "Each photo must be under 4 MB."));
@@ -99,11 +95,17 @@ export function NewsSubmissionForm({
     e.preventDefault();
     const form = e.currentTarget;
     const fd = new FormData(form);
+    const title = String(fd.get("title") ?? "").trim();
     const description = String(fd.get("description") ?? "").trim();
     const submitter_name = String(fd.get("submitter_name") ?? "").trim();
+    if (title.length < 4) {
+      setState("error");
+      setMsg(L("Haber konusu en az 4 karakter olmalı.", "Topic must be at least 4 characters."));
+      return;
+    }
     if (description.length < 40) {
       setState("error");
-      setMsg(L("Haber metni en az 40 karakter olmalı.", "News text must be at least 40 characters."));
+      setMsg(L("Haber içeriği en az 40 karakter olmalı.", "News body must be at least 40 characters."));
       return;
     }
     if (submitter_name.length < 2) {
@@ -129,11 +131,13 @@ export function NewsSubmissionForm({
       }
 
       const payload = {
+        title,
         description,
-        category: String(fd.get("category") ?? ""),
         submitter_name,
         submitter_email: String(fd.get("submitter_email") ?? "").trim() || undefined,
         submitter_phone: String(fd.get("submitter_phone") ?? "").trim() || undefined,
+        submitter_profession: String(fd.get("submitter_profession") ?? "").trim() || undefined,
+        submitter_company: String(fd.get("submitter_company") ?? "").trim() || undefined,
         image_urls,
       };
 
@@ -166,7 +170,24 @@ export function NewsSubmissionForm({
       ) : (
         <form onSubmit={onSubmit} className="grid gap-5 sm:grid-cols-2">
           <Field
-            label={L("Haber metni", "News text")}
+            label={L("Haber konusu", "News topic")}
+            icon={Type}
+            required
+            full
+            hint={L("Kısa bir başlık / konu satırı.", "A short headline or topic line.")}
+          >
+            <input
+              name="title"
+              required
+              minLength={4}
+              maxLength={300}
+              placeholder={L("Örn. Yerli LLM değerlendirme seti açıklandı", "e.g. New local LLM eval set released")}
+              className="field"
+            />
+          </Field>
+
+          <Field
+            label={L("Haber içeriği", "News body")}
             icon={AlignLeft}
             required
             full
@@ -183,31 +204,18 @@ export function NewsSubmissionForm({
             />
           </Field>
 
-          <Field label={L("Kategori", "Category")} icon={Tag} required full>
-            <select name="category" required defaultValue="" className="field">
-              <option value="" disabled>
-                {L("Seçiniz", "Select")}
-              </option>
-              {Object.entries(BUCKETS).map(([b, label]) => (
-                <option key={b} value={b}>
-                  {label[locale]}
-                </option>
-              ))}
-            </select>
-          </Field>
-
           <div className="sm:col-span-2">
             <span className="mb-1.5 flex items-center gap-1.5 text-[13px] font-semibold text-ink dark:text-d-ink">
               <ImageIcon className="h-3.5 w-3.5 text-muted" />
-              {L("Fotoğraflar", "Photos")}
+              {L("Haber fotoğrafı", "News photos")}
               <span className="font-normal text-muted">
-                ({L(`en fazla ${MAX_PHOTOS}`, `max ${MAX_PHOTOS}`)})
+                ({L(`en fazla ${MAX_PHOTOS} · jpeg, png, webp…`, `max ${MAX_PHOTOS} · jpeg, png, webp…`)})
               </span>
             </span>
             <input
               ref={fileRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
+              accept={ACCEPT}
               multiple
               className="hidden"
               onChange={(e) => {
@@ -252,6 +260,22 @@ export function NewsSubmissionForm({
               minLength={2}
               maxLength={120}
               placeholder={L("Adınız soyadınız", "Your full name")}
+              className="field"
+            />
+          </Field>
+          <Field label={L("Mesleğiniz", "Your profession")} icon={Briefcase}>
+            <input
+              name="submitter_profession"
+              maxLength={120}
+              placeholder={L("Örn. Yazılım mühendisi", "e.g. Software engineer")}
+              className="field"
+            />
+          </Field>
+          <Field label={L("Geliştirici şirketi", "Developer company")} icon={Building2}>
+            <input
+              name="submitter_company"
+              maxLength={160}
+              placeholder={L("Şirket / ekip adı", "Company / team name")}
               className="field"
             />
           </Field>

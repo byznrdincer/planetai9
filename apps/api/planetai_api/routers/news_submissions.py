@@ -19,7 +19,8 @@ router = APIRouter()
 _settings = get_settings()
 
 STATUSES = {"pending", "approved", "rejected"}
-MAX_IMAGES = 5
+MAX_IMAGES = 12
+DEFAULT_CATEGORY = "AI"
 
 
 class SubmissionOut(BaseModel):
@@ -35,6 +36,8 @@ class SubmissionOut(BaseModel):
     submitter_name: str | None
     submitter_email: str | None
     submitter_phone: str | None
+    submitter_profession: str | None
+    submitter_company: str | None
     event_slug: str | None
     created_at: datetime
 
@@ -44,16 +47,17 @@ class StatusChange(BaseModel):
 
 
 class SubmissionIn(BaseModel):
-    """Public tip form — title/link/summary optional; body + name required."""
+    """Public tip — konu + içerik + gönderen; kategori yok (varsayılan AI)."""
 
-    title: str | None = Field(default=None, max_length=300)
-    description: str = Field(min_length=40, max_length=8000)
-    category: str
+    title: str = Field(min_length=4, max_length=300)  # haber konusu
+    description: str = Field(min_length=40, max_length=8000)  # haber içeriği
+    category: str = DEFAULT_CATEGORY
     submitter_name: str = Field(min_length=2, max_length=120)
     submitter_email: str | None = Field(default=None, max_length=200)
     submitter_phone: str | None = Field(default=None, max_length=40)
+    submitter_profession: str | None = Field(default=None, max_length=120)
+    submitter_company: str | None = Field(default=None, max_length=160)
     image_urls: list[str] = Field(default_factory=list, max_length=MAX_IMAGES)
-    # legacy optional fields kept for older clients
     url: HttpUrl | None = None
     summary: str | None = Field(default=None, max_length=600)
     image_url: HttpUrl | None = None
@@ -73,41 +77,62 @@ class SubmissionIn(BaseModel):
 
 class SubmissionEdit(BaseModel):
     title: str | None = Field(default=None, min_length=4, max_length=300)
-    description: str | None = Field(default=None, min_length=40, max_length=8000)
+    description: str | None = Field(default=None, min_length=40, max_length=20000)
     category: str | None = None
     image_urls: list[str] | None = None
     submitter_name: str | None = Field(default=None, max_length=120)
     submitter_email: str | None = Field(default=None, max_length=200)
     submitter_phone: str | None = Field(default=None, max_length=40)
+    submitter_profession: str | None = Field(default=None, max_length=120)
+    submitter_company: str | None = Field(default=None, max_length=160)
 
 
-def _title_from_body(body: str, explicit: str | None) -> str:
-    if explicit and explicit.strip():
-        return explicit.strip()[:300]
-    first = (body or "").strip().split("\n", 1)[0].strip()
-    if len(first) >= 8:
-        return first[:300]
-    return (body.strip()[:80] + ("…" if len(body.strip()) > 80 else "")) or "Haber"
+def _gallery_from_submission(s: models.NewsSubmission) -> list[str]:
+    urls: list[str] = []
+    for u in s.image_urls or []:
+        if isinstance(u, str) and u.strip() and u.strip() not in urls:
+            urls.append(u.strip())
+    if s.image_url and s.image_url not in urls:
+        urls.insert(0, s.image_url)
+    return urls[:MAX_IMAGES]
 
 
 def _out(s: models.NewsSubmission) -> SubmissionOut:
-    urls = list(s.image_urls or [])
-    if s.image_url and s.image_url not in urls:
-        urls = [s.image_url, *urls]
+    """Admin queue: if already published as an Event, expose the live article
+    (full body + photos) so editors aren't stuck with the short tip text."""
+    from planetai_api.serializers import split_body_and_gallery
+
+    title = s.title
+    description = s.description
+    urls = _gallery_from_submission(s)
+
+    ev = s.event
+    if ev is not None:
+        title = ev.title or title
+        if ev.body_text and len(ev.body_text.strip()) >= len((description or "").strip()):
+            description = ev.body_text
+        _text, gallery = split_body_and_gallery(ev.body_text, ev.image_url, ev.image_urls)
+        if gallery:
+            urls = gallery[:MAX_IMAGES]
+        elif ev.image_url and ev.image_url not in urls:
+            urls = [ev.image_url, *urls][:MAX_IMAGES]
+
     return SubmissionOut(
         id=s.id,
-        title=s.title,
+        title=title,
         url=s.url,
-        description=s.description,
+        description=description,
         summary=s.summary,
         image_url=urls[0] if urls else s.image_url,
-        image_urls=urls[:MAX_IMAGES],
+        image_urls=urls,
         category=s.category,
         status=s.status,
         submitter_name=s.submitter_name,
         submitter_email=s.submitter_email,
         submitter_phone=s.submitter_phone,
-        event_slug=s.event.slug if s.event else None,
+        submitter_profession=s.submitter_profession,
+        submitter_company=s.submitter_company,
+        event_slug=ev.slug if ev else None,
         created_at=s.created_at,
     )
 
@@ -115,9 +140,7 @@ def _out(s: models.NewsSubmission) -> SubmissionOut:
 @router.post("/news-submissions", status_code=201)
 @limiter.limit(_settings.rate_limit_submit)
 def submit_news(request: Request, payload: SubmissionIn, db: Session = Depends(get_db)) -> dict:
-    if payload.category not in PUBLIC_BUCKETS:
-        raise HTTPException(422, f"category must be one of {PUBLIC_BUCKETS}")
-
+    category = payload.category if payload.category in PUBLIC_BUCKETS else DEFAULT_CATEGORY
     body = payload.description.strip()
     urls = list(payload.image_urls)
     if payload.image_url:
@@ -126,16 +149,18 @@ def submit_news(request: Request, payload: SubmissionIn, db: Session = Depends(g
             urls.insert(0, u)
 
     submission = models.NewsSubmission(
-        title=_title_from_body(body, payload.title),
+        title=payload.title.strip(),
         url=str(payload.url) if payload.url else None,
         description=body,
         summary=(payload.summary or "").strip() or None,
         image_url=urls[0] if urls else None,
         image_urls=urls[:MAX_IMAGES],
-        category=payload.category,
+        category=category,
         submitter_name=payload.submitter_name.strip(),
         submitter_email=(payload.submitter_email or "").strip() or None,
         submitter_phone=(payload.submitter_phone or "").strip() or None,
+        submitter_profession=(payload.submitter_profession or "").strip() or None,
+        submitter_company=(payload.submitter_company or "").strip() or None,
         status="pending",
     )
     db.add(submission)
@@ -188,20 +213,30 @@ def edit_submission(
         submission.submitter_email = payload.submitter_email.strip() or None
     if payload.submitter_phone is not None:
         submission.submitter_phone = payload.submitter_phone.strip() or None
+    if payload.submitter_profession is not None:
+        submission.submitter_profession = payload.submitter_profession.strip() or None
+    if payload.submitter_company is not None:
+        submission.submitter_company = payload.submitter_company.strip() or None
 
-    # Keep the live Event in sync when already published
     if submission.event_id and submission.event is not None:
         ev = submission.event
         ev.title = submission.title
-        ev.body_text = submission.description
-        ev.summary = (submission.description or "")[:280] or None
-        ev.image_url = submission.image_url
-        ev.image_urls = list(submission.image_urls or [])
+        # Prefer the edited body; keep a usable summary without wiping a longer one
+        if payload.description is not None:
+            ev.body_text = submission.description
+            tip = (submission.description or "").strip()
+            if tip:
+                ev.summary = tip[:280]
+        if payload.image_urls is not None:
+            ev.image_url = submission.image_url
+            ev.image_urls = list(submission.image_urls or [])
         if submission.event.articles:
             art = submission.event.articles[0]
             art.title = submission.title
-            art.body_text = submission.description
-            art.image_url = submission.image_url
+            if payload.description is not None:
+                art.body_text = submission.description
+            if payload.image_urls is not None:
+                art.image_url = submission.image_url
 
     db.commit()
     db.refresh(submission)
@@ -222,12 +257,38 @@ def set_status(
     if submission is None:
         raise HTTPException(404, "gönderi bulunamadı")
 
-    if payload.status == "approved" and submission.event_id is None:
-        event = create_event_from_submission(db, submission)
-        submission.event_id = event.id
+    if payload.status == "approved":
+        if submission.event_id is None:
+            event = create_event_from_submission(db, submission)
+            submission.event_id = event.id
+        else:
+            _set_reader_event_visibility(db, submission, visible=True)
+    elif payload.status in ("rejected", "pending"):
+        # Unpublish the Event created from this tip — seeded/linked stories untouched.
+        _set_reader_event_visibility(db, submission, visible=False)
 
     submission.status = payload.status
     db.commit()
     db.refresh(submission)
     _bust_home_cache()
     return _out(submission)
+
+
+def _set_reader_event_visibility(
+    db: Session, submission: models.NewsSubmission, *, visible: bool
+) -> None:
+    """Toggle only Events born from this submission (external_id = reader:<id>)."""
+    if submission.event_id is None:
+        return
+    article = db.scalar(
+        select(models.Article).where(
+            models.Article.external_id == f"reader:{submission.id}",
+            models.Article.event_id == submission.event_id,
+        )
+    )
+    if article is None:
+        return
+    event = db.get(models.Event, submission.event_id)
+    if event is None:
+        return
+    event.status = "active" if visible else "hidden"

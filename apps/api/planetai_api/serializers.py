@@ -10,10 +10,13 @@ from sqlalchemy.orm import Session
 from planetai_api import schemas
 
 _IMAGE_PARA = re.compile(
-    r"^(?:https?://\S+)?(/news/|/uploads/).+\.(?:svg|png|jpe?g|webp)$",
+    r"^(?:https?://\S+)?(/news/|/uploads/).+\.(?:svg|png|jpe?g|webp|gif|avif|bmp|tiff?|heic|heif)$",
     re.IGNORECASE,
 )
-_IMAGE_ONLY = re.compile(r"^/?(?:news|uploads)/.+\.(?:svg|png|jpe?g|webp)$", re.IGNORECASE)
+_IMAGE_ONLY = re.compile(
+    r"^/?(?:news|uploads)/.+\.(?:svg|png|jpe?g|webp|gif|avif|bmp|tiff?|heic|heif)$",
+    re.IGNORECASE,
+)
 
 
 def _is_image_paragraph(p: str) -> bool:

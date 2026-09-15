@@ -25,7 +25,7 @@ export default async function TurkiyePage() {
           {tr ? "Açık veri" : "Open data"}
         </p>
         <h1 className="mt-3 text-[36px] font-extrabold leading-[1.03] tracking-tight3 text-ink dark:text-d-ink sm:text-[48px]">
-          Veri Vatanı
+          VeriVatan
         </h1>
         <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-ink-2 dark:text-d-ink-2">
           {tr
