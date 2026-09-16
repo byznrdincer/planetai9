@@ -144,6 +144,8 @@ def seed_editorial(db: Session) -> None:
         author.avatar_url = row.get("avatar_url")
         author.links = row.get("links") or {}
         author.status = row.get("status") or "active"
+        if row.get("email"):
+            author.email = str(row["email"]).strip() or None
         if "is_moderator" in row:
             author.is_moderator = bool(row["is_moderator"])
         # Studio secret hash → DB so /yazar works after seed without AUTHOR_KEYS.
