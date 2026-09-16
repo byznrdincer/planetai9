@@ -38,15 +38,19 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     return <LlmRadarArticle event={event} locale={locale} ownNews={ownNews} />;
   }
 
+  // Prefer first body paragraph as standfirst — never show a mid-word [:280] clip.
+  const lead = event.body[0] || event.summary || null;
+  const bodyParas = event.body.length > 1 ? event.body.slice(1) : event.body.length === 1 ? [] : [];
+
   return (
     <div className="mx-auto grid max-w-content gap-10 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-16">
       <article className="mx-auto w-full max-w-[680px]">
         <h1 className="text-[30px] font-extrabold leading-[1.12] tracking-tight3 text-ink dark:text-d-ink sm:text-[40px]">
           {event.title}
         </h1>
-        {event.summary && (
+        {lead && (
           <p className="mt-4 text-[18px] leading-relaxed text-ink-2 dark:text-d-ink-2">
-            {event.summary}
+            {lead}
           </p>
         )}
         <div className="mt-5 border-y border-line py-3 dark:border-d-line">
@@ -72,9 +76,9 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           />
         )}
 
-        {event.body.length > 0 && (
+        {(bodyParas.length > 0 || primary) && (
           <div className="mt-8 space-y-5">
-            {event.body.map((p, i) => (
+            {bodyParas.map((p, i) => (
               <p key={i} className="text-[17px] leading-[1.8] text-ink dark:text-d-ink">
                 {p}
               </p>

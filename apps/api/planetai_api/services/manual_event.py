@@ -14,6 +14,7 @@ good enough to rank a reader story by recency; it will generally sit low under
 from __future__ import annotations
 
 import hashlib
+import re
 import uuid
 from datetime import UTC, datetime
 
@@ -29,7 +30,8 @@ _settings = get_settings()
 READER_SOURCE_SLUG = "okuyucu-haberleri"
 STAFF_SOURCE_SLUG = "planetai9-editorial"
 SUMMARY_LIMIT = 280
-_SENT_END = __import__("re").compile(r"(?<=[.!?…])\s+")
+
+_SENT_END = re.compile(r"(?<=[.!?…])\s+")
 
 
 def clip_summary(text: str | None, limit: int = SUMMARY_LIMIT) -> str | None:
