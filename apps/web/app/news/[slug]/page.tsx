@@ -38,9 +38,10 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     return <LlmRadarArticle event={event} locale={locale} ownNews={ownNews} />;
   }
 
-  // Prefer first body paragraph as standfirst — never show a mid-word [:280] clip.
-  const lead = event.body[0] || event.summary || null;
-  const bodyParas = event.body.length > 1 ? event.body.slice(1) : event.body.length === 1 ? [] : [];
+  // Explicit alt başlık when present; otherwise first body paragraph as standfirst.
+  const hasDek = Boolean(event.summary?.trim());
+  const lead = (hasDek ? event.summary : event.body[0]) || event.summary || null;
+  const bodyParas = hasDek ? event.body : event.body.length > 1 ? event.body.slice(1) : [];
 
   return (
     <div className="mx-auto grid max-w-content gap-10 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-16">

@@ -216,7 +216,7 @@ def create_event_from_submission(db: Session, submission: models.NewsSubmission)
         canonical_url=canonical_url,
         title=submission.title,
         raw_summary=submission.summary,
-        clean_summary=submission.summary or clip_summary(submission.description),
+        clean_summary=submission.summary,
         body_text=submission.description or submission.summary,
         lang="tr",
         published_at=now,
@@ -232,7 +232,7 @@ def create_event_from_submission(db: Session, submission: models.NewsSubmission)
     event = models.Event(
         slug=slug,
         title=submission.title,
-        summary=submission.summary or clip_summary(submission.description),
+        summary=submission.summary,
         body_text=submission.description,
         image_url=cover,
         image_urls=gallery,
