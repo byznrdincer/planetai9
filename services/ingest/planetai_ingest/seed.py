@@ -179,9 +179,7 @@ def seed_editorial(db: Session) -> None:
     admin_token = (get_settings().admin_token or "").strip()
     if admin_token:
         digest = hash_api_key(admin_token)
-        cred = db.scalar(
-            select(models.SiteCredential).where(models.SiteCredential.kind == "admin")
-        )
+        cred = db.scalar(select(models.SiteCredential).where(models.SiteCredential.kind == "admin"))
         if cred is None:
             db.add(models.SiteCredential(kind="admin", secret_hash=digest))
         else:

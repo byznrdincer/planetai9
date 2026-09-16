@@ -305,7 +305,9 @@ class CuratedLink(Base, TimestampMixin):
     __tablename__ = "curated_links"
 
     id: Mapped[uuid.UUID] = uuid_pk()
-    collection: Mapped[str] = mapped_column(String(30))  # tr_data | tr_share | tr_ecosystem (legacy)
+    collection: Mapped[str] = mapped_column(
+        String(30)
+    )  # tr_data | tr_share | tr_ecosystem (legacy)
     name: Mapped[str] = mapped_column(String(200))
     url: Mapped[str] = mapped_column(Text)
     kind: Mapped[str] = mapped_column(String(30))  # sub-label: portal / nlp / şirket / lab …

@@ -123,9 +123,7 @@ def submission_looks_staff(db: Session, submission: models.NewsSubmission) -> bo
         if hit is not None:
             return True
     if name:
-        authors = db.scalars(
-            select(models.Author).where(models.Author.status == "active")
-        ).all()
+        authors = db.scalars(select(models.Author).where(models.Author.status == "active")).all()
         for a in authors:
             if (a.name or "").strip().lower() == name:
                 return True
