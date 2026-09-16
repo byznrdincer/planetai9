@@ -73,7 +73,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                   : []
             }
             category={event.category}
-            className="mt-6 aspect-[16/9]"
           />
         )}
 
