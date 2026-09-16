@@ -43,6 +43,7 @@ def clip_summary(text: str | None, limit: int = SUMMARY_LIMIT) -> str | None:
         cut = t[:limit].rstrip()
     return f"{cut}…"
 
+
 MAX_IMAGES = 12
 
 # The bucket vocabulary a public submitter picks from (mirrors events.py's
