@@ -29,15 +29,29 @@ _settings = get_settings()
 READER_SOURCE_SLUG = "okuyucu-haberleri"
 STAFF_SOURCE_SLUG = "planetai9-editorial"
 SUMMARY_LIMIT = 280
+_SENT_END = __import__("re").compile(r"(?<=[.!?…])\s+")
 
 
 def clip_summary(text: str | None, limit: int = SUMMARY_LIMIT) -> str | None:
-    """Short dek for cards/detail — cut on a word boundary, never mid-word."""
+    """Short dek — prefer whole sentences; never end mid-word."""
     if not text:
         return None
     t = " ".join(str(text).split())
     if len(t) <= limit:
         return t
+    # Pack as many complete sentences as fit (no trailing …).
+    out = ""
+    for sent in _SENT_END.split(t):
+        sent = sent.strip()
+        if not sent:
+            continue
+        cand = f"{out} {sent}".strip() if out else sent
+        if len(cand) <= limit:
+            out = cand
+        else:
+            break
+    if len(out) >= max(40, limit // 3):
+        return out
     cut = t[:limit].rsplit(" ", 1)[0].rstrip(" ,;:.-–—")
     if len(cut) < max(40, limit // 3):
         cut = t[:limit].rstrip()
