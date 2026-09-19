@@ -67,6 +67,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           <ArticleEngagement slug={event.slug} locale={locale} />
         </div>
 
+        <ArticleEntities entities={event.entities} locale={locale} compact />
+
         {(event.image_urls?.length || event.image_url) && (
           <ImageCarousel
             images={
@@ -156,8 +158,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             <ArrowUpRight className="h-5 w-5 text-accent" />
           </a>
         )}
-
-        <ArticleEntities entities={event.entities} locale={locale} />
 
         {event.topics.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-2">

@@ -444,7 +444,7 @@ def link_videos(db: Session) -> int:
     return made
 
 
-def backfill_people_on_events(db: Session, *, limit: int = 800) -> int:
+def backfill_people_on_events(db: Session, *, limit: int | None = None) -> int:
     """Attach people to existing events via seed dictionary + auto-extract.
 
     Matches title / summary / body_text so names that only appear in the article
@@ -452,12 +452,14 @@ def backfill_people_on_events(db: Session, *, limit: int = 800) -> int:
     """
     made = 0
     index = EntityIndex.from_db(db)
-    events = db.scalars(
+    stmt = (
         select(models.Event)
         .where(models.Event.status == "active")
         .order_by(models.Event.last_activity_at.desc())
-        .limit(limit)
-    ).all()
+    )
+    if limit is not None:
+        stmt = stmt.limit(limit)
+    events = db.scalars(stmt).all()
     for ev in events:
         existing = {
             str(r.entity_id)

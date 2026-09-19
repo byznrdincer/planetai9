@@ -80,6 +80,8 @@ export function LlmRadarArticle({
           <ArticleEngagement slug={event.slug} locale={locale} />
         </div>
 
+        <ArticleEntities entities={event.entities} locale={locale} compact />
+
         {gallery.length > 0 && (
           <ImageCarousel images={gallery} category={event.category} />
         )}
@@ -117,8 +119,6 @@ export function LlmRadarArticle({
             </Link>
           </p>
         )}
-
-        <ArticleEntities entities={event.entities} locale={locale} />
 
         <CommentSection slug={event.slug} locale={locale} />
       </article>
