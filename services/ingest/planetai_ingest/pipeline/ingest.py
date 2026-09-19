@@ -437,9 +437,7 @@ def link_videos(db: Session) -> int:
                 key = ("topic", str(topic.id))
                 if key not in existing:
                     db.add(
-                        models.VideoLink(
-                            video_id=video.id, target_type="topic", target_id=topic.id
-                        )
+                        models.VideoLink(video_id=video.id, target_type="topic", target_id=topic.id)
                     )
                     made += 1
                     existing.add(key)
@@ -462,9 +460,7 @@ def backfill_people_on_events(db: Session, *, limit: int = 800) -> int:
                 select(models.EventEntity).where(models.EventEntity.event_id == ev.id)
             ).all()
         }
-        for person in auto_tag_people(
-            db, title=ev.title, body=ev.summary or "", source="news"
-        ):
+        for person in auto_tag_people(db, title=ev.title, body=ev.summary or "", source="news"):
             if str(person.id) in existing:
                 continue
             in_title = person.name.lower() in ev.title.lower()

@@ -192,8 +192,7 @@ def list_comments(
                     (
                         n
                         for n in sorted(known_names, key=len, reverse=True)
-                        if after.lower() == n.lower()
-                        or after.lower().startswith(n.lower() + " ")
+                        if after.lower() == n.lower() or after.lower().startswith(n.lower() + " ")
                     ),
                     None,
                 )
@@ -240,11 +239,7 @@ def post_comment(
         except ValueError as exc:
             raise HTTPException(422, "geçersiz yanıt") from exc
         parent = db.get(models.EventComment, pid)
-        if (
-            parent is None
-            or parent.event_id != ev.id
-            or parent.status != "active"
-        ):
+        if parent is None or parent.event_id != ev.id or parent.status != "active":
             raise HTTPException(404, "yanıtlanacak yorum bulunamadı")
         # Flatten to one level: reply-to-reply attaches to the root comment.
         parent_id = parent.parent_id or parent.id

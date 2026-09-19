@@ -83,9 +83,7 @@ def _collect_images(events: list[models.Event], limit: int = 16) -> list[schemas
             if url in seen:
                 continue
             seen.add(url)
-            images.append(
-                schemas.EntityImage(url=url, caption=ev.title, event_slug=ev.slug)
-            )
+            images.append(schemas.EntityImage(url=url, caption=ev.title, event_slug=ev.slug))
             if len(images) >= limit:
                 return images
     return images
