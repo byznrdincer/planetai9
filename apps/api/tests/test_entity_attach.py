@@ -1,7 +1,7 @@
 """Unit tests for dictionary entity attachment on approved news."""
 
-from datetime import UTC, datetime
 import uuid
+from datetime import UTC, datetime
 
 from planetai_api.services.entity_attach import _mentions, attach_entities_to_event
 from planetai_shared.db import models
