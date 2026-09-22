@@ -380,9 +380,11 @@ def list_developers(
         if d.slug in cards:
             continue
         # Match by radar_slug into an existing org card
-        if d.radar_slug and d.radar_slug in orgs and d.radar_slug not in {
-            c.radar_slug for c in curated if c.radar_slug
-        }:
+        if (
+            d.radar_slug
+            and d.radar_slug in orgs
+            and d.radar_slug not in {c.radar_slug for c in curated if c.radar_slug}
+        ):
             continue
         cards[d.slug] = _developer_card(
             slug=d.slug,
@@ -457,9 +459,7 @@ def get_developer(slug: str, db: Session = Depends(get_db)) -> schemas.LlmDevelo
         for m in (org.models if org else [])
     ]
 
-    display_name = (
-        curated.display_name if curated else (org.name if org else slug)
-    )
+    display_name = curated.display_name if curated else (org.name if org else slug)
     return schemas.LlmDeveloperDetail(
         slug=curated.slug if curated else (org.slug if org else slug),
         display_name=display_name,
