@@ -222,6 +222,8 @@ def _developer_card(
     logo_url: str | None = None,
     website_url: str | None = None,
     hf_url: str | None = None,
+    linkedin_url: str | None = None,
+    github_url: str | None = None,
     city: str | None = None,
     curated: bool = False,
 ) -> schemas.LlmDeveloperCard:
@@ -233,6 +235,8 @@ def _developer_card(
         logo_url=logo_url,
         website_url=website_url,
         hf_url=hf_url,
+        linkedin_url=linkedin_url,
+        github_url=github_url,
         city=city,
         model_count=model_count,
         curated=curated,
@@ -272,6 +276,8 @@ def overview(
                 logo_url=c.logo_url if c else None,
                 website_url=(c.website_url if c else None) or org.website_url,
                 hf_url=(c.hf_url if c else None) or org.hf_url,
+                linkedin_url=c.linkedin_url if c else None,
+                github_url=c.github_url if c else None,
                 city=c.city if c else None,
                 curated=c is not None,
             )
@@ -293,6 +299,8 @@ def overview(
                 logo_url=d.logo_url,
                 website_url=d.website_url,
                 hf_url=d.hf_url,
+                linkedin_url=d.linkedin_url,
+                github_url=d.github_url,
                 city=d.city,
                 curated=True,
             )
@@ -362,6 +370,8 @@ def list_developers(
             logo_url=c.logo_url if c else None,
             website_url=(c.website_url if c else None) or org.website_url,
             hf_url=(c.hf_url if c else None) or org.hf_url,
+            linkedin_url=c.linkedin_url if c else None,
+            github_url=c.github_url if c else None,
             city=c.city if c else None,
             curated=c is not None,
         )
@@ -383,6 +393,8 @@ def list_developers(
             logo_url=d.logo_url,
             website_url=d.website_url,
             hf_url=d.hf_url,
+            linkedin_url=d.linkedin_url,
+            github_url=d.github_url,
             city=d.city,
             curated=True,
         )
@@ -457,6 +469,8 @@ def get_developer(slug: str, db: Session = Depends(get_db)) -> schemas.LlmDevelo
         website_url=(curated.website_url if curated else None)
         or (org.website_url if org else None),
         hf_url=(curated.hf_url if curated else None) or (org.hf_url if org else None),
+        linkedin_url=curated.linkedin_url if curated else None,
+        github_url=curated.github_url if curated else None,
         city=curated.city if curated else None,
         lat=float(curated.lat) if curated and curated.lat is not None else None,
         lng=float(curated.lng) if curated and curated.lng is not None else None,
