@@ -8,8 +8,8 @@ import { CommentSection } from "@/components/CommentSection";
 function pageKeyFromPath(pathname: string, search: string): string | null {
   const path = (pathname || "/").replace(/\/+$/, "") || "/";
 
-  // Auth / studio / admin / submit — no public comments
-  if (/^\/(giris|yazar|yonetim|haber-giris)(\/|$)/.test(path)) return null;
+  // Auth / studio / admin — no public comments
+  if (/^\/(giris|yazar|yonetim)(\/|$)/.test(path)) return null;
 
   // Already have dedicated comment threads
   if (/^\/news\/[^/]+$/.test(path)) return null;
