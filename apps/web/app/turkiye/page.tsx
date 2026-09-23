@@ -1,4 +1,5 @@
 import { DataShareForm } from "@/components/DataShareForm";
+import { CommentSection } from "@/components/CommentSection";
 import { ResourceLinkCard } from "@/components/ResourceLinkCard";
 import { SectionHeader } from "@/components/SectionHeader";
 import { apiSafe } from "@/lib/api";
@@ -168,6 +169,10 @@ export default async function TurkiyePage() {
         )}
 
         <DataShareForm locale={locale} />
+      </section>
+
+      <section>
+        <CommentSection slug="verivatan" locale={locale} kind="page" />
       </section>
     </div>
   );

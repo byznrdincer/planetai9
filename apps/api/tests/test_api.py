@@ -597,3 +597,37 @@ def test_news_submission_approval_creates_event_in_tr_region(client, monkeypatch
                 db.query(models.Article).filter_by(event_id=ev.id).delete()
                 db.query(models.EventTopic).filter_by(event_id=ev.id).delete()
                 db.delete(ev)
+
+
+def test_page_comments(client, monkeypatch):
+    from planetai_api.routers import auth as auth_router
+
+    monkeypatch.setattr(auth_router._settings, "env", "development")
+
+    assert client.get("/api/v1/pages/verivatan/comments").status_code == 200
+    assert client.get("/api/v1/pages/nope/comments").status_code == 404
+
+    email = "page-comment@example.com"
+    registered = client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "secret12", "display_name": "Page Reader"},
+    )
+    assert registered.status_code == 200
+
+    posted = client.post(
+        "/api/v1/pages/universite/comments",
+        json={"body": "Bu hatta daha fazla sağlık videosu olsun."},
+    )
+    assert posted.status_code == 201
+    cid = posted.json()["id"]
+
+    listed = client.get("/api/v1/pages/universite/comments")
+    assert listed.status_code == 200
+    assert any(c["id"] == cid for c in listed.json())
+
+    liked = client.post(f"/api/v1/pages/universite/comments/{cid}/like")
+    assert liked.status_code == 200
+    assert liked.json()["liked"] is True
+
+    deleted = client.delete(f"/api/v1/pages/universite/comments/{cid}")
+    assert deleted.status_code == 200

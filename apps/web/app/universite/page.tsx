@@ -1,3 +1,4 @@
+import { CommentSection } from "@/components/CommentSection";
 import { EducationShareForm } from "@/components/EducationShareForm";
 import { ResourceLinkCard } from "@/components/ResourceLinkCard";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -109,6 +110,10 @@ export default async function UniversitePage() {
             : "Add an open course, video, or workshop to one of the three tracks. Published after review."}
         </p>
         <EducationShareForm locale={locale} />
+      </section>
+
+      <section>
+        <CommentSection slug="universite" locale={locale} kind="page" />
       </section>
     </div>
   );
