@@ -600,14 +600,16 @@ def test_news_submission_approval_creates_event_in_tr_region(client, monkeypatch
 
 
 def test_page_comments(client, monkeypatch):
+    import uuid
+
     from planetai_api.routers import auth as auth_router
 
     monkeypatch.setattr(auth_router._settings, "env", "development")
 
     assert client.get("/api/v1/pages/verivatan/comments").status_code == 200
-    assert client.get("/api/v1/pages/nope/comments").status_code == 404
+    assert client.get("/api/v1/pages/Bad Key!/comments").status_code == 404
 
-    email = "page-comment@example.com"
+    email = f"page-comment-{uuid.uuid4().hex[:8]}@example.com"
     registered = client.post(
         "/api/v1/auth/register",
         json={"email": email, "password": "secret12", "display_name": "Page Reader"},

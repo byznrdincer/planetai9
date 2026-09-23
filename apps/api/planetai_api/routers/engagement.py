@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -600,12 +601,12 @@ def delete_developer_comment(
     return {"ok": True}
 
 
-_PAGE_KEYS = frozenset({"verivatan", "universite"})
+_PAGE_KEY_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,38}[a-z0-9]$|^[a-z0-9]$")
 
 
 def _page_key_or_404(page_key: str) -> str:
     key = (page_key or "").strip().lower()
-    if key not in _PAGE_KEYS:
+    if not _PAGE_KEY_RE.match(key):
         raise HTTPException(404, "sayfa bulunamadı")
     return key
 
