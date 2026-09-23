@@ -29,7 +29,7 @@ export default async function TurkiyePage() {
   ]);
 
   const note = (l: CuratedLink) => (tr ? l.note_tr : l.note_en) ?? "";
-  const knownKeys = new Set(DATA_CATEGORIES.map((c) => c.key));
+  const knownKeys = new Set<string>(DATA_CATEGORIES.map((c) => c.key));
 
   const curatedBy = (key: string) =>
     trData.filter((d) => normalizeKind(d.kind) === key);

@@ -357,9 +357,7 @@ def overview(
         seen.add(d.slug)
 
     # Most active first: models, then datasets (open contribution), then name.
-    top.sort(
-        key=lambda c: (-c.model_count, -(c.dataset_count or 0), c.display_name.casefold())
-    )
+    top.sort(key=lambda c: (-c.model_count, -(c.dataset_count or 0), c.display_name.casefold()))
     top = top[:24]
 
     pins: list[schemas.LlmMapPin] = []
@@ -472,9 +470,7 @@ def list_developers(
     if sort == "name":
         out.sort(key=lambda c: c.display_name.casefold())
     else:
-        out.sort(
-            key=lambda c: (-c.model_count, -(c.dataset_count or 0), c.display_name.casefold())
-        )
+        out.sort(key=lambda c: (-c.model_count, -(c.dataset_count or 0), c.display_name.casefold()))
     return out
 
 
