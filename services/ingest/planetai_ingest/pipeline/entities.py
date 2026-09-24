@@ -33,9 +33,7 @@ _NAME_TOKEN = r"[A-ZÇĞİÖŞÜ][A-Za-zÇĞİÖŞÜçğıöşü''\-]*"
 _NAME_PHRASE = rf"({_NAME_TOKEN}(?:\s+{_NAME_TOKEN})+)"
 
 # "Kemal Kar ile" — strongest TR guest signal
-_GUEST_ILE = re.compile(
-    rf"(?<![A-Za-zÇĞİÖŞÜçğıöşü]){_NAME_PHRASE}\s+ile\b"
-)
+_GUEST_ILE = re.compile(rf"(?<![A-Za-zÇĞİÖŞÜçğıöşü]){_NAME_PHRASE}\s+ile\b")
 # Video title guest: "Susan Wojcicki: …" (name at start, then colon)
 _VIDEO_TITLE_GUEST = re.compile(rf"^{_NAME_PHRASE}\s*:")
 # News headline verbs: "Sam Altman apologizes …" / "Dario Amodei warns …"
