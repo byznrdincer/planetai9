@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, CalendarDays, Code2, Cpu, FileText, Globe2, Play, Users } from "lucide-react";
+import { ArrowUpRight, CalendarDays, Code2, Cpu, FileText, Globe2, Play, Shield, Users } from "lucide-react";
 import { LogoMark } from "@/components/Logo";
 import { getLocale } from "@/lib/i18n";
 import { PRESENCE_LINKS } from "@/lib/presence";
