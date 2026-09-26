@@ -128,8 +128,6 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-8">
-      <OppyBanner locale={locale} />
-
       {lead && (
         <HeroBlock
           lead={lead}
@@ -205,6 +203,8 @@ export default async function HomePage() {
           )}
         </section>
       )}
+
+      <OppyBanner locale={locale} />
     </div>
   );
 }
